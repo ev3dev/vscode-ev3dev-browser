@@ -1,0 +1,124 @@
+{
+    "name": "ev3dev-browser",
+    "displayName": "ev3dev-browser",
+    "description": "Browse for ev3dev devices",
+    "version": "0.0.1",
+    "publisher": "dlech",
+    "engines": {
+        "vscode": "^1.13.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:extension.sayHello",
+        "onView:ev3devBrowser"
+    ],
+    "main": "./out/src/extension",
+    "contributes": {
+        "configuration": {
+            "title": "ev3dev browser configuration",
+            "properties": {
+                "ev3devBrowser.password": {
+                    "type": ["string", "null"],
+                    "default": "maker",
+                    "description": "The password for the 'robot' user."
+                },
+                "ev3devBrowser.env": {
+                    "type": "object",
+                    "default": {},
+                    "description": "Addition environment variables to use on remote devices.\n\nIMPORTANT: Environment variables must be white-listed by setting AcceptEnv in sshd_config on the server, otherwise these values will be ignored.",
+                    "uniqueItems": true
+                }
+            }
+        },
+        "commands": [
+            {
+                "command": "extension.sayHello",
+                "title": "Hello World"
+            }, {
+                "command": "ev3devBrowser.refresh",
+                "title": "Re-scan",
+                "icon":{
+                    "dark": "resources/icons/dark/refresh.svg",
+                    "light": "resources/icons/light/refresh.svg"
+                }
+            }, {
+                "command": "ev3devBrowser.openSshTerminal",
+                "title": "Open SSH Terminal"
+            }, {
+                "command": "ev3devBrowser.remoteRun",
+                "title": "Run",
+                "icon":{
+                    "dark": "resources/icons/dark/green-circle.svg",
+                    "light": "resources/icons/light/refresh.svg"
+                }
+            }, {
+                "command": "ev3devBrowser.remoteTerm",
+                "title": "Stop",
+                "icon":{
+                    "dark": "resources/icons/dark/red-circle.svg",
+                    "light": "resources/icons/light/refresh.svg"
+                }
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "ev3devBrowser.refresh",
+                    "when": "view == ev3devBrowser",
+                    "group": "navigation"
+                }, {
+                    "command": "ev3devBrowser.remoteRun",
+                    "when": "view == ev3devBrowser && viewItem == executableFile",
+                    "group": "navigation"
+                }, {
+                    "command": "ev3devBrowser.remoteTerm",
+                    "when": "view == ev3devBrowser && viewItem == runningFile",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "ev3devBrowser.openSshTerminal",
+                    "when": "view == ev3devBrowser && viewItem == ev3devDevice"
+                }, {
+                    "command": "ev3devBrowser.remoteRun",
+                    "when": "view == ev3devBrowser && viewItem == executableFile"
+                }, {
+                    "command": "ev3devBrowser.remoteTerm",
+                    "when": "view == ev3devBrowser && viewItem == runningFile"
+                }
+            ]
+        },
+        "views": {
+            "explorer": [
+                {
+                    "id": "ev3devBrowser",
+                    "name": "ev3dev devices"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "tsc -p ./",
+        "compile": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.0.3",
+        "vscode": "^1.0.0",
+        "mocha": "^2.3.3",
+        "@types/node": "^6.0.40",
+        "@types/mocha": "^2.2.32",
+        "@types/bonjour": "^3.5.4",
+        "@types/ssh2": "~0.5.35",
+        "@types/ssh2-streams": "~0.1.2"
+    },
+    "dependencies": {
+        "bonjour": "^3.5.0",
+        "ssh2": "~0.5.5",
+        "ssh2-streams": "~0.1.19"
+    }
+}
