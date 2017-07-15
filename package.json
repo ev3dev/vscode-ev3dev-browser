@@ -48,18 +48,10 @@
                 "title": "Open SSH Terminal"
             }, {
                 "command": "ev3devBrowser.remoteRun",
-                "title": "Run",
-                "icon":{
-                    "dark": "resources/icons/dark/green-circle.svg",
-                    "light": "resources/icons/light/refresh.svg"
-                }
+                "title": "Run"
             }, {
                 "command": "ev3devBrowser.remoteTerm",
-                "title": "Stop",
-                "icon":{
-                    "dark": "resources/icons/dark/red-circle.svg",
-                    "light": "resources/icons/light/refresh.svg"
-                }
+                "title": "Stop"
             }
         ],
         "menus": {
@@ -72,22 +64,12 @@
                     "command": "ev3devBrowser.remoteRun",
                     "when": "view == ev3devBrowser && viewItem == executableFile",
                     "group": "navigation"
-                }, {
-                    "command": "ev3devBrowser.remoteTerm",
-                    "when": "view == ev3devBrowser && viewItem == runningFile",
-                    "group": "navigation"
                 }
             ],
             "view/item/context": [
                 {
                     "command": "ev3devBrowser.openSshTerminal",
                     "when": "view == ev3devBrowser && viewItem == ev3devDevice"
-                }, {
-                    "command": "ev3devBrowser.remoteRun",
-                    "when": "view == ev3devBrowser && viewItem == executableFile"
-                }, {
-                    "command": "ev3devBrowser.remoteTerm",
-                    "when": "view == ev3devBrowser && viewItem == runningFile"
                 }
             ]
         },

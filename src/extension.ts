@@ -217,19 +217,20 @@ class Device extends vscode.TreeItem {
 
 class File extends vscode.TreeItem {
     private fileCache: File[] = new Array<File>();
-    private channel: ssh2.Channel;
     readonly path: string;
+    readonly isExecutable: boolean;
 
     constructor(public device: Device, directory: string, private fileInfo: ssh2Streams.FileEntry) {
         super(fileInfo.filename);
         // work around bad typescript bindings
         const stats = (<ssh2Streams.Stats> fileInfo.attrs);
+        this.path = directory + fileInfo.filename;
+        this.isExecutable = stats.isFile() && !!(stats.mode & S_IXUSR);
         if (stats.isDirectory()) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             this.contextValue = 'folder';
         }
-        this.path = directory + fileInfo.filename;
-        if (stats.isFile() && (stats.mode & S_IXUSR)) {
+        if (this.isExecutable) {
             this.contextValue = 'executableFile';
         }
         this.command = { command: 'ev3devBrowser.fileClicked', title: '', arguments: [this]};
@@ -276,6 +277,19 @@ class File extends vscode.TreeItem {
             this.fileCache.length = 0;
             this.device.provider.fireFileChanged(this);
         }
+
+        // Show a quick-pick to allow users to run an executable program.
+        if (this.isExecutable) {
+            const runItem = <vscode.QuickPickItem> {
+                label: 'Run',
+                description: this.path
+            };
+            vscode.window.showQuickPick([runItem]).then(value => {
+                if (value == runItem) {
+                    this.run();
+                }
+            });
+        }
     }
 
     run() :void {
@@ -284,12 +298,9 @@ class File extends vscode.TreeItem {
         output.clear();
         output.appendLine(`Starting: ${command}`);
         this.device.exec(command).then(channel => {
+            const cancelSource = new vscode.CancellationTokenSource();
             channel.on('close', () => {
-                // The exit signal is not guaranteed to run, so handle the
-                // important stuff here in the close event handler.
-                this.channel = undefined;
-                this.contextValue = 'executableFile';
-                this.device.provider.fireDeviceChanged(this.device);
+                cancelSource.dispose();
             });
             channel.on('exit', (code, signal, coreDump, desc) => {
                 if (code === 0) {
@@ -310,9 +321,22 @@ class File extends vscode.TreeItem {
             });
             output.appendLine('Started.');
             output.appendLine('');
-            this.channel = channel;
-            this.contextValue = 'runningFile';
-            this.device.provider.fireDeviceChanged(this.device);
+
+            // Use quick-pick to allow the user to stop a running program. This
+            // seems to be the best available UI at the moment. By using
+            // ignoreFocusOut: true, we can prevent the user from accidentally
+            // closing the quick-pick (unless they press ESC). Using the
+            // cancellation token will close it automatically when the program
+            // exits.
+            const stopItem = <vscode.QuickPickItem> {
+                label: 'Stop',
+                description: this.path
+            };
+            vscode.window.showQuickPick([stopItem], { ignoreFocusOut: true }, cancelSource.token).then(value => {
+                if (value == stopItem) {
+                    this.stop();
+                }
+            });
         }, err => {
             output.appendLine(`Failed: ${err.message}`);
         });
