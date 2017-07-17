@@ -26,7 +26,9 @@
                 },
                 "ev3devBrowser.env": {
                     "type": "object",
-                    "default": {},
+                    "default": {
+                        "PYTHONUNBUFFERED": "TRUE"
+                    },
                     "description": "Addition environment variables to use on remote devices.\n\nIMPORTANT: Environment variables must be white-listed by setting AcceptEnv in sshd_config on the server, otherwise these values will be ignored.",
                     "uniqueItems": true
                 }
