@@ -349,6 +349,6 @@ class File extends vscode.TreeItem {
         // }
 
         // signal() does not seem to work anyway
-        this.device.exec('killall conrun');
+        this.device.exec('conrun-kill');
     }
 }
