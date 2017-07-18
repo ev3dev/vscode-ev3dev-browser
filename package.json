@@ -61,6 +61,10 @@
                 {
                     "command": "ev3devBrowser.openSshTerminal",
                     "when": "view == ev3devBrowser && viewItem == ev3devDevice"
+                },
+                {
+                    "command": "ev3devBrowser.remoteRun",
+                    "when": "view == ev3devBrowser && viewItem == executableFile"
                 }
             ]
         },
