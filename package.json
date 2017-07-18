@@ -57,17 +57,6 @@
             }
         ],
         "menus": {
-            "view/title": [
-                {
-                    "command": "ev3devBrowser.refresh",
-                    "when": "view == ev3devBrowser",
-                    "group": "navigation"
-                }, {
-                    "command": "ev3devBrowser.remoteRun",
-                    "when": "view == ev3devBrowser && viewItem == executableFile",
-                    "group": "navigation"
-                }
-            ],
             "view/item/context": [
                 {
                     "command": "ev3devBrowser.openSshTerminal",
