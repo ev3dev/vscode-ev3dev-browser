@@ -87,9 +87,7 @@ class AvahiBrowser extends events.EventEmitter implements bonjour.Browser {
         }
         this.destroyOp = this.avahi.pushDestroyOp(() => this.stop());
         const type = `_${this.options.type}._${this.options.protocol || 'tcp'}`;
-        // FIXME: 'local' is not necessarily the default domain, but dbus-native
-        // can't encode null
-        avahiDaemon.ServiceBrowserNew(avahi.IF_UNSPEC, avahi.PROTO_UNSPEC, type, 'local', 0,
+        avahiDaemon.ServiceBrowserNew(avahi.IF_UNSPEC, avahi.PROTO_UNSPEC, type, '', 0,
             (err, browser) => {
                 if (!this.destroyOp) {
                     // service was stopped before callback
