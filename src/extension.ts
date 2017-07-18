@@ -7,9 +7,10 @@ import * as bonjour from 'bonjour';
 import * as ssh2 from 'ssh2'
 import * as ssh2Streams from 'ssh2-streams'
 import * as path from 'path'
+import * as bonjour2 from './bonjour'
 
 const S_IXUSR = parseInt('00100', 8);
-
+const bonjourInstance = bonjour2.getInstance();
 
 let output: vscode.OutputChannel;
 let resourceDir: string;
@@ -29,11 +30,11 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteTerm', f => f.stop()));
-    
 }
 
 // this method is called when your extension is deactivated
 export function deactivate() {
+    bonjourInstance.destroy();
 }
 
 export class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
@@ -43,7 +44,7 @@ export class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | F
     private readonly browser: bonjour.Browser;
 
 	constructor() {
-        this.browser = bonjour().find({type: 'sftp-ssh'});
+        this.browser = bonjourInstance.find({ type: 'sftp-ssh' });
         this.browser.on('up', s => this.onBrowserUp(s));
         this.browser.on('down', s => this.onBrowserDown(s));
         this.browser.start();
