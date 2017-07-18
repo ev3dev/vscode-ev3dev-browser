@@ -1,15 +1,23 @@
 // This implements the interface from the 'bonjour' npm package using the
 // avahi-browse command. Not all features are implemented.
 
+import * as avahi from 'avahi-dbus';
 import * as bonjour from 'bonjour';
 import * as bonjour2 from '../bonjour';
+import * as dbus from 'dbus-native';
 import * as events from 'events';
-import * as child_process from 'child_process';
-import * as readline from 'readline';
+import * as vscode from 'vscode';
+
+let bus;
+let avahiDaemon;
 
 export function isPresent(): boolean {
+    if (bus && avahiDaemon) {
+        return true;
+    }
     try {
-        child_process.execFileSync('avahi-browse', ['--version']);
+        bus = dbus.systemBus();
+        avahiDaemon = new avahi.Daemon(bus);
         return true;
     }
     catch (err) {
@@ -18,6 +26,9 @@ export function isPresent(): boolean {
 }
 
 export function getInstance(): bonjour2.Bonjour {
+    if (!isPresent()) {
+        throw 'Not present';
+    }
     return new Avahi();
 }
 
@@ -62,7 +73,7 @@ class Avahi implements bonjour2.Bonjour {
 }
 
 class AvahiBrowser extends events.EventEmitter implements bonjour.Browser {
-    private avahiBrowse: child_process.ChildProcess;
+    private browser: any;
     private destroyOp: ()=>void;
     readonly services: bonjour.Service[] = new Array<bonjour.Service>();
 
@@ -74,54 +85,50 @@ class AvahiBrowser extends events.EventEmitter implements bonjour.Browser {
         if (this.destroyOp) {
             throw 'Already started';
         }
-
-        const args = ['--parsable', '--no-db-lookup', '--resolve'];
-        if (this.options.type) {
-            args.push(`_${this.options.type}._${this.options.protocol || 'tcp'}`);
-        }
-        else {
-            args.push('--all');
-        }
-        this.avahiBrowse = child_process.spawn('avahi-browse', args);
         this.destroyOp = this.avahi.pushDestroyOp(() => this.stop());
-        const rl = readline.createInterface({ input: this.avahiBrowse.stdout });
-        rl.on('line', line => {
-            if (!line) {
-                return;
-            }
-            const [action, iface, protocol, name, type, domain, host, addr, port, txt] = line.split(';', 10);
-            const service = this.getOrCreateService(name, type, domain);
-            switch (action) {
-            case '+':
-                // we have to merge several avahi entries together to get the
-                // equivalent of the nodejs bonjour implementation
-                service.pushPending(`${iface}.${protocol}`);
-                break;
-            case '-':
-                const i = this.services.findIndex(s => s.fqdn == `${name}.${type}.${domain}`);
-                if (i < 0) {
-                    // was already removed
-                    break;
+        const type = `_${this.options.type}._${this.options.protocol || 'tcp'}`;
+        // FIXME: 'local' is not necessarily the default domain, but dbus-native
+        // can't encode null
+        avahiDaemon.ServiceBrowserNew(avahi.IF_UNSPEC, avahi.PROTO_UNSPEC, type, 'local', 0,
+            (err, browser) => {
+                if (!this.destroyOp) {
+                    // service was stopped before callback
+                    return;
                 }
-                this.services.splice(i, 1);
-                this.emit('down', service);
-                break;
-            case '=':
-                service.host = host;
-                service.addresses.push(addr);
-                service.port = Number(port);
-                service.txt = AvahiBrowser.parseText(txt);
-                if (service.popPending(`${iface}.${protocol}`)) {
-                    // don't emit the 'up' event until we are sure we are completely resolved
-                    this.emit('up', service);
+                if (err) {
+                    vscode.window.showErrorMessage(`Error while starting avahi browser: ${err.message}`);
+                    return;
                 }
-                break;
-            }
-        });
-        this.avahiBrowse.on('close', (c, s) => {
-            this.avahi.popDestroyOp(this.destroyOp);
-            this.destroyOp = undefined;
-        });
+                this.browser = browser;
+                browser.on('ItemNew', (iface, protocol, name, type, domain, flags) => {
+                    const service = this.getOrCreateService(name, type, domain);
+                    // the native js bonjour does not consider iface and protocol variations as separate
+                    // services, so we have to do some funny things to get them grouped together
+                    service.pushPending(`${iface}.${protocol}`);
+                    avahiDaemon.ResolveService(iface, protocol, name, type, domain, avahi.PROTO_UNSPEC, 0,
+                        (err, iface, protocol, name, type, domain, host, aprotocol, addr, port, txt, flags) => {
+                            if (err) {
+                                vscode.window.showErrorMessage(`Error resolving avahi service: ${err.message}`);
+                                return;
+                            }
+                            service.host = host;
+                            service.addresses.push(addr);
+                            service.port = Number(port);
+                            service.txt = AvahiBrowser.parseText(txt);
+                            if (service.popPending(`${iface}.${protocol}`)) {
+                                // don't emit the 'up' event until we are sure we are completely resolved
+                                this.emit('up', service);
+                            }
+                        });
+                });
+                browser.on('ItemRemove', (iface, protocol, name, type, domain, flags) => {
+                    const i = this.services.findIndex(s => s.fqdn == `${name}.${type}.${domain}`);
+                    if (i >= 0) {
+                        const [service] = this.services.splice(i, 1);
+                        this.emit('down', service);
+                    }
+                });
+            });
     }
 
     update(): void {
@@ -132,7 +139,10 @@ class AvahiBrowser extends events.EventEmitter implements bonjour.Browser {
         if (!this.destroyOp) {
             throw 'Not started';
         }
-        this.avahiBrowse.kill();
+        if (this.browser) {
+            this.browser.Free();
+            this.browser = undefined;
+        }
     }
 
     private getOrCreateService(name: string, type: string, domain: string): AvahiService {
@@ -146,16 +156,13 @@ class AvahiBrowser extends events.EventEmitter implements bonjour.Browser {
         return service;
     }
 
-    private static parseText(txt?: string): Object {
+    private static parseText(txt?: Uint8Array[]): Object {
         const result = new Object();
         if (!txt) {
             return result;
         }
-        const matches = txt.match(/"[^"]+"/g);
-        matches.forEach(m => {
-            // remove quotes
-            m = m.slice(1, -1);
-            const [key, value] = m.split('=', 2);
+        txt.forEach(v => {
+            const [key, value] = v.toString().split(/=/);
             result[key] = value;
         });
         return result;

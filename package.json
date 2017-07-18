@@ -90,7 +90,9 @@
         "@types/ssh2-streams": "~0.1.2"
     },
     "dependencies": {
+        "avahi-dbus": "~0.1.0",
         "bonjour": "^3.5.0",
+        "dbus-native": "~0.2.2",
         "ssh2": "~0.5.5",
         "ssh2-streams": "~0.1.19"
     }
