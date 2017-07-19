@@ -215,7 +215,8 @@ class Device extends vscode.TreeItem implements vscode.QuickPickItem {
                     longname: '',
                     attrs: stats
                 });
-                this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+                this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+                this.rootDirectory.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
                 this.provider.fireDeviceChanged(this);
             });
             
