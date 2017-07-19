@@ -51,7 +51,8 @@ function sendToDevice(): void {
         const config = vscode.workspace.getConfiguration('ev3devBrowser.sendToDevice');
         const includeFiles = config.get<string>('include');
         const excludeFiles = config.get<string>('exclude');
-        const projectDir = config.get<string>('directory', path.basename(localDir));
+        const projectDir = config.get<string>('directory') || path.basename(localDir);
+        const remoteDir = d.rootDirectory.path + `/${projectDir}/`;
         vscode.window.withProgress({
             location: vscode.ProgressLocation.Window
         }, async progress => {
@@ -61,7 +62,6 @@ function sendToDevice(): void {
                     progress.report({
                         message: `Copying ${f.fsPath}`
                     });
-                    const remoteDir = d.rootDirectory.path + `/${projectDir}/`;
                     const basename = path.basename(f.fsPath);
                     const remotePath = remoteDir + basename;
 
@@ -83,6 +83,8 @@ function sendToDevice(): void {
                     // TODO: selectively make files executable
                     await d.chmod(remotePath, '755');
                 });
+                // make sure any new files show up in the browser
+                d.provider.fireDeviceChanged(d);
             }
             catch (err) {
                 vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
