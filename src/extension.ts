@@ -14,15 +14,16 @@ const bonjourInstance = bonjour2.getInstance();
 
 let output: vscode.OutputChannel;
 let resourceDir: string;
+let ev3devBrowserProvider: Ev3devBrowserProvider;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
     output = vscode.window.createOutputChannel('ev3dev');
-    resourceDir = context.asAbsolutePath('resources');
     context.subscriptions.push(output);
+    resourceDir = context.asAbsolutePath('resources');
 
-    const ev3devBrowserProvider = new Ev3devBrowserProvider();
+    ev3devBrowserProvider = new Ev3devBrowserProvider();
     context.subscriptions.push(vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.refresh', () => ev3devBrowserProvider.refresh()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.openSshTerminal', d => ev3devBrowserProvider.openSshTerminal(d)));
@@ -30,6 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteTerm', f => f.stop()));
+    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.sendToDevice', () => sendToDevice()));
 }
 
 // this method is called when your extension is deactivated
@@ -37,7 +39,59 @@ export function deactivate() {
     bonjourInstance.destroy();
 }
 
-export class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
+function sendToDevice(): void {
+    vscode.workspace.saveAll();
+    const localDir = vscode.workspace.rootPath;
+    if (!localDir) {
+        vscode.window.showErrorMessage('Must have a folder open to send files to device.');
+        return;
+    }
+
+    ev3devBrowserProvider.getDevice().then(async d => {;
+        const config = vscode.workspace.getConfiguration('ev3devBrowser.sendToDevice');
+        const includeFiles = config.get<string>('include');
+        const excludeFiles = config.get<string>('exclude');
+        const projectDir = config.get<string>('directory', path.basename(localDir));
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Window
+        }, async progress => {
+            try {
+                const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
+                files.forEach(async f => {
+                    progress.report({
+                        message: `Copying ${f.fsPath}`
+                    });
+                    const remoteDir = d.rootDirectory.path + `/${projectDir}/`;
+                    const basename = path.basename(f.fsPath);
+                    const remotePath = remoteDir + basename;
+
+                    // have to make sure the directory exists on the remote device first
+                    try {
+                        await d.stat(remoteDir);
+                    }
+                    catch (err) {
+                        if (err.code == 2 /* file does not exist */) {
+                            await d.mkdir(remoteDir);
+                        }
+                        else {
+                            throw err;
+                        }
+                    }
+
+                    // then we can copy the file
+                    await d.put(f.fsPath, remotePath);
+                    // TODO: selectively make files executable
+                    await d.chmod(remotePath, '755');
+                });
+            }
+            catch (err) {
+                vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
+            }
+        });
+    });
+}
+
+class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
     private _onDidChangeTreeData: vscode.EventEmitter<Device | File | undefined> = new vscode.EventEmitter<Device | File | undefined>();
 	readonly onDidChangeTreeData: vscode.Event<Device | File | undefined> = this._onDidChangeTreeData.event;
     private readonly devices: Array<Device> = new Array<Device>();
@@ -48,6 +102,23 @@ export class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | F
         this.browser.on('up', s => this.onBrowserUp(s));
         this.browser.on('down', s => this.onBrowserDown(s));
         this.browser.start();
+    }
+
+    /**
+     * Gets a single device.
+     *
+     * If there is only one device, it is returned. If there is more than one
+     * device, the a quick-pick is shown to select the device.
+     */
+    getDevice(): Thenable<Device> {
+        switch (this.devices.length) {
+        case 0:
+            return Promise.reject('No devices present');
+        case 1:
+            return Promise.resolve(this.devices[0]);
+        default:
+            return vscode.window.showQuickPick(this.devices.filter(d => d.rootDirectory));
+        }
     }
 
 	refresh(): void {
@@ -102,14 +173,17 @@ export class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | F
     }
 }
 
-class Device extends vscode.TreeItem {
+class Device extends vscode.TreeItem implements vscode.QuickPickItem {
     private client: ssh2.Client;
     private sftp: ssh2.SFTPWrapper;
     readonly username: string;
+    readonly label:string;
+    readonly description: string;
     rootDirectory : File;
 
 	constructor(readonly provider: Ev3devBrowserProvider, public service: bonjour.Service) {
         super(service.name);
+        this.label = service.name;
         this.username = service.txt['ev3dev.robot.user']
         this.contextValue = 'ev3devDevice';
         this.command = { command: 'ev3devBrowser.deviceCLicked', title: '', arguments: [this]};
@@ -157,16 +231,16 @@ class Device extends vscode.TreeItem {
         vscode.window.showErrorMessage(`Failed to connect to ${this.label}: ${err.message}`);
     }
 
-    readdir(path: string): Promise<ssh2Streams.FileEntry[]> {
+    chmod(path: string, mode: string | number): Promise<void> {
         return new Promise((resolve, reject) => {
-            this.sftp.readdir(path, (err, list) => {
+            this.sftp.chmod(path, mode, err => {
                 if (err) {
                     reject(err);
                 }
                 else {
-                    resolve(list);
+                    resolve();
                 }
-            })
+            });
         });
     }
 
@@ -181,6 +255,58 @@ class Device extends vscode.TreeItem {
                     return;
                 }
                 resolve(channel);
+            });
+        });
+    }
+
+    mkdir(path: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.sftp.mkdir(path, err => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    put(local: string, remote: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.sftp.fastPut(local, remote, (err) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    readdir(path: string): Promise<ssh2Streams.FileEntry[]> {
+        return new Promise((resolve, reject) => {
+            this.sftp.readdir(path, (err, list) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(list);
+                }
+            })
+        });
+    }
+
+    stat(path: string): Promise<ssh2Streams.Stats> {
+        return new Promise((resolve, reject) => {
+            this.sftp.stat(path, (err, stats) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(stats);
+                }
             });
         });
     }

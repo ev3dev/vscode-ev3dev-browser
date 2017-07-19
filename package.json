@@ -31,6 +31,21 @@
                     },
                     "description": "Addition environment variables to use on remote devices.\n\nIMPORTANT: Environment variables must be white-listed by setting AcceptEnv in sshd_config on the server, otherwise these values will be ignored.",
                     "uniqueItems": true
+                },
+                "sendToDevice.sendToDevice.include": {
+                    "type": "string",
+                    "default": "**/*",
+                    "description": "Files to include when sending project to remote devices."
+                },
+                "sendToDevice.sendToDevice.exclude": {
+                    "type": "string",
+                    "default": "**/.*",
+                    "description": "Files to exclude when sending project to remote devices."
+                },
+                "sendToDevice.sendToDevice.directory": {
+                    "type": ["string", "null"],
+                    "default": null,
+                    "description": "The directory on the remote device where the files will be saved. The default is to use the name of the vscode project directory."
                 }
             }
         },
@@ -54,9 +69,28 @@
             }, {
                 "command": "ev3devBrowser.remoteTerm",
                 "title": "Stop"
+            },
+            {
+                "command": "ev3devBrowser.sendToDevice",
+                "title": "ev3dev: Send project to device",
+                "icon":{
+                    "dark": "resources/icons/dark/download.svg",
+                    "light": "resources/icons/light/download.svg"
+                }
             }
         ],
         "menus": {
+            "commandPalette": [
+                {
+                    "command": "ev3devBrowser.sendToDevice"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "ev3devBrowser.sendToDevice",
+                    "group": "navigation"
+                }
+            ],
             "view/item/context": [
                 {
                     "command": "ev3devBrowser.openSshTerminal",
