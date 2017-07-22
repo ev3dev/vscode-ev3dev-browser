@@ -1,5 +1,6 @@
 
 import * as avahi from './bonjour/avahi';
+import * as dnssd from './bonjour/dnssd';
 import * as bonjour from 'bonjour';
 
 // This is a subset for bonjour.Bonjour. We are not using the full interface,
@@ -18,6 +19,10 @@ export interface Bonjour {
 export function getInstance(): Bonjour {
     if (avahi.isPresent()) {
         return avahi.getInstance();
+    }
+
+    if (dnssd.isPresent()) {
+        return dnssd.getInstance();
     }
 
     // fall back to pure-javascript implementation
