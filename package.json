@@ -46,7 +46,10 @@
                     "description": "Files to exclude when sending project to remote devices."
                 },
                 "ev3devBrowser.sendToDevice.directory": {
-                    "type": ["string", "null"],
+                    "type": [
+                        "string",
+                        "null"
+                    ],
                     "default": null,
                     "description": "The directory on the remote device where the files will be saved. The default is to use the name of the vscode project directory."
                 }
@@ -80,7 +83,7 @@
             {
                 "command": "ev3devBrowser.sendToDevice",
                 "title": "ev3dev: Send project to device",
-                "icon":{
+                "icon": {
                     "dark": "resources/icons/dark/download.svg",
                     "light": "resources/icons/light/download.svg"
                 }
@@ -125,19 +128,19 @@
         "test": "node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "typescript": "^2.0.3",
-        "vscode": "^1.0.0",
-        "mocha": "^2.3.3",
-        "@types/node": "^6.0.40",
-        "@types/mocha": "^2.2.32",
         "@types/bonjour": "^3.5.4",
+        "@types/mocha": "^2.2.32",
+        "@types/node": "^6.0.85",
         "@types/ssh2": "~0.5.35",
-        "@types/ssh2-streams": "~0.1.2"
+        "@types/ssh2-streams": "~0.1.2",
+        "mocha": "^2.3.3",
+        "typescript": "^2.4.2",
+        "vscode": "^1.0.0"
     },
     "dependencies": {
-        "avahi-dbus": "~0.1.0",
+        "avahi-dbus": "^0.1.0",
         "bonjour": "^3.5.0",
-        "dbus-native": "~0.2.2",
+        "dbus-native": "^0.2.2",
         "ssh2": "~0.5.5",
         "ssh2-streams": "~0.1.19"
     }
