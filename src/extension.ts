@@ -10,8 +10,8 @@ import * as path from 'path'
 import * as bonjour2 from './bonjour'
 
 const S_IXUSR = parseInt('00100', 8);
-const bonjourInstance = bonjour2.getInstance();
 
+let bonjourInstance: bonjour2.Bonjour;
 let output: vscode.OutputChannel;
 let resourceDir: string;
 let ev3devBrowserProvider: Ev3devBrowserProvider;
@@ -19,6 +19,7 @@ let ev3devBrowserProvider: Ev3devBrowserProvider;
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+    bonjourInstance = bonjour2.getInstance();
     output = vscode.window.createOutputChannel('ev3dev');
     context.subscriptions.push(output);
     resourceDir = context.asAbsolutePath('resources');

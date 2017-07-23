@@ -8,21 +8,16 @@ import * as dbus from 'dbus-native';
 import * as events from 'events';
 import * as vscode from 'vscode';
 
-let bus;
-let avahiDaemon;
+let connected = false;
+
+const bus = dbus.systemBus();
+bus.connection.on('connect', () => connected = true);
+bus.connection.on('error', err => connected = false);
+bus.connection.on('end', () => connected = false);
+const avahiDaemon = new avahi.Daemon(bus);
 
 export function isPresent(): boolean {
-    if (bus && avahiDaemon) {
-        return true;
-    }
-    try {
-        bus = dbus.systemBus();
-        avahiDaemon = new avahi.Daemon(bus);
-        return true;
-    }
-    catch (err) {
-        return false;
-    }
+    return connected;
 }
 
 export function getInstance(): bonjour2.Bonjour {
