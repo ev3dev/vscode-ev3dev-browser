@@ -5,6 +5,7 @@
 import * as vscode from 'vscode';
 import * as ssh2 from 'ssh2'
 import * as ssh2Streams from 'ssh2-streams'
+import * as os from 'os';
 import * as path from 'path'
 
 import * as dnssd from './dnssd'
@@ -196,7 +197,7 @@ class Device extends vscode.TreeItem implements vscode.QuickPickItem {
         this.client.on('ready', () => this.handleClientReady());
         this.client.on('error', err => this.handleClientError(err));
         this.client.connect({
-            host: service.host,
+            host: service.address,
             username: this.username,
             password: vscode.workspace.getConfiguration('ev3devBrowser').get('password'),
         });
@@ -332,12 +333,20 @@ class Device extends vscode.TreeItem implements vscode.QuickPickItem {
 
     openSshTerminal(): void {
         const term = vscode.window.createTerminal(this.label);
-        let command = 'ssh ';
+        const onWindows = (<string> os.platform()) == 'win32';
+        let command = onWindows ? 'plink.exe ' : 'ssh ';
         if (this.service.txt['ev3dev.robot.user']) {
             command += this.username + '@';
         }
-        command += this.service.host;
-        command += '; exit';
+        command += this.service.address;
+        if (this.service.port != 22) {
+            command += ` -p ${this.service.port}`;
+        }
+        const passwd = vscode.workspace.getConfiguration('ev3devBrowser').get<string>('password');
+        if (onWindows && passwd) {
+            command += ` -pw ${passwd}`;
+        }
+        command += onWindows ? '; $? -and $(exit)' : ' && exit';
         term.sendText(command, true);
         term.show();
     }
