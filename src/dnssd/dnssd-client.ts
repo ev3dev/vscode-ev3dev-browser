@@ -203,6 +203,261 @@ export enum ServiceFlags {
     ForceMulticast      = 0x400
 }
 
+/**
+ * Service record types.
+ */
+export enum ServiceType {
+    /**
+     * Host address.
+     */
+    A         = 1,
+    
+    /**
+     * Authoritative server.
+     */
+    NS        = 2,
+    
+    /**
+     * Mail destination.
+     */
+    MD        = 3,
+    
+    /**
+     * Mail forwarder.
+     */
+    MF        = 4,
+    
+    /**
+     * Canonical name.
+     */
+    CNAME     = 5,
+    
+    /**
+     * Start of authority zone.
+     */
+    SOA       = 6,
+    
+    /**
+     * Mailbox domain name.
+     */
+    MB        = 7,
+    
+    /**
+     * Mail group member.
+     */
+    MG        = 8,
+    
+    /**
+     * Mail rename name.
+     */
+    MR        = 9,
+    
+    /**
+     * Null resource record.
+     */
+    NULL      = 10,
+    
+    /**
+     * Well known service.
+     */
+    WKS       = 11,
+    
+    /**
+     * Domain name pointer.
+     */
+    PTR       = 12,
+    
+    /**
+     * Host information.
+     */
+    HINFO     = 13,
+    
+    /**
+     * Mailbox information.
+     */
+    MINFO     = 14,
+    
+    /**
+     * Mail routing information.
+     */
+    MX        = 15,
+    
+    /**
+     * One or more text strings.
+     */
+    TXT       = 16,
+    
+    /**
+     * Responsible person.
+     */
+    RP        = 17,
+    
+    /**
+     * AFS cell database.
+     */
+    AFSDB     = 18,
+    
+    /**
+     * X_25 calling address.
+     */
+    X25       = 19,
+    
+    /**
+     * ISDN calling address.
+     */
+    ISDN      = 20,
+    
+    /**
+     * Router.
+     */
+    RT        = 21,
+    
+    /**
+     * NSAP address.
+     */
+    NSAP      = 22,
+    
+    /**
+     * Reverse NSAP lookup (deprecated).
+     */
+    NSAP_PTR  = 23,
+    
+    /**
+     * Security signature.
+     */
+    SIG       = 24,
+    
+    /**
+     * Security key.
+     */
+    KEY       = 25,
+    
+    /**
+     * X.400 mail mapping.
+     */
+    PX        = 26,
+    
+    /**
+     * Geographical position (withdrawn).
+     */
+    GPOS      = 27,
+    
+    /**
+     * Ip6 Address.
+     */
+    AAAA      = 28,
+    
+    /**
+     * Location Information.
+     */
+    LOC       = 29,
+    
+    /**
+     * Next domain (security).
+     */
+    NXT       = 30,
+    
+    /**
+     * Endpoint identifier.
+     */
+    EID       = 31,
+    
+    /**
+     * Nimrod Locator.
+     */
+    NIMLOC    = 32,
+    
+    /**
+     * Server Selection.
+     */
+    SRV       = 33,
+    
+    /**
+     * ATM Address
+     */
+    ATMA      = 34,
+    
+    /**
+     * Naming Authority PoinTeR
+     */
+    NAPTR     = 35,
+    
+    /**
+     * Key Exchange
+     */
+    KX        = 36,
+    
+    /**
+     * Certification record
+     */
+    CERT      = 37,
+    
+    /**
+     * IPv6 address (deprecates AAAA)
+     */
+    A6        = 38,
+    
+    /**
+     * Non-terminal DNAME (for IPv6)
+     */
+    DNAME     = 39,
+    
+    /**
+     * Kitchen sink (experimentatl)
+     */
+    SINK      = 40,
+    
+    /**
+     * EDNS0 option (meta-RR)
+     */
+    OPT       = 41,
+    
+    /**
+     * Transaction key
+     */
+    TKEY      = 249,
+    
+    /**
+     * Transaction signature.
+     */
+    TSIG      = 250,
+    
+    /**
+     * Incremental zone transfer.
+     */
+    IXFR      = 251,
+    
+    /**
+     * Transfer zone of authority.
+     */
+    AXFR      = 252,
+    
+    /**
+     * Transfer mailbox records.
+     */
+    MAILB     = 253,
+    
+    /**
+     * Transfer mail agent records.
+     */
+    MAILA     = 254,
+
+    /**
+     * Wildcard match.
+     */
+    ANY       = 255
+}
+
+/**
+ * Service record classes.
+ */
+export enum ServiceClass {
+    /**
+     * Internet
+     */
+    IN       = 1
+};
+
 interface IpcMsgHeader {
     version: number;
     dataLen: number;
@@ -223,6 +478,7 @@ export function checkDaemonRunning(): boolean {
 }
 
 /**
+ * Callback for Service.browse().
  * @param service   The object initialized by Service.browse().
  * @param flags     Possible values are ServiceFlags.MoreComing and ServiceFlags.Add.
  *                  See flag definitions for details.
@@ -251,6 +507,7 @@ export type BrowseReply = (service: Service, flags: ServiceFlags, iface: number,
     errorCode: ServiceErrorCode, name: string, type: string, domain: string) => void;
 
 /**
+ * Callback for Service.resolve().
  * @param service   The Service object initialized by Service.resolve().
  * @param flags     Currently unused, reserved for future use.
  * @param iface     The interface on which the service was resolved.
@@ -268,7 +525,29 @@ export type BrowseReply = (service: Service, flags: ServiceFlags, iface: number,
  * @param txt       The service's primary txt record.
  */
 export type ResolveReply = (service: Service, flags: ServiceFlags, iface: number,
-    errCode: ServiceErrorCode, fullName: string, hostTarget: string, port: number, txt: string[]) => void
+    errCode: ServiceErrorCode, fullName: string, hostTarget: string, port: number, txt: string[]) => void;
+
+/**
+ * Callback for Service.queryRecord().
+ * @param service   The Service object initialized by Service.queryRecord().
+ * @param flags     Possible values are ServiceFlags.MoreComing and
+ *                  ServiceFlagsA.dd.  The Add flag is NOT set for PTR records
+ *                  with a ttl of 0, i.e. "Remove" events.
+ * @param iface     The interface on which the query was resolved (the index for a given
+ *                  interface is determined via the if_nametoindex() family of calls).
+ *                  See "Constants for specifying an interface index" for more details.
+ * @param errCode   Will be ServiceErrorCode.NoError on success, otherwise will
+ *                  indicate the failure that occurred.  Other parameters are undefined if
+ *                  errCode is nonzero.
+ * @param fullname  The resource record's full domain name.
+ * @param rrType    The resource record's type (e.g. ServiceType.PTR, ServiceType.SRV, etc)
+ * @param rrClass   The class of the resource record (usually ServiceClass.IN).
+ * @param rdata     The raw rdata of the resource record.
+ * @param ttl       The resource record's time to live, in seconds.
+ */
+export type QueryRecordReply = (service: Service, flags: ServiceFlags, iface: number,
+    errCode: ServiceErrorCode, fullName: string, rrType: ServiceType,
+    rrClass: ServiceClass, rData: Buffer, ttl: number) => void;
 
 /**
  * Object that represents a connection to the mDNSResponder daemon. Instances
@@ -277,7 +556,7 @@ export type ResolveReply = (service: Service, flags: ServiceFlags, iface: number
 export class Service {
     private op: RequestOp;
     private processReply: (header: IpcMsgHeader, data: Buffer) => void;
-    private appCallback: BrowseReply | ResolveReply;
+    private appCallback: BrowseReply | ResolveReply | QueryRecordReply;
 
     private constructor(private socket: net.Socket) {
     }
@@ -618,5 +897,78 @@ export class Service {
         }
 
         (<ResolveReply> this.appCallback)(this, flags, iface, errCode, fullName, target, port, txt);
+    }
+
+    /**
+     * @param flags     Pass ServiceFlags.LongLivedQuery to create a "long-lived" unicast
+     *                  query in a non-local domain.  Without setting this flag, unicast queries
+     *                  will be one-shot - that is, only answers available at the time of the call
+     *                  will be returned.  By setting this flag, answers (including Add and Remove
+     *                  events) that become available after the initial call is made will generate
+     *                  callbacks.  This flag has no effect on link-local multicast queries.
+     * @param iface     If non-zero, specifies the interface on which to issue the query
+     *                  (the index for a given interface is determined via the if_nametoindex()
+     *                  family of calls.)  Passing 0 causes the name to be queried for on all
+     *                  interfaces. See "Constants for specifying an interface index" for more details.
+     * @param fullName  The full domain name of the resource record to be queried for.
+     * @param rrType    The numerical type of the resource record to be queried for
+     *                  (e.g. ServiceType.PTR, ServiceType.SRV, etc)
+     * @param rrClass   The class of the resource record (usually ServiceClass.IN).
+     * @param callback  The function to be called when a result is found, or if the call
+     *                  asynchronously fails.
+     */
+    public async queryRecord(flags: ServiceFlags, iface: number, fullName: string, rrType: ServiceType,
+        rrClass: ServiceClass, callback: QueryRecordReply): Promise<Service>
+    {
+        const nameBuf = Buffer.from(fullName + '\0');
+        let length = 4; // size of flags
+        length += 4; // size of iface
+        length += nameBuf.length;
+        length += 2; //size of rrType
+        length += 2; //size of rrClass
+
+        let [msg, offset] = Service.createHeader(RequestOp.QueryRequest, length, true);
+        offset = msg.writeUInt32BE(flags, offset);
+        offset = msg.writeUInt32BE(iface, offset);
+        offset += nameBuf.copy(msg, offset);
+        offset = msg.writeUInt16BE(rrType, offset);
+        offset = msg.writeUInt16BE(rrClass, offset);
+
+        const service = await Service.connectToServer();
+        await service.deliverRequest(msg, true);
+        service.op = RequestOp.QueryRequest;
+        service.processReply = service.handleQueryResponse;
+        service.appCallback = callback;
+
+        return service;
+    }
+
+    private handleQueryResponse(header: IpcMsgHeader, data: Buffer): void {
+        const flags = <ServiceFlags> data.readUInt32BE(0);
+        const iface = data.readUInt32BE(4);
+        const errCode = <ServiceErrorCode> data.readUInt32BE(8);
+
+        let offset = 12;
+        let strError = false;
+        let fullName: string;
+
+        let nullTermIndex = data.indexOf(0, offset);
+        if (nullTermIndex < 0) {
+            strError = true;
+        }
+        else {
+            fullName = data.toString(undefined, offset, nullTermIndex);
+            offset = nullTermIndex + 1;
+        }
+
+        const rrType = <ServiceType> data.readUInt16BE(offset + 0);
+        const rrClass = <ServiceClass> data.readUInt16BE(offset + 2);
+        const rdLen = data.readUInt16BE(offset + 4);
+        offset += 6;
+        const rData = Buffer.alloc(rdLen);
+        data.copy(rData, 0, offset, offset + rdLen);
+        offset += rdLen;
+        const ttl = data.readUInt32BE(offset);
+        (<QueryRecordReply> this.appCallback)(this, flags, iface, errCode, fullName, rrType, rrClass, rData, ttl);
     }
 }
