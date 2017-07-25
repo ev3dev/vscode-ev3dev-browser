@@ -79,22 +79,31 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
                 return;
             }
             if (f & dns.ServiceFlags.Add) {
-                const resolveService = await s.resolve(f, i, n, t, d, (s, f, i, e, n, h, p, txt) => {
+                const resolveService = await s.resolve(0, i, n, t, d, async (s, f, i, e, fn, h, p, txt) => {
                     if (e) {
                         this.emit('error', new dns.ServiceError(e, 'Resolving service failed.'));
                         return;
                     }
-                    const service = new DnssdService(i, n, t, d, h, p, txt);
-                    this.services.push(service);
-                    this.emit('added', service);
+                    const addrService = await s.getAddrInfo(0, i, dns.ServiceProtocol.IPv4, h,
+                        (s, f, i, e, h, a, ttl) => {
+                            if (e) {
+                                this.emit('error', new dns.ServiceError(e, 'Querying service failed.'));
+                                return;
+                            }
+                            const service = new DnssdService(i, n, t, d, h, a, p, txt);
+                            this.services.push(service);
+                            this.emit('added', service);
+                        });
+                    await addrService.processResult();
+                    addrService.destroy();
                 });
                 await resolveService.processResult();
                 resolveService.destroy();
             }
             else {
-                const i = this.services.findIndex(s => s.match(i, n, t, d));
-                if (i >= 0) {
-                    const [service] = this.services.splice(i, 1);
+                const index = this.services.findIndex(s => s.match(i, n, t, d));
+                if (index >= 0) {
+                    const [service] = this.services.splice(index, 1);
                     this.emit('removed', service);
                 }
             }
@@ -123,16 +132,18 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
 class DnssdService extends events.EventEmitter implements dnssd.Service {
     public readonly service: string;
     public readonly transport: 'tcp' | 'udp';
+    public readonly host: string;
+    public readonly domain: string;
     public readonly ipv: 'IPv4' | 'IPv6';
-    public readonly address: string;
     public readonly txt: dnssd.TxtRecords;
 
     constructor(
         private readonly iface: number,
         public readonly name: string,
         private readonly type: string,
-        public readonly domain: string,
-        public readonly host: string,
+        domain: string,
+        host: string,
+        public readonly address: string,
         public readonly port: number,
         txt: string[])
     {
@@ -141,6 +152,10 @@ class DnssdService extends events.EventEmitter implements dnssd.Service {
         // remove leading '_'
         this.service = service.slice(1);
         this.transport = <'tcp' | 'udp'> transport.slice(1);
+        // strip trailing '.'
+        this.host = host.replace(/\.$/, '');
+        this.domain = domain.replace(/\.$/, '');
+        this.ipv = 'IPv4';
         this.txt = DnssdService.parseText(txt);
     }
 
