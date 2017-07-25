@@ -61,14 +61,6 @@
                 "title": "Hello World"
             },
             {
-                "command": "ev3devBrowser.refresh",
-                "title": "Re-scan",
-                "icon": {
-                    "dark": "resources/icons/dark/refresh.svg",
-                    "light": "resources/icons/light/refresh.svg"
-                }
-            },
-            {
                 "command": "ev3devBrowser.openSshTerminal",
                 "title": "Open SSH Terminal"
             },

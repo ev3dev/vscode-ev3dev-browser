@@ -3,15 +3,15 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as bonjour from 'bonjour';
 import * as ssh2 from 'ssh2'
 import * as ssh2Streams from 'ssh2-streams'
 import * as path from 'path'
-import * as bonjour2 from './bonjour'
+
+import * as dnssd from './dnssd'
 
 const S_IXUSR = parseInt('00100', 8);
 
-let bonjourInstance: bonjour2.Bonjour;
+let dnssdClient: dnssd.Client;
 let output: vscode.OutputChannel;
 let resourceDir: string;
 let ev3devBrowserProvider: Ev3devBrowserProvider;
@@ -19,14 +19,13 @@ let ev3devBrowserProvider: Ev3devBrowserProvider;
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-    bonjourInstance = bonjour2.getInstance();
+    dnssdClient = dnssd.getInstance();
     output = vscode.window.createOutputChannel('ev3dev');
     context.subscriptions.push(output);
     resourceDir = context.asAbsolutePath('resources');
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
     context.subscriptions.push(vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.refresh', () => ev3devBrowserProvider.refresh()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.openSshTerminal', d => ev3devBrowserProvider.openSshTerminal(d)));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.deviceCLicked', d => d.handleClick()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()));
@@ -37,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-    bonjourInstance.destroy();
+    dnssdClient.destroy();
 }
 
 function sendToDevice(): void {
@@ -98,13 +97,17 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
     private _onDidChangeTreeData: vscode.EventEmitter<Device | File | undefined> = new vscode.EventEmitter<Device | File | undefined>();
 	readonly onDidChangeTreeData: vscode.Event<Device | File | undefined> = this._onDidChangeTreeData.event;
     private readonly devices: Array<Device> = new Array<Device>();
-    private readonly browser: bonjour.Browser;
+    private browser: dnssd.Browser;
 
 	constructor() {
-        this.browser = bonjourInstance.find({ type: 'sftp-ssh' });
-        this.browser.on('up', s => this.onBrowserUp(s));
-        this.browser.on('down', s => this.onBrowserDown(s));
-        this.browser.start();
+        dnssdClient.browse({ service: 'sftp-ssh' }).then(browser => {
+            browser.on('added', s => this.onBrowserAdded(s));
+            browser.on('removed', s => this.onBrowserRemoved(s));
+            browser.on('error', err => this.onBrowserError(err));
+            this.browser = browser;
+        }).catch(err => {
+            vscode.window.showErrorMessage(`Failed to start browser: ${err.message}`);
+        });;
     }
 
     /**
@@ -124,11 +127,6 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
         }
     }
 
-	refresh(): void {
-		this.browser.update();
-        this._onDidChangeTreeData.fire();
-    }
-    
     openSshTerminal(device: Device): void {
         device.openSshTerminal();
     }
@@ -149,7 +147,7 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
         }
     }
 
-    private onBrowserUp = (service: bonjour.Service): void => {
+    private onBrowserAdded(service: dnssd.Service): void {
         if ('ev3dev.robot.user' in service.txt) {
             const device = new Device(this, service);
             this.devices.push(device);
@@ -157,12 +155,16 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
         }
     }
 
-    private onBrowserDown = (service: bonjour.Service): void => {
+    private onBrowserRemoved(service: dnssd.Service): void {
         const matchIndex = this.devices.findIndex(d => d.service == service);
         if (matchIndex >= 0) {
             this.devices.splice(matchIndex, 1);
             this._onDidChangeTreeData.fire();
         }
+    }
+
+    private onBrowserError(err: Error): void {
+       vscode.window.showErrorMessage(`ev3dev browser error: ${err.message}`);
     }
 
     fireDeviceChanged(device: Device): void {
@@ -184,7 +186,7 @@ class Device extends vscode.TreeItem implements vscode.QuickPickItem {
     readonly description: string;
     rootDirectory : File;
 
-	constructor(readonly provider: Ev3devBrowserProvider, public service: bonjour.Service) {
+	constructor(readonly provider: Ev3devBrowserProvider, public service: dnssd.Service) {
         super(service.name);
         this.label = service.name;
         this.username = service.txt['ev3dev.robot.user']
