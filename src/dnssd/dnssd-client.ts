@@ -85,7 +85,7 @@ enum ReplyOp {
 /**
  * Possible error code values.
  */
-export enum ServiceErrorCode {
+export enum ServiceErrorType {
     NoError             = 0,
     Unknown             = -65537,
     NoSuchName          = -65538,
@@ -112,7 +112,7 @@ export enum ServiceErrorCode {
 }
 
 /**
- * Wraps ServiceErrorCode for throwing exceptions.
+ * Wraps ServiceErrorType for throwing exceptions.
  */
 export class ServiceError extends Error {
     /**
@@ -120,7 +120,7 @@ export class ServiceError extends Error {
      * @param code The error code.
      * @param message A useful message.
      */
-    constructor(public code: ServiceErrorCode, message: string) {
+    constructor(public code: ServiceErrorType, message: string) {
         super(message);
     }
 }
@@ -841,7 +841,7 @@ export function checkDaemonRunning(): boolean {
  *                  it can be passed to Service.resolve() when the service is later resolved.
  */
 export type BrowseReply = (service: Service, flags: ServiceFlags, iface: number,
-    errorCode: ServiceErrorCode, name: string, type: string, domain: string) => void;
+    errorCode: ServiceErrorType, name: string, type: string, domain: string) => void;
 
 /**
  * Callback for Service.resolve().
@@ -862,7 +862,7 @@ export type BrowseReply = (service: Service, flags: ServiceFlags, iface: number,
  * @param txt       The service's primary txt record.
  */
 export type ResolveReply = (service: Service, flags: ServiceFlags, iface: number,
-    errCode: ServiceErrorCode, fullName: string, hostTarget: string, port: number, txt: string[]) => void;
+    errCode: ServiceErrorType, fullName: string, hostTarget: string, port: number, txt: string[]) => void;
 
 /**
  * Callback for Service.getAddrInfo().
@@ -870,7 +870,7 @@ export type ResolveReply = (service: Service, flags: ServiceFlags, iface: number
  * @param flags     Possible values are ServiceFlags.MoreComing and
  *                  ServiceFlags.Add.
  * @param iface     The interface to which the answers pertain.
- * @param errCode   Will be ServiceErrorCode.NoError on success, otherwise will
+ * @param errCode   Will be ServiceErrorType.NoError on success, otherwise will
  *                  indicate the failure that occurred.  Other parameters are
  *                  undefined if errCode is nonzero.
  * @param hostname  The fully qualified domain name of the host to be queried for.
@@ -886,7 +886,7 @@ export type ResolveReply = (service: Service, flags: ServiceFlags, iface: number
  *                  get another callback telling them otherwise.
  */
 export type GetAddrInfoReply = (service: Service, flags: ServiceFlags, iface: number,
-    errCode: ServiceErrorCode, hostname: string, address: string | undefined, ttl: number) => void;
+    errCode: ServiceErrorType, hostname: string, address: string | undefined, ttl: number) => void;
 
 /**
  * Callback for Service.queryRecord().
@@ -897,7 +897,7 @@ export type GetAddrInfoReply = (service: Service, flags: ServiceFlags, iface: nu
  * @param iface     The interface on which the query was resolved (the index for a given
  *                  interface is determined via the if_nametoindex() family of calls).
  *                  See "Constants for specifying an interface index" for more details.
- * @param errCode   Will be ServiceErrorCode.NoError on success, otherwise will
+ * @param errCode   Will be ServiceErrorType.NoError on success, otherwise will
  *                  indicate the failure that occurred.  Other parameters are undefined if
  *                  errCode is nonzero.
  * @param fullname  The resource record's full domain name.
@@ -907,7 +907,7 @@ export type GetAddrInfoReply = (service: Service, flags: ServiceFlags, iface: nu
  * @param ttl       The resource record's time to live, in seconds.
  */
 export type QueryRecordReply = (service: Service, flags: ServiceFlags, iface: number,
-    errCode: ServiceErrorCode, fullName: string, rrType: ServiceType,
+    errCode: ServiceErrorType, fullName: string, rrType: ServiceType,
     rrClass: ServiceClass, rData: Buffer, ttl: number) => void;
 
 /**
@@ -986,7 +986,7 @@ export class Service {
             regIndex: headerBuf.readUInt32BE(24),
         };
         if (header.version != VERSION) {
-            throw new ServiceError(ServiceErrorCode.Incompatible, 'Incompatible version');
+            throw new ServiceError(ServiceErrorType.Incompatible, 'Incompatible version');
         }
         const data = await this.read(header.dataLen);
         this.processReply(header, data);
@@ -1108,7 +1108,7 @@ export class Service {
     private handleBrowseResponse(header: IpcMsgHeader, data: Buffer): void {
         const flags = <ServiceFlags> data.readUInt32BE(0);
         const ifaceIndex = data.readUInt32BE(4);
-        let errCode = <ServiceErrorCode> data.readInt32BE(8);
+        let errCode = <ServiceErrorType> data.readInt32BE(8);
         let offset = 12;
         let strError = false;
         let replyName, replyType, replyDomain: string;
@@ -1141,7 +1141,7 @@ export class Service {
         }
 
         if (!errCode && strError) {
-            errCode = ServiceErrorCode.Unknown;
+            errCode = ServiceErrorType.Unknown;
         }
 
         (<BrowseReply> this.appCallback)(this, flags, ifaceIndex, errCode, replyName, replyType, replyDomain);
@@ -1217,7 +1217,7 @@ export class Service {
     private handleResolveResponse(header: IpcMsgHeader, data: Buffer): void {
         const flags = <ServiceFlags> data.readUInt32BE(0);
         const iface = data.readUInt32BE(4);
-        let errCode = <ServiceErrorCode> data.readInt32BE(8);
+        let errCode = <ServiceErrorType> data.readInt32BE(8);
 
         let offset = 12;
         let strError = false;
@@ -1254,7 +1254,7 @@ export class Service {
         }
 
         if (!errCode && strError) {
-            errCode = ServiceErrorCode.Unknown;
+            errCode = ServiceErrorType.Unknown;
         }
 
         (<ResolveReply> this.appCallback)(this, flags, iface, errCode, fullName, target, port, txt);
@@ -1306,7 +1306,7 @@ export class Service {
     private handleAddrInfoResponse(header: IpcMsgHeader, data: Buffer): void {
         const flags = <ServiceFlags> data.readUInt32BE(0);
         const iface = data.readUInt32BE(4);
-        const errCode = <ServiceErrorCode> data.readUInt32BE(8);
+        const errCode = <ServiceErrorType> data.readUInt32BE(8);
 
         let offset = 12;
         let strError = false;
@@ -1396,7 +1396,7 @@ export class Service {
     private handleQueryResponse(header: IpcMsgHeader, data: Buffer): void {
         const flags = <ServiceFlags> data.readUInt32BE(0);
         const iface = data.readUInt32BE(4);
-        const errCode = <ServiceErrorCode> data.readUInt32BE(8);
+        const errCode = <ServiceErrorType> data.readUInt32BE(8);
 
         let offset = 12;
         let strError = false;
