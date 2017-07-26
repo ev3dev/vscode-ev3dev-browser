@@ -1,65 +1,77 @@
-# ev3dev-browser README
+# ev3dev browser for Visual Studio Code
 
-This is the README for your extension "ev3dev-browser". After writing up a brief description, we recommend including the following sections.
+This extension allows you to browse ev3dev devices from Visual Studio Code, send
+files to these devices and remotely run programs.
+
+Learn more about ev3dev at <http://www.ev3dev.org>.
+
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+*   **Discover devices**: Any connected ev3dev device should be automatically discovered.
+    No configuration necessary.
 
-For example if there is an image subfolder under your extension project workspace:
+    ![Device listing screenshot](.README/device-listing.png)
 
-\!\[feature X\]\(images/feature-x.png\)
+*   **Remotely browse files**: Files for each device are listed just as they are in
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+    ![File listing screenshot](.README/file-listing.png)
+
+    Brickman.
+
+*   **Download files to the device**: The current VS Code project can be sent to an
+    ev3dev device with a single click.
+
+    ![Download button screenshot](.README/download-button.png)
+
+*   **Remotely run programs**: Click any executable file to run it.
+
+    ![Run quick-pick screenshot](.README/run-quick-pick.png)
+
+    Right-clicking works too.
+
+    ![Run context menu screenshot](.README/run-context-menu.png)
+
+    Error messages will be displayed in the output pane.
+
+    ![Output pane screenshot](.README/output-pane.png)
+
+*   **Start a remote SSH session**: You can start an SSH session in the terminal pane
+    by right-clicking on a device.
+
+    ![Device context menu screenshot](.README/device-context-menu.png)
+
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+This extension is only compatible with **ev3dev-stretch** snapshot images starting
+with `2017-07-25`. It will not work with other versions of ev3dev.
+
+
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+*   `ev3devBrowser.password`: If you changed the password on your ev3dev device,
+     you will need to set the password here.
+*   `ev3devBrowser.env`: If you need to set environment variables for running
+    remote programs, you can set them here.
+*   `ev3devBrowser.sendToDevice.include`: Use this to specify which files to
+    included when downloading files to the remote device. Can use glob patterns.
+*   `ev3devBrowser.sendToDevice.exclude`: Use this to specify which files to
+    exclude when downloading files to the remote device. Can use glob patterns.
+*   `ev3devBrowser.sendToDevice.directory`: By default files are downloaded to
+    a folder with the same name as the VS Code project. Use this setting to
+    save the project files somewhere else. Paths are relative to the `/home/robot`
+    directory.
+
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on OSX or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on OSX or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (OSX) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+*   Currently, all downloaded files have the executable bit set.
+*   Devices don't disappear from the list on macOS when they are disconnected.
+*   Stopping a program only sends `SIGTERM`. If that doesn't actually stop the
+    program then it can't be stopped remotely. There is not a way to send
+    `SIGKILL` to forcefully stop it.
+*   Each SSH terminal session starts a new SSH connection. These could be shared.
