@@ -14,10 +14,9 @@ Learn more about ev3dev at <http://www.ev3dev.org>.
     ![Device listing screenshot](.README/device-listing.png)
 
 *   **Remotely browse files**: Files for each device are listed just as they are in
+    Brickman.
 
     ![File listing screenshot](.README/file-listing.png)
-
-    Brickman.
 
 *   **Download files to the device**: The current VS Code project can be sent to an
     ev3dev device with a single click.
