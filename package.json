@@ -2,8 +2,17 @@
     "name": "ev3dev-browser",
     "displayName": "ev3dev-browser",
     "description": "Browse for ev3dev devices",
-    "version": "0.0.1",
+    "icon": "resources/icons/ev3dev-logo.png",
+    "version": "0.1.0",
     "publisher": "dlech",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/dlech/vscode-ev3dev-browser.git"
+    },
+    "bugs": {
+        "url": "https://github.com/dlech/vscode-ev3dev-browser/issues"
+    },
     "engines": {
         "vscode": "^1.13.0"
     },
@@ -11,7 +20,6 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.sayHello",
         "onView:ev3devBrowser"
     ],
     "main": "./out/src/extension",
@@ -56,10 +64,6 @@
             }
         },
         "commands": [
-            {
-                "command": "extension.sayHello",
-                "title": "Hello World"
-            },
             {
                 "command": "ev3devBrowser.openSshTerminal",
                 "title": "Open SSH Terminal"
