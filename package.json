@@ -8,10 +8,10 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/dlech/vscode-ev3dev-browser.git"
+        "url": "https://github.com/ev3dev/vscode-ev3dev-browser.git"
     },
     "bugs": {
-        "url": "https://github.com/dlech/vscode-ev3dev-browser/issues"
+        "url": "https://github.com/ev3dev/vscode-ev3dev-browser/issues"
     },
     "engines": {
         "vscode": "^1.13.0"
