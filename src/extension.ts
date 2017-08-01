@@ -332,7 +332,7 @@ class Device extends vscode.TreeItem implements vscode.QuickPickItem {
     }
 
     openSshTerminal(): void {
-        const term = vscode.window.createTerminal(this.label);
+        const term = vscode.window.createTerminal(`SSH: ${this.label}`);
         const onWindows = (<string> os.platform()) == 'win32';
         let command = onWindows ? 'plink.exe ' : 'ssh ';
         if (this.service.txt['ev3dev.robot.user']) {
