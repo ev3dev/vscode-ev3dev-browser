@@ -27,6 +27,11 @@
         "configuration": {
             "title": "ev3dev browser configuration",
             "properties": {
+                "ev3devBrowser.visible": {
+                    "type": "boolean",
+                    "description": "Show/hide the ev3dev device browser",
+                    "default": true
+                },
                 "ev3devBrowser.password": {
                     "type": [
                         "string",
@@ -88,13 +93,15 @@
         "menus": {
             "commandPalette": [
                 {
-                    "command": "ev3devBrowser.sendToDevice"
+                    "command": "ev3devBrowser.sendToDevice",
+                    "when": "config.ev3devBrowser.visible"
                 }
             ],
             "view/title": [
                 {
                     "command": "ev3devBrowser.sendToDevice",
-                    "group": "navigation"
+                    "group": "navigation",
+                    "when": "view == ev3devBrowser"
                 }
             ],
             "view/item/context": [
@@ -112,7 +119,8 @@
             "explorer": [
                 {
                     "id": "ev3devBrowser",
-                    "name": "ev3dev devices"
+                    "name": "ev3dev devices",
+                    "when": "config.ev3devBrowser.visible"
                 }
             ]
         }
