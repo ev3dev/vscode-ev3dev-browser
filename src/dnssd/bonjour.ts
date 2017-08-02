@@ -137,12 +137,12 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
         browser.on('up', s => {
            const service =  new BonjourService(s);
            services.push(service);
-           this.emit('added', service);
+           this.emit('added', service, false);
         });
         browser.on('down', s => {
             const index = services.findIndex(v => v.bService == s);
             const [service] = services.splice(index, 1);
-            this.emit('removed', service);
+            this.emit('removed', service, false);
         });
         this.browsers.push({bClient: bClient, browser: browser, services: services});
         browser.start();

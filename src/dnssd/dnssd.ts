@@ -78,6 +78,7 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
                 this.emit('error', new dns.ServiceError(e, 'Error while browsing.'));
                 return;
             }
+            const moreComing = !!(f & dns.ServiceFlags.MoreComing);
             if (f & dns.ServiceFlags.Add) {
                 const resolveService = await s.resolve(0, i, n, t, d, async (s, f, i, e, fn, h, p, txt) => {
                     if (e) {
@@ -92,7 +93,7 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
                             }
                             const service = new DnssdService(i, n, t, d, h, a, p, txt);
                             this.services.push(service);
-                            this.emit('added', service);
+                            this.emit('added', service, moreComing);
                         });
                     await addrService.processResult();
                     addrService.destroy();
@@ -104,7 +105,7 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
                 const index = this.services.findIndex(s => s.match(i, n, t, d));
                 if (index >= 0) {
                     const [service] = this.services.splice(index, 1);
-                    this.emit('removed', service);
+                    this.emit('removed', service, moreComing);
                 }
             }
         }).then(async service => {
