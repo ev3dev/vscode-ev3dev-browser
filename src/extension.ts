@@ -123,7 +123,7 @@ async function pickDevice(): Promise<void> {
 }
 
 async function sendToDevice(): Promise<void> {
-    vscode.workspace.saveAll();
+    await vscode.workspace.saveAll();
     const localDir = vscode.workspace.rootPath;
     if (!localDir) {
         vscode.window.showErrorMessage('Must have a folder open to send files to device.');
