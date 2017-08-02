@@ -242,17 +242,14 @@ class ServiceItem implements vscode.QuickPickItem {
     }
 }
 
-class Device extends vscode.TreeItem implements vscode.QuickPickItem {
+class Device extends vscode.TreeItem {
     private client: ssh2.Client;
     private sftp: ssh2.SFTPWrapper;
     readonly username: string;
-    readonly label:string;
-    readonly description: string;
     rootDirectory : File;
 
 	constructor(readonly provider: Ev3devBrowserProvider, public service: dnssd.Service) {
         super(service.name);
-        this.label = service.name;
         this.username = service.txt['ev3dev.robot.user']
         this.contextValue = 'ev3devDevice';
         this.command = { command: 'ev3devBrowser.deviceCLicked', title: '', arguments: [this]};
