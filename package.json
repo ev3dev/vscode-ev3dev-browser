@@ -71,15 +71,18 @@
         "commands": [
             {
                 "command": "ev3devBrowser.openSshTerminal",
-                "title": "Open SSH Terminal"
+                "title": "Open SSH Terminal",
+                "category": "ev3dev"
             },
             {
                 "command": "ev3devBrowser.remoteRun",
-                "title": "Run"
+                "title": "Run",
+                "category": "ev3dev"
             },
             {
                 "command": "ev3devBrowser.remoteTerm",
-                "title": "Stop"
+                "title": "Stop",
+                "category": "ev3dev"
             },
             {
                 "command": "ev3devBrowser.pickDevice",
