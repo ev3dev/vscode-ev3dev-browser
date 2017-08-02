@@ -32,6 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteTerm', f => f.stop()));
+    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.pickDevice', () => pickDevice()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.sendToDevice', () => sendToDevice()));
 }
 
@@ -40,7 +41,88 @@ export function deactivate() {
     dnssdClient.destroy();
 }
 
-function sendToDevice(): void {
+/**
+ * Use a quick-pick to browse discovered devices and select one.
+ */
+async function pickDevice(): Promise<void> {
+    try {
+        const selectedItem = await new Promise<ServiceItem>(async (resolve, reject) => {
+                // start browsing for devices
+                const browser = await dnssdClient.browse({ service: 'sftp-ssh' });
+                const items = new Array<ServiceItem>();
+                let cancelSource: vscode.CancellationTokenSource;
+                let done = false;
+
+                // if a device is added or removed, cancel the quick-pick
+                // and then show a new one with the update list
+                browser.on('added', (service, moreComing) => {
+                    if (!service.txt['ev3dev.robot.home']) {
+                        // this does not look like an ev3dev device
+                        return;
+                    }
+                    const item = new ServiceItem(service);
+                    items.push(item);
+                    if (!moreComing) {
+                        cancelSource.cancel();
+                    }
+                });
+                browser.on('removed', (service, moreComing) => {
+                    const index = items.findIndex(si => si.service == service);
+                    if (index == -1) {
+                        return;
+                    }
+                    items.splice(index, 1);
+                    if (!moreComing) {
+                        cancelSource.cancel();
+                    }
+                });
+
+                // if there is a browser error, cancel the quick-pick and show
+                // an error message
+                browser.on('error', err => {
+                    cancelSource.cancel();
+                    browser.destroy();
+                    done = true;
+                    reject(err);
+                });
+
+                while (!done) {
+                    cancelSource = new vscode.CancellationTokenSource();
+                    // using this promise in the quick-pick will cause a progress
+                    // bar to show if there are no items.
+                    const list = new Promise<ServiceItem[]>((resolve, reject) => {
+                        if (items) {
+                            resolve(items);
+                        }
+                        else {
+                            reject();
+                        }
+                    })
+                    const selected = await vscode.window.showQuickPick(list, {
+                        ignoreFocusOut: true,
+                        placeHolder: "Searching for devices..."
+                    }, cancelSource.token);
+                    if (cancelSource.token.isCancellationRequested) {
+                        continue;
+                    }
+                    browser.destroy();
+                    done = true;
+                    resolve(selected);
+                }
+            });
+        if (!selectedItem) {
+            // cancelled
+            return;
+        }
+
+        ev3devBrowserProvider.setDevice(selectedItem.service);
+    }
+    catch (err) {
+        vscode.window.showErrorMessage(`Something bad happened: ${err.message}`);
+    }
+}
+
+async function sendToDevice(): Promise<void> {
     vscode.workspace.saveAll();
     const localDir = vscode.workspace.rootPath;
     if (!localDir) {
@@ -48,84 +130,72 @@ function sendToDevice(): void {
         return;
     }
 
-    ev3devBrowserProvider.getDevice().then(async d => {;
-        const config = vscode.workspace.getConfiguration('ev3devBrowser.sendToDevice');
-        const includeFiles = config.get<string>('include');
-        const excludeFiles = config.get<string>('exclude');
-        const projectDir = config.get<string>('directory') || path.basename(localDir);
-        const remoteDir = d.rootDirectory.path + `/${projectDir}/`;
-        vscode.window.withProgress({
-            location: vscode.ProgressLocation.Window
-        }, async progress => {
-            try {
-                const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
-                files.forEach(async f => {
-                    progress.report({
-                        message: `Copying ${f.fsPath}`
-                    });
-                    const basename = path.basename(f.fsPath);
-                    const remotePath = remoteDir + basename;
-
-                    // have to make sure the directory exists on the remote device first
-                    try {
-                        await d.stat(remoteDir);
-                    }
-                    catch (err) {
-                        if (err.code == 2 /* file does not exist */) {
-                            await d.mkdir(remoteDir);
-                        }
-                        else {
-                            throw err;
-                        }
-                    }
-
-                    // then we can copy the file
-                    await d.put(f.fsPath, remotePath);
-                    // TODO: selectively make files executable
-                    await d.chmod(remotePath, '755');
+    let device = ev3devBrowserProvider.getDevice();
+    if (!device) {
+        vscode.window.showErrorMessage('No ev3dev device is connected.');
+        return;
+    }
+    const config = vscode.workspace.getConfiguration('ev3devBrowser.sendToDevice');
+    const includeFiles = config.get<string>('include');
+    const excludeFiles = config.get<string>('exclude');
+    const projectDir = config.get<string>('directory') || path.basename(localDir);
+    const remoteDir = device.rootDirectory.path + `/${projectDir}/`;
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Window
+    }, async progress => {
+        try {
+            const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
+            files.forEach(async f => {
+                progress.report({
+                    message: `Copying ${f.fsPath}`
                 });
-                // make sure any new files show up in the browser
-                d.provider.fireDeviceChanged(d);
-            }
-            catch (err) {
-                vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
-            }
-        });
+                const basename = path.basename(f.fsPath);
+                const remotePath = remoteDir + basename;
+
+                // have to make sure the directory exists on the remote device first
+                try {
+                    await device.stat(remoteDir);
+                }
+                catch (err) {
+                    if (err.code == 2 /* file does not exist */) {
+                        await device.mkdir(remoteDir);
+                    }
+                    else {
+                        throw err;
+                    }
+                }
+
+                // then we can copy the file
+                await device.put(f.fsPath, remotePath);
+                // TODO: selectively make files executable
+                await device.chmod(remotePath, '755');
+            });
+            // make sure any new files show up in the browser
+            device.provider.fireDeviceChanged(device);
+        }
+        catch (err) {
+            vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
+        }
     });
 }
 
 class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
     private _onDidChangeTreeData: vscode.EventEmitter<Device | File | undefined> = new vscode.EventEmitter<Device | File | undefined>();
 	readonly onDidChangeTreeData: vscode.Event<Device | File | undefined> = this._onDidChangeTreeData.event;
-    private readonly devices: Array<Device> = new Array<Device>();
-    private browser: dnssd.Browser;
+    private device: Device;
 
-	constructor() {
-        dnssdClient.browse({ service: 'sftp-ssh' }).then(browser => {
-            browser.on('added', s => this.onBrowserAdded(s));
-            browser.on('removed', s => this.onBrowserRemoved(s));
-            browser.on('error', err => this.onBrowserError(err));
-            this.browser = browser;
-        }).catch(err => {
-            vscode.window.showErrorMessage(`Failed to start browser: ${err.message}`);
-        });;
+    setDevice(service: dnssd.Service) {
+        if (this.device) {
+            this.device.destroy();
+        }
+        this.device = new Device(this, service);
     }
 
     /**
-     * Gets a single device.
-     *
-     * If there is only one device, it is returned. If there is more than one
-     * device, the a quick-pick is shown to select the device.
+     * Gets the current device.
      */
-    getDevice(): Thenable<Device> {
-        switch (this.devices.length) {
-        case 0:
-            return Promise.reject('No devices present');
-        case 1:
-            return Promise.resolve(this.devices[0]);
-        default:
-            return vscode.window.showQuickPick(this.devices.filter(d => d.rootDirectory));
-        }
+    getDevice(): Device {
+        return this.device;
     }
 
     openSshTerminal(device: Device): void {
@@ -138,7 +208,7 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
 
     getChildren(element?: Device | File): vscode.ProviderResult<Device[] | File[]> {
         if (!element) {
-            return this.devices;
+            return [this.device];
         }
         if (element instanceof Device) {
             return [element.rootDirectory];
@@ -146,26 +216,6 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
         if (element instanceof File) {
             return element.getFiles();
         }
-    }
-
-    private onBrowserAdded(service: dnssd.Service): void {
-        if ('ev3dev.robot.user' in service.txt) {
-            const device = new Device(this, service);
-            this.devices.push(device);
-            this._onDidChangeTreeData.fire();
-        }
-    }
-
-    private onBrowserRemoved(service: dnssd.Service): void {
-        const matchIndex = this.devices.findIndex(d => d.service == service);
-        if (matchIndex >= 0) {
-            this.devices.splice(matchIndex, 1);
-            this._onDidChangeTreeData.fire();
-        }
-    }
-
-    private onBrowserError(err: Error): void {
-       vscode.window.showErrorMessage(`ev3dev browser error: ${err.message}`);
     }
 
     fireDeviceChanged(device: Device): void {
@@ -176,6 +226,15 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
 
     fireFileChanged(file: File): void {
         this._onDidChangeTreeData.fire(file);
+    }
+}
+
+class ServiceItem implements vscode.QuickPickItem {
+    readonly label: string;
+    readonly description: string;
+    
+    constructor (public service: dnssd.Service) {
+        this.label = service.name;
     }
 }
 
@@ -201,6 +260,10 @@ class Device extends vscode.TreeItem implements vscode.QuickPickItem {
             username: this.username,
             password: vscode.workspace.getConfiguration('ev3devBrowser').get('password'),
         });
+    }
+
+    destroy(): void {
+        this.client.destroy();
     }
 
     private handleClientReady(): void {

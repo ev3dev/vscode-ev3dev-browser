@@ -82,22 +82,41 @@
                 "title": "Stop"
             },
             {
+                "command": "ev3devBrowser.pickDevice",
+                "title": "Connect to a device",
+                "icon": {
+                    "dark": "resources/icons/green-plus-sign.svg",
+                    "light": "resources/icons/green-plus-sign.svg"
+                },
+                "category": "ev3dev"
+            },
+            {
                 "command": "ev3devBrowser.sendToDevice",
-                "title": "ev3dev: Send project to device",
+                "title": "Send project to device",
                 "icon": {
                     "dark": "resources/icons/dark/download.svg",
                     "light": "resources/icons/light/download.svg"
-                }
+                },
+                "category": "ev3dev"
             }
         ],
         "menus": {
             "commandPalette": [
+                {
+                    "command": "ev3devBrowser.pickDevice",
+                    "when": "config.ev3devBrowser.visible"
+                },
                 {
                     "command": "ev3devBrowser.sendToDevice",
                     "when": "config.ev3devBrowser.visible"
                 }
             ],
             "view/title": [
+                {
+                    "command": "ev3devBrowser.pickDevice",
+                    "group": "navigation",
+                    "when": "view == ev3devBrowser"
+                },
                 {
                     "command": "ev3devBrowser.sendToDevice",
                     "group": "navigation",
@@ -119,7 +138,7 @@
             "explorer": [
                 {
                     "id": "ev3devBrowser",
-                    "name": "ev3dev devices",
+                    "name": "ev3dev device browser",
                     "when": "config.ev3devBrowser.visible"
                 }
             ]
