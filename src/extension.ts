@@ -38,6 +38,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
+    const device = ev3devBrowserProvider.getDevice();
+    if (device) {
+        device.destroy();
+    }
     dnssdClient.destroy();
 }
 
