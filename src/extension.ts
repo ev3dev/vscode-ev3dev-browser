@@ -33,7 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteTerm', f => f.stop()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.pickDevice', () => pickDevice()));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.sendToDevice', () => sendToDevice()));
+    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.download', () => download()));
 }
 
 // this method is called when your extension is deactivated
@@ -124,7 +124,7 @@ async function pickDevice(): Promise<void> {
     }
 }
 
-async function sendToDevice(): Promise<void> {
+async function download(): Promise<void> {
     await vscode.workspace.saveAll();
     const localDir = vscode.workspace.rootPath;
     if (!localDir) {
@@ -137,7 +137,7 @@ async function sendToDevice(): Promise<void> {
         vscode.window.showErrorMessage('No ev3dev device is connected.');
         return;
     }
-    const config = vscode.workspace.getConfiguration('ev3devBrowser.sendToDevice');
+    const config = vscode.workspace.getConfiguration('ev3devBrowser.download');
     const includeFiles = config.get<string>('include');
     const excludeFiles = config.get<string>('exclude');
     const projectDir = config.get<string>('directory') || path.basename(localDir);

@@ -56,11 +56,11 @@ This extension contributes the following settings:
      you will need to set the password here.
 *   `ev3devBrowser.env`: If you need to set environment variables for running
     remote programs, you can set them here.
-*   `ev3devBrowser.sendToDevice.include`: Use this to specify which files to
+*   `ev3devBrowser.download.include`: Use this to specify which files to
     included when downloading files to the remote device. Can use glob patterns.
-*   `ev3devBrowser.sendToDevice.exclude`: Use this to specify which files to
+*   `ev3devBrowser.download.exclude`: Use this to specify which files to
     exclude when downloading files to the remote device. Can use glob patterns.
-*   `ev3devBrowser.sendToDevice.directory`: By default files are downloaded to
+*   `ev3devBrowser.download.directory`: By default files are downloaded to
     a folder with the same name as the VS Code project. Use this setting to
     save the project files somewhere else. Paths are relative to the `/home/robot`
     directory.

@@ -48,17 +48,17 @@
                     "description": "Addition environment variables to use on remote devices.\n\nIMPORTANT: Environment variables must be white-listed by setting AcceptEnv in sshd_config on the server, otherwise these values will be ignored.",
                     "uniqueItems": true
                 },
-                "ev3devBrowser.sendToDevice.include": {
+                "ev3devBrowser.download.include": {
                     "type": "string",
                     "default": "**/*",
                     "description": "Files to include when sending project to remote devices."
                 },
-                "ev3devBrowser.sendToDevice.exclude": {
+                "ev3devBrowser.download.exclude": {
                     "type": "string",
                     "default": "**/.*",
                     "description": "Files to exclude when sending project to remote devices."
                 },
-                "ev3devBrowser.sendToDevice.directory": {
+                "ev3devBrowser.download.directory": {
                     "type": [
                         "string",
                         "null"
@@ -94,7 +94,7 @@
                 "category": "ev3dev"
             },
             {
-                "command": "ev3devBrowser.sendToDevice",
+                "command": "ev3devBrowser.download",
                 "title": "Send project to device",
                 "icon": {
                     "dark": "resources/icons/dark/download.svg",
@@ -110,7 +110,7 @@
                     "when": "config.ev3devBrowser.visible"
                 },
                 {
-                    "command": "ev3devBrowser.sendToDevice",
+                    "command": "ev3devBrowser.download",
                     "when": "config.ev3devBrowser.visible"
                 }
             ],
@@ -121,7 +121,7 @@
                     "when": "view == ev3devBrowser"
                 },
                 {
-                    "command": "ev3devBrowser.sendToDevice",
+                    "command": "ev3devBrowser.download",
                     "group": "navigation",
                     "when": "view == ev3devBrowser"
                 }
