@@ -423,6 +423,7 @@ class File extends vscode.TreeItem {
     private fileCache: File[] = new Array<File>();
     readonly path: string;
     readonly isExecutable: boolean;
+    readonly isDirectory: boolean;
 
     constructor(public device: Device, directory: string, private fileInfo: ssh2Streams.FileEntry) {
         super(fileInfo.filename);
@@ -430,7 +431,8 @@ class File extends vscode.TreeItem {
         const stats = (<ssh2Streams.Stats> fileInfo.attrs);
         this.path = directory + fileInfo.filename;
         this.isExecutable = stats.isFile() && !!(stats.mode & S_IXUSR);
-        if (stats.isDirectory()) {
+        this.isDirectory = stats.isDirectory();
+        if (this.isDirectory) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             this.contextValue = 'folder';
         }
@@ -452,6 +454,19 @@ class File extends vscode.TreeItem {
         return file;
     }
 
+    private static compare(a: File, b: File): number {
+        // directories go first
+        if (a.isDirectory && !b.isDirectory) {
+            return -1;
+        }
+        if (!a.isDirectory && b.isDirectory) {
+            return 1;
+        }
+
+        // then sort in ASCII order
+        return a.path < b.path ? -1 : +(a.path > b.path);
+    }
+
     getFiles(): vscode.ProviderResult<File[]> {
         return new Promise((resolve, reject) => {
             this.device.readdir(this.path).then(list => {
@@ -465,6 +480,8 @@ class File extends vscode.TreeItem {
                         }
                     }, this);
                 }
+                // sort directories first, then by ASCII
+                files.sort(File.compare);
                 resolve(files);
                 this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
             }, err => {
