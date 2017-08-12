@@ -33,6 +33,7 @@ export async function activate(context: vscode.ExtensionContext) : Promise<void>
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteTerm', f => f.stop()));
+    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteDelete', f => f.delete()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.pickDevice', () => pickDevice()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.download', () => download()));
 }
@@ -279,7 +280,7 @@ class Device extends vscode.TreeItem {
                     this.handleClientError(err);
                     return;
                 }
-                this.rootDirectory = new File(this, '', {
+                this.rootDirectory = new File(this, undefined, '', {
                     filename: this.service.txt['ev3dev.robot.home'] || `/home/${this.username}`,
                     longname: '',
                     attrs: stats
@@ -381,6 +382,19 @@ class Device extends vscode.TreeItem {
         });
     }
 
+    unlink(path: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.sftp.unlink(path, err => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve();
+                }
+            })
+        });
+    }
+
     handleClick(): void {
         // Attempt to keep he collapsible state correct. If we don't do this,
         // strange things happen on a refresh.
@@ -426,7 +440,8 @@ class File extends vscode.TreeItem {
     readonly isExecutable: boolean;
     readonly isDirectory: boolean;
 
-    constructor(public device: Device, directory: string, private fileInfo: ssh2Streams.FileEntry) {
+    constructor(public device: Device, public parent: File | undefined, directory: string,
+                private fileInfo: ssh2Streams.FileEntry) {
         super(fileInfo.filename);
         // work around bad typescript bindings
         const stats = (<ssh2Streams.Stats> fileInfo.attrs);
@@ -437,8 +452,11 @@ class File extends vscode.TreeItem {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             this.contextValue = 'folder';
         }
-        if (this.isExecutable) {
+        else if (this.isExecutable) {
             this.contextValue = 'executableFile';
+        }
+        else {
+            this.contextValue = "file";
         }
         this.command = { command: 'ev3devBrowser.fileClicked', title: '', arguments: [this]};
     }
@@ -450,7 +468,7 @@ class File extends vscode.TreeItem {
             match.fileInfo = fileInfo;
             return match;
         }
-        const file = new File(device, directory, fileInfo);
+        const file = new File(device, this, directory, fileInfo);
         this.fileCache.push(file);
         return file;
     }
@@ -572,5 +590,13 @@ class File extends vscode.TreeItem {
 
         // signal() does not seem to work anyway
         this.device.exec('conrun-kill');
+    }
+
+    delete(): void {
+        this.device.unlink(this.path).then(() => {
+            this.device.provider.fireFileChanged(this.parent);
+        }, err => {
+            vscode.window.showErrorMessage(`Error deleting '${this.path}': ${err.message}`);
+        });
     }
 }

@@ -85,6 +85,11 @@
                 "category": "ev3dev"
             },
             {
+                "command": "ev3devBrowser.remoteDelete",
+                "title": "Delete",
+                "category": "ev3dev"
+            },
+            {
                 "command": "ev3devBrowser.pickDevice",
                 "title": "Connect to a device",
                 "icon": {
@@ -133,6 +138,14 @@
                 },
                 {
                     "command": "ev3devBrowser.remoteRun",
+                    "when": "view == ev3devBrowser && viewItem == executableFile"
+                },
+                {
+                    "command": "ev3devBrowser.remoteDelete",
+                    "when": "view == ev3devBrowser && viewItem == file"
+                },
+                {
+                    "command": "ev3devBrowser.remoteDelete",
                     "when": "view == ev3devBrowser && viewItem == executableFile"
                 }
             ]
