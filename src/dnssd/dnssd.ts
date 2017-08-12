@@ -6,11 +6,10 @@ import * as events from 'events';
 import * as dns from './dnssd-client';
 import * as dnssd from '../dnssd';
 
-export function isPresent(): boolean {
-    return dns.checkDaemonRunning();
-}
-
 export function getInstance(): dnssd.Client {
+    if (!dns.checkDaemonRunning()) {
+        throw new Error('Could not find mDNSResponder');
+    }
     return new DnssdClient();
 }
 

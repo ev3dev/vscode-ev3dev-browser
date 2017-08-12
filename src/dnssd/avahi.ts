@@ -7,27 +7,37 @@ import * as events from 'events';
 
 import * as dnssd from '../dnssd';
 
-let connected = false;
 
-const bus = dbus.systemBus();
-bus.connection.on('connect', () => connected = true);
-bus.connection.on('error', err => connected = false);
-bus.connection.on('end', () => connected = false);
-const avahiDaemon = new avahi.Daemon(bus);
+let _daemon;
 
-export function isPresent(): boolean {
-    return connected;
+async function getDaemon(): Promise<any> {
+    if (_daemon) {
+        return Promise.resolve(_daemon);
+    }
+
+    return new Promise((resolve, reject) => {
+        const bus = dbus.systemBus();
+        bus.connection.on('connect', () => {
+            _daemon = new avahi.Daemon(bus);
+            resolve(_daemon);
+
+        });
+        bus.connection.on('error', err => {
+            reject(err);
+        });
+    });
 }
 
-export function getInstance(): dnssd.Client {
-    if (!isPresent()) {
-        throw 'Not present';
-    }
-    return new AvahiClient();
+export async function getInstance(): Promise<dnssd.Client> {
+    const daemon = await getDaemon();
+    return new AvahiClient(daemon);
 }
 
 class AvahiClient implements dnssd.Client {
     private destroyOps = new Array<()=>void>();
+
+    constructor(readonly daemon: any) {
+    }
 
     public browse(options: dnssd.BrowseOptions): Promise<dnssd.Browser> {
         return new Promise((resolve, reject) => {
@@ -80,14 +90,14 @@ class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
         super();
         const proto = this.options.ipv == 'IPv6' ? avahi.PROTO_INET6 : avahi.PROTO_INET;
         const type = `_${this.options.service}._${this.options.transport || 'tcp'}`;
-        avahiDaemon.ServiceBrowserNew(avahi.IF_UNSPEC, proto, type, '', 0, (err, browser) => {
+        client.daemon.ServiceBrowserNew(avahi.IF_UNSPEC, proto, type, '', 0, (err, browser) => {
             if (err) {
                 this.emit('error', err);
                 return;
             }
             this.browser = browser;
             browser.on('ItemNew', (iface, protocol, name, type, domain, flags) => {
-                avahiDaemon.ResolveService(iface, protocol, name, type, domain, protocol, 0,
+                client.daemon.ResolveService(iface, protocol, name, type, domain, protocol, 0,
                     (err, iface, protocol, name, type, domain, host, aprotocol, addr, port, txt, flags) => {
                         if (err) {
                             this.emit('error', err);

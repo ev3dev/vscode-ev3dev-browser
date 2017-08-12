@@ -106,15 +106,17 @@ export interface Service {
  * It will try to use a platform-specific implementation. Or if one is not
  * present, it falls back to a pure js implementation.
  */
-export function getInstance(): Client {
-    if (avahi.isPresent()) {
-        return avahi.getInstance();
+export async function getInstance(): Promise<Client> {
+    try {
+        return await avahi.getInstance();
     }
-
-    if (dnssd.isPresent()) {
-        return dnssd.getInstance();
+    catch (err) {
+        try {
+            return dnssd.getInstance();
+        }
+        catch (err) {
+            // fall back to pure-javascript implementation
+            return bonjour.getInstance();
+        }
     }
-
-    // fall back to pure-javascript implementation
-    return bonjour.getInstance();
 }
