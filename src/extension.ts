@@ -1,12 +1,10 @@
 'use strict';
 
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as dnode from 'dnode';
+import * as path from 'path'
 import * as ssh2 from 'ssh2'
 import * as ssh2Streams from 'ssh2-streams'
-import * as os from 'os';
-import * as path from 'path'
+import * as vscode from 'vscode';
 
 import * as dnssd from './dnssd'
 
@@ -15,6 +13,7 @@ const S_IXUSR = parseInt('00100', 8);
 let dnssdClient: dnssd.Client;
 let output: vscode.OutputChannel;
 let resourceDir: string;
+let shellPath: string;
 let ev3devBrowserProvider: Ev3devBrowserProvider;
 
 // this method is called when your extension is activated
@@ -25,6 +24,7 @@ export async function activate(context: vscode.ExtensionContext) : Promise<void>
     output = vscode.window.createOutputChannel('ev3dev');
     context.subscriptions.push(output);
     resourceDir = context.asAbsolutePath('resources');
+    shellPath = context.asAbsolutePath(path.join('out', 'src', 'shell.js'));
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
     context.subscriptions.push(vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider));
@@ -246,6 +246,7 @@ class Device extends vscode.TreeItem {
     private client: ssh2.Client;
     private sftp: ssh2.SFTPWrapper;
     readonly username: string;
+    shellPort: number;
     rootDirectory : File;
 
 	constructor(readonly provider: Ev3devBrowserProvider, public service: dnssd.Service) {
@@ -260,6 +261,38 @@ class Device extends vscode.TreeItem {
             host: service.address,
             username: this.username,
             password: vscode.workspace.getConfiguration('ev3devBrowser').get('password'),
+        });
+        // FIXME: If the client is killed/crashes, exit is never called, so the shell is not destroyed.
+        const d = dnode({
+            shell: (ttySettings, dataOut, dataErr, ready, exit) => {
+                this.shell(ttySettings).then(c => {
+                    c.stdout.on('data', data => {
+                        dataOut(data.toString('base64'));
+                    });
+                    c.stderr.on('data', data => {
+                        dataErr((<Buffer> data).toString('base64'));
+                    });
+                    c.on('exit', () => {
+                        exit();
+                    });
+                    c.on('close', () => {
+                        c.destroy();
+                    });
+                    ready((rows, cols) => {
+                        // resize callback
+                        c.setWindow(rows, cols, 0, 0);
+                    }, data => {
+                        // dataIn callback
+                        c.stdin.write(new Buffer(data, 'base64'));
+                    });
+                });
+            }
+        }, {
+            weak: false
+        });
+        const server = d.listen(0, '127.0.0.1');
+        server.on('listening', () => {
+            this.shellPort = server.address().port;
         });
     }
 
@@ -328,6 +361,22 @@ class Device extends vscode.TreeItem {
                 resolve(channel);
             });
         });
+    }
+
+    shell(window: ssh2.PseudoTtyOptions): Promise<ssh2.ClientChannel> {
+        return new Promise((resolve, reject) => {
+            const options = <ssh2.ShellOptions> {
+                env: vscode.workspace.getConfiguration('ev3devBrowser').get('env')
+            };
+            this.client.shell(window, options, (err, stream) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(stream);
+                }
+            });
+        })
     }
 
     mkdir(path: string): Promise<void> {
@@ -409,22 +458,9 @@ class Device extends vscode.TreeItem {
     }
 
     openSshTerminal(): void {
-        const term = vscode.window.createTerminal(`SSH: ${this.label}`);
-        const onWindows = (<string> os.platform()) == 'win32';
-        let command = onWindows ? 'plink.exe ' : 'ssh ';
-        if (this.service.txt['ev3dev.robot.user']) {
-            command += this.username + '@';
-        }
-        command += this.service.address;
-        if (this.service.port != 22) {
-            command += ` -p ${this.service.port}`;
-        }
-        const passwd = vscode.workspace.getConfiguration('ev3devBrowser').get<string>('password');
-        if (onWindows && passwd) {
-            command += ` -pw ${passwd}`;
-        }
-        command += onWindows ? '; $? -and $(exit)' : ' && exit';
-        term.sendText(command, true);
+        const term = vscode.window.createTerminal(`SSH: ${this.label}`,
+            'node', // TODO: get node path from VS Code
+            [shellPath, this.shellPort.toString()]);
         term.show();
     }
 
