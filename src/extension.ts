@@ -29,7 +29,7 @@ export async function activate(context: vscode.ExtensionContext) : Promise<void>
     ev3devBrowserProvider = new Ev3devBrowserProvider();
     context.subscriptions.push(vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.openSshTerminal', d => ev3devBrowserProvider.openSshTerminal(d)));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.deviceCLicked', d => d.handleClick()));
+    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.deviceClicked', d => d.handleClick()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteTerm', f => f.stop()));
@@ -253,7 +253,7 @@ class Device extends vscode.TreeItem {
         super(service.name);
         this.username = service.txt['ev3dev.robot.user']
         this.contextValue = 'ev3devDevice';
-        this.command = { command: 'ev3devBrowser.deviceCLicked', title: '', arguments: [this]};
+        this.command = { command: 'ev3devBrowser.deviceClicked', title: '', arguments: [this]};
         this.client = new ssh2.Client();
         this.client.on('ready', () => this.handleClientReady());
         this.client.on('error', err => this.handleClientError(err));
