@@ -43,7 +43,7 @@ export interface BrowseOptions {
 }
 
 export interface Browser {
-    on(event: 'added' | 'removed', listener: (service: Service, moreComing: boolean) => void): this;
+    on(event: 'added' | 'removed', listener: (service: Service) => void): this;
     on(event: 'error', listener: (err: Error) => void): this;
     destroy();
 }

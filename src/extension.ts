@@ -61,22 +61,18 @@ async function pickDevice(): Promise<void> {
 
                 // if a device is added or removed, cancel the quick-pick
                 // and then show a new one with the update list
-                browser.on('added', (service, moreComing) => {
+                browser.on('added', (service) => {
                     if (service.txt['ev3dev.robot.home']) {
                         // this looks like an ev3dev device
                         const item = new ServiceItem(service);
                         items.push(item);
-                    }
-                    if (!moreComing) {
                         cancelSource.cancel();
                     }
                 });
-                browser.on('removed', (service, moreComing) => {
+                browser.on('removed', (service) => {
                     const index = items.findIndex(si => si.service == service);
                     if (index > -1) {
                         items.splice(index, 1);
-                    }
-                    if (!moreComing) {
                         cancelSource.cancel();
                     }
                 });

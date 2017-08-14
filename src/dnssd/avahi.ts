@@ -82,7 +82,6 @@ class AvahiClient implements dnssd.Client {
 }
 
 class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
-    private moreComing: boolean = true;
     private browser: any;
     private readonly services: AvahiService[] = new Array<AvahiService>();
 
@@ -105,18 +104,15 @@ class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
                         }
                         const service = new AvahiService(iface, protocol, name, type, domain, host, aprotocol, addr, port, txt, flags);
                         this.services.push(service);
-                        this.emit('added', service, this.moreComing);
+                        this.emit('added', service);
                     });
             });
             browser.on('ItemRemove', (iface, protocol, name, type, domain, flags) => {
                 const i = this.services.findIndex(s => s.match(iface, protocol, name, type, domain));
                 if (i >= 0) {
                     const [service] = this.services.splice(i, 1);
-                    this.emit('removed', service, this.moreComing);
+                    this.emit('removed', service);
                 }
-            });
-            browser.on('AllForNow', () => {
-                this.moreComing = false;
             });
             browser.on('Failure', error => {
                 this.emit('error', new Error(error));
