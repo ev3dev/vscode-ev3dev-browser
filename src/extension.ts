@@ -272,6 +272,10 @@ class Device extends vscode.TreeItem {
                     c.stderr.on('data', data => {
                         dataErr((<Buffer> data).toString('base64'));
                     });
+                    c.on('error', err => {
+                        vscode.window.showErrorMessage(`SSH connection error: ${err.message}`);
+                        exit();
+                    });
                     c.on('exit', () => {
                         exit();
                     });
