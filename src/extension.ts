@@ -1,6 +1,7 @@
 'use strict';
 
 import * as dnode from 'dnode';
+import * as net from 'net'
 import * as path from 'path'
 import * as ssh2 from 'ssh2'
 import * as ssh2Streams from 'ssh2-streams'
@@ -25,6 +26,9 @@ export async function activate(context: vscode.ExtensionContext) : Promise<void>
     context.subscriptions.push(output);
     resourceDir = context.asAbsolutePath('resources');
     shellPath = context.asAbsolutePath(path.join('native', process.platform, 'shell'));
+    if (process.platform == 'win32') {
+        shellPath += '.exe'
+    }
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
     context.subscriptions.push(vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider));
@@ -284,39 +288,47 @@ class Device extends vscode.TreeItem {
             password: vscode.workspace.getConfiguration('ev3devBrowser').get('password'),
             tryKeyboard: true
         });
-        // FIXME: If the client is killed/crashes, exit is never called, so the shell is not destroyed.
-        const d = dnode({
-            shell: (ttySettings, dataOut, dataErr, ready, exit) => {
-                this.shell(ttySettings).then(c => {
-                    c.stdout.on('data', data => {
-                        dataOut(data.toString('base64'));
+        const server = net.createServer(c => {
+            const d = dnode({
+                shell: (ttySettings, dataOut, dataErr, ready, exit) => {
+                    this.shell(ttySettings).then(ch => {
+                        ch.stdout.on('data', data => {
+                            dataOut(data.toString('base64'));
+                        });
+                        ch.stderr.on('data', data => {
+                            dataErr((<Buffer> data).toString('base64'));
+                        });
+                        ch.on('error', err => {
+                            vscode.window.showErrorMessage(`SSH connection error: ${err.message}`);
+                            exit();
+                        });
+                        ch.on('exit', () => {
+                            exit();
+                        });
+                        ch.on('close', () => {
+                            ch.destroy();
+                            d.destroy();
+                        });
+                        ready((rows, cols) => {
+                            // resize callback
+                            ch.setWindow(rows, cols, 0, 0);
+                        }, data => {
+                            // dataIn callback
+                            ch.stdin.write(new Buffer(data, 'base64'));
+                        });
                     });
-                    c.stderr.on('data', data => {
-                        dataErr((<Buffer> data).toString('base64'));
-                    });
-                    c.on('error', err => {
-                        vscode.window.showErrorMessage(`SSH connection error: ${err.message}`);
-                        exit();
-                    });
-                    c.on('exit', () => {
-                        exit();
-                    });
-                    c.on('close', () => {
-                        c.destroy();
-                    });
-                    ready((rows, cols) => {
-                        // resize callback
-                        c.setWindow(rows, cols, 0, 0);
-                    }, data => {
-                        // dataIn callback
-                        c.stdin.write(new Buffer(data, 'base64'));
-                    });
-                });
-            }
-        }, {
-            weak: false
+                }
+            }, {
+                weak: false
+            });
+            c.on('error', err => {
+                // TODO: not sure what to do here.
+                // The default dnode implementation only ignores EPIPE.
+                // On Windows, we can also get ECONNRESET when a client disconnects.
+            });
+            c.pipe(d).pipe(c);
         });
-        const server = d.listen(0, '127.0.0.1');
+        server.listen(0, '127.0.0.1');
         server.on('listening', () => {
             this.shellPort = server.address().port;
         });
