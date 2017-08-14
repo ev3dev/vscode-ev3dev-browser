@@ -24,7 +24,7 @@ export async function activate(context: vscode.ExtensionContext) : Promise<void>
     output = vscode.window.createOutputChannel('ev3dev');
     context.subscriptions.push(output);
     resourceDir = context.asAbsolutePath('resources');
-    shellPath = context.asAbsolutePath(path.join('out', 'src', 'shell.js'));
+    shellPath = context.asAbsolutePath(path.join('native', process.platform, 'shell'));
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
     context.subscriptions.push(vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider));
@@ -459,8 +459,8 @@ class Device extends vscode.TreeItem {
 
     openSshTerminal(): void {
         const term = vscode.window.createTerminal(`SSH: ${this.label}`,
-            'node', // TODO: get node path from VS Code
-            [shellPath, this.shellPort.toString()]);
+            shellPath,
+            [this.shellPort.toString()]);
         term.show();
     }
 

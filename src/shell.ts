@@ -16,7 +16,7 @@
 
 import * as dnode from 'dnode';
 
-const port = parseInt(process.argv[2]);
+const port = parseInt(process.argv[process.argv.length - 1]);
 
 const d = dnode({}, { weak: false }).connect(port);
 d.on('remote', remote => {
