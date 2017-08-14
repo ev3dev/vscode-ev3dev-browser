@@ -38,7 +38,7 @@
                         "null"
                     ],
                     "default": "maker",
-                    "description": "The password for the 'robot' user."
+                    "description": "The password for the 'robot' user. Set to \"null\" to prompt for password (or use public key authentication)."
                 },
                 "ev3devBrowser.env": {
                     "type": "object",

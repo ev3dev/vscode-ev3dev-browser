@@ -264,10 +264,25 @@ class Device extends vscode.TreeItem {
             // this has the effect of calling this.destroy()
             this.provider.setDevice(undefined);
         });
+        this.client.on('keyboard-interactive', async (name, instructions, lang, prompts, finish) => {
+            const answers = new Array<string>();
+            // work around type bug
+            for (const p of prompts) {
+                const choice = await vscode.window.showInputBox({
+                    ignoreFocusOut: true,
+                    password: !p.echo,
+                    prompt:  p.prompt
+                });
+                answers.push(choice);
+            }
+            // another type binding workaround
+            finish(answers);
+        });
         this.client.connect({
             host: service.address,
             username: this.username,
             password: vscode.workspace.getConfiguration('ev3devBrowser').get('password'),
+            tryKeyboard: true
         });
         // FIXME: If the client is killed/crashes, exit is never called, so the shell is not destroyed.
         const d = dnode({
