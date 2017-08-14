@@ -188,11 +188,15 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
 	readonly onDidChangeTreeData: vscode.Event<Device | File | undefined> = this._onDidChangeTreeData.event;
     private device: Device;
 
-    setDevice(service: dnssd.Service) {
+    setDevice(service: dnssd.Service | undefined) {
         if (this.device) {
             this.device.destroy();
+            this.device = undefined;
         }
-        this.device = new Device(this, service);
+        if (service) {
+            this.device = new Device(this, service);
+        }
+        this.fireDeviceChanged(this.device);
     }
 
     /**
@@ -212,6 +216,9 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
 
     getChildren(element?: Device | File): vscode.ProviderResult<Device[] | File[]> {
         if (!element) {
+            if (!this.device) {
+                return [];
+            }
             return [this.device];
         }
         if (element instanceof Device) {
@@ -257,6 +264,10 @@ class Device extends vscode.TreeItem {
         this.client = new ssh2.Client();
         this.client.on('ready', () => this.handleClientReady());
         this.client.on('error', err => this.handleClientError(err));
+        this.client.on('end', () => {
+            // this has the effect of calling this.destroy()
+            this.provider.setDevice(undefined);
+        });
         this.client.connect({
             host: service.address,
             username: this.username,
