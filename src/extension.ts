@@ -1,5 +1,3 @@
-'use strict';
-
 import * as dnode from 'dnode';
 import * as net from 'net'
 import * as path from 'path'
