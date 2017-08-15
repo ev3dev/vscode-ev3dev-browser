@@ -266,6 +266,10 @@ class Device extends vscode.TreeItem {
             // this has the effect of calling this.destroy()
             this.provider.setDevice(undefined);
         });
+        this.client.on('close', () => {
+            // this has the effect of calling this.destroy()
+            this.provider.setDevice(undefined);
+        });
         this.client.on('keyboard-interactive', async (name, instructions, lang, prompts, finish) => {
             const answers = new Array<string>();
             // work around type bug

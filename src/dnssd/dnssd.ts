@@ -89,6 +89,10 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
                                 this.emit('error', new dns.ServiceError(e, 'Querying service failed.'));
                                 return;
                             }
+                            if (this.services.findIndex(v => v.name == n && v.type == t && v.domain == d.replace(/\.$/, '')) != -1) {
+                                // ignore duplicates
+                                return;
+                            }
                             const service = new DnssdService(i, n, t, d, h, a, p, txt);
                             this.services.push(service);
                             this.emit('added', service);
@@ -139,7 +143,7 @@ class DnssdService extends events.EventEmitter implements dnssd.Service {
     constructor(
         private readonly iface: number,
         public readonly name: string,
-        private readonly type: string,
+        readonly type: string,
         domain: string,
         host: string,
         public readonly address: string,

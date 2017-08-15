@@ -78,3 +78,4 @@ This extension contributes the following settings:
 *   Stopping a program only sends `SIGTERM`. If that doesn't actually stop the
     program then it can't be stopped remotely. There is not a way to send
     `SIGKILL` to forcefully stop it.
+*   USB disconnection is not detected on macOS.
