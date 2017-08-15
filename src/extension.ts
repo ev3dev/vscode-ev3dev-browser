@@ -369,8 +369,13 @@ class Device extends vscode.TreeItem {
     private handleClientError(err: any): void {
         this.iconPath.dark = path.join(resourceDir, 'icons', 'dark', 'red-circle.svg');
         this.iconPath.light = path.join(resourceDir, 'icons', 'light', 'red-circle.svg');
+        this.rootDirectory = undefined;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.provider.fireDeviceChanged(this);
-        vscode.window.showErrorMessage(`Failed to connect to ${this.label}: ${err.message}`);
+        // only show error message if we never connected
+        if (!this.sftp) {
+            vscode.window.showErrorMessage(`Failed to connect to ${this.label}: ${err.message}`);
+        }
     }
 
     chmod(path: string, mode: string | number): Promise<void> {
