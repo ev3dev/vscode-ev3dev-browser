@@ -4,7 +4,9 @@ out/test/**
 test/**
 src/**
 **/*.map
+.gitattributes
 .gitignore
+build-native.*
 tsconfig.json
 vsc-extension-quickstart.md
 .nexe
