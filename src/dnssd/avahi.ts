@@ -99,7 +99,8 @@ class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
                 client.daemon.ResolveService(iface, protocol, name, type, domain, protocol, 0,
                     (err, iface, protocol, name, type, domain, host, aprotocol, addr, port, txt, flags) => {
                         if (err) {
-                            this.emit('error', err);
+                            // This was probably something in the cache that timed out
+                            // because it is no longer connected.
                             return;
                         }
                         const service = new AvahiService(iface, protocol, name, type, domain, host, aprotocol, addr, port, txt, flags);
