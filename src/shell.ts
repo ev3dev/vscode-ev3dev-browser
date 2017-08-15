@@ -12,8 +12,6 @@
 // - stdin, stdout and stderr from the remote shell() are connected to the same
 //   in the shell.ts node process.
 
-'use strict'
-
 import * as dnode from 'dnode';
 
 const port = parseInt(process.argv[process.argv.length - 1]);
