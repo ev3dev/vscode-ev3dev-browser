@@ -24,7 +24,7 @@ d.on('remote', remote => {
         // ttyOptions
         rows: process.stdout.rows,
         cols: process.stdout.columns,
-        term: process.env['TERM']
+        term: process.env['TERM'] || 'xterm-256color'
     }, dataOut => {
         // dataOut callback
         process.stdout.write(new Buffer(dataOut, 'base64'));
