@@ -301,11 +301,11 @@ class Device extends vscode.TreeItem {
                         ch.on('error', err => {
                             vscode.window.showErrorMessage(`SSH connection error: ${err.message}`);
                             exit();
-                        });
-                        ch.on('exit', () => {
-                            exit();
+                            ch.destroy();
+                            d.destroy();
                         });
                         ch.on('close', () => {
+                            exit();
                             ch.destroy();
                             d.destroy();
                         });
