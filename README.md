@@ -6,12 +6,25 @@ files to these devices and remotely run programs.
 Learn more about ev3dev at <http://www.ev3dev.org>.
 
 
+## Requirements
+
+This extension is only compatible with **ev3dev-stretch** [snapshot images] starting
+with `2017-08-11`. It will not work with other versions of ev3dev.
+
+Additional information can be found on the [wiki].
+
+[snapshot images]: https://oss.jfrog.org/list/oss-snapshot-local/org/ev3dev/brickstrap/
+[wiki]: https://github.com/ev3dev/vscode-ev3dev-browser/wiki
+
+
 ## Features
 
 *   **Discover devices**: Any connected ev3dev device should be automatically discovered.
     No configuration necessary.
 
-    ![Device listing screenshot](.README/device-listing.png)
+    ![Device connect button screenshot](.README/device-connect-button.png)
+
+    ![Device quick-pick screenshot](.README/device-quick-pick.png)
 
 *   **Remotely browse files**: Files for each device are listed just as they are in
     Brickman.
@@ -41,13 +54,6 @@ Learn more about ev3dev at <http://www.ev3dev.org>.
     ![Device context menu screenshot](.README/device-context-menu.png)
 
 
-## Requirements
-
-This extension is only compatible with **ev3dev-stretch** snapshot images starting
-with `2017-07-25`. It will not work with other versions of ev3dev.
-
-
-
 ## Extension Settings
 
 This extension contributes the following settings:
@@ -69,8 +75,6 @@ This extension contributes the following settings:
 ## Known Issues
 
 *   Currently, all downloaded files have the executable bit set.
-*   Devices don't disappear from the list on macOS when they are disconnected.
 *   Stopping a program only sends `SIGTERM`. If that doesn't actually stop the
     program then it can't be stopped remotely. There is not a way to send
     `SIGKILL` to forcefully stop it.
-*   Each SSH terminal session starts a new SSH connection. These could be shared.
