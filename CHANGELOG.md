@@ -6,6 +6,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## Unreleased
 ### Fixed
 - Fix downloading projects with subdirectories
+### Added
+- Command to capture a screenshot from the remote device
 
 ## 0.2.0 - 2017-08-15
 ### Added
