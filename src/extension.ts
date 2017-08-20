@@ -141,37 +141,28 @@ async function download(): Promise<void> {
     const includeFiles = config.get<string>('include');
     const excludeFiles = config.get<string>('exclude');
     const projectDir = config.get<string>('directory') || path.basename(localDir);
-    const remoteDir = device.rootDirectory.path + `/${projectDir}/`;
+    const remoteBaseDir = device.rootDirectory.path + `/${projectDir}/`;
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Window
     }, async progress => {
         try {
             const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
-            files.forEach(async f => {
+            for (const f of files) {
                 progress.report({
                     message: `Copying ${f.fsPath}`
                 });
                 const basename = path.basename(f.fsPath);
+                const relativeDir = path.dirname(vscode.workspace.asRelativePath(f.fsPath)) + '/';
+                const remoteDir = remoteBaseDir + relativeDir;
                 const remotePath = remoteDir + basename;
-
-                // have to make sure the directory exists on the remote device first
-                try {
-                    await device.stat(remoteDir);
-                }
-                catch (err) {
-                    if (err.code == 2 /* file does not exist */) {
-                        await device.mkdir(remoteDir);
-                    }
-                    else {
-                        throw err;
-                    }
-                }
-
+                
+                // make sure the directory exists
+                await device.mkdir_p(remoteDir);
                 // then we can copy the file
                 await device.put(f.fsPath, remotePath);
                 // TODO: selectively make files executable
                 await device.chmod(remotePath, '755');
-            });
+            }
             // make sure any new files show up in the browser
             device.provider.fireDeviceChanged(device);
         }
@@ -435,6 +426,28 @@ class Device extends vscode.TreeItem {
                 }
             });
         });
+    }
+
+    /**
+     * Recursively create a directory (equivalent of mkdir -p).
+     * @param path the path
+     */
+    async mkdir_p(path: string): Promise<void> {
+        const names = path.split('/');
+        let part = '';
+        while (names.length) {
+            part += names.shift() + '/';
+            // have to make sure the directory exists on the remote device first
+            try {
+                await this.stat(part);
+            }
+            catch (err) {
+                if (err.code != 2 /* file does not exist */) {
+                    throw err;
+                }
+                await this.mkdir(part);
+            }
+        }
     }
 
     put(local: string, remote: string): Promise<void> {

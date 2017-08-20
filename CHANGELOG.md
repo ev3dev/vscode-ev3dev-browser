@@ -3,6 +3,10 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+### Fixed
+- Fix downloading projects with subdirectories
+
 ## 0.2.0 - 2017-08-15
 ### Added
 - Optional interactive password prompt
