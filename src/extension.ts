@@ -1,16 +1,21 @@
-import * as dnode from 'dnode'
-import * as fs from 'fs'
-import * as net from 'net'
+import * as dnode from 'dnode';
+import * as fs from 'fs';
+import * as net from 'net';
 
-import * as path from 'path'
-import * as ssh2 from 'ssh2'
-import * as ssh2Streams from 'ssh2-streams'
-import * as temp from 'temp'
+import * as path from 'path';
+import * as ssh2 from 'ssh2';
+import * as ssh2Streams from 'ssh2-streams';
+import * as temp from 'temp';
 
-import * as vscode from 'vscode'
+import * as vscode from 'vscode';
 
-import * as dnssd from './dnssd'
-import { sanitizedDateString, getSharedTempDir, verifyFileHeader } from './utils'
+import * as dnssd from './dnssd';
+import {
+    sanitizedDateString,
+    getSharedTempDir,
+    verifyFileHeader,
+    StatusBarProgressionMessage
+} from './utils';
 
 const S_IXUSR = parseInt('00100', 8);
 
@@ -536,13 +541,11 @@ class Device extends vscode.TreeItem {
     }
     
     async captureScreenshot() {
-        const statusBarMessage = vscode.window.createStatusBarItem();
-        statusBarMessage.text = "Attempting to capture screenshot...";
-        statusBarMessage.show();
+        const statusBarMessage = new StatusBarProgressionMessage("Attempting to capture screenshot...");
 
-        const handleCaptureError = (e) => {
-            vscode.window.showErrorMessage("Error capturing screenshot: " + (e.message || e));
-            statusBarMessage.dispose();
+        const handleCaptureError = e => {
+            vscode.window.showErrorMessage("Error capturing screenshot: " + (e.message || e)); 
+            statusBarMessage.finish();
         }
 
         try {
@@ -564,21 +567,17 @@ class Device extends vscode.TreeItem {
             
             writeStream.on('error', (e: Error) => {
                 vscode.window.showErrorMessage("Error saving screenshot: " + e.message);
-                statusBarMessage.dispose();
+                statusBarMessage.finish();
             });
 
             writeStream.on('finish', async () => {
                 const pngHeader = [ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A ];
-                if(await verifyFileHeader(screenshotFile, pngHeader)) {
-                    statusBarMessage.text = `Screenshot "${screenshotBaseName}" successfully captured`;
+                if (await verifyFileHeader(screenshotFile, pngHeader)) {
+                    statusBarMessage.finish(`Screenshot "${screenshotBaseName}" successfully captured`);
                     vscode.commands.executeCommand('vscode.open', vscode.Uri.file(screenshotFile));
-    
-                    // Remove message after giving time to read it
-                    setTimeout(() => statusBarMessage.dispose(), 5000);
                 }
                 else {
-                    handleCaptureError("The captured screenshot was not in the expected format."
-                        + " This may be caused by running an old version of 'fbcat' on the remote device; try updating the fbcat package.");
+                    handleCaptureError("The screenshot was not in the correct format. You may need to upgrade to fbcat 0.5.0.");
                 }
             });
         }
