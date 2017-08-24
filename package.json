@@ -71,8 +71,7 @@
         "commands": [
             {
                 "command": "ev3devBrowser.openSshTerminal",
-                "title": "Open SSH Terminal",
-                "category": "ev3dev"
+                "title": "Open SSH Terminal"
             },
             {
                 "command": "ev3devBrowser.captureScreenshot",
@@ -80,18 +79,15 @@
             },
             {
                 "command": "ev3devBrowser.remoteRun",
-                "title": "Run",
-                "category": "ev3dev"
+                "title": "Run"
             },
             {
                 "command": "ev3devBrowser.remoteTerm",
-                "title": "Stop",
-                "category": "ev3dev"
+                "title": "Stop"
             },
             {
                 "command": "ev3devBrowser.remoteDelete",
-                "title": "Delete",
-                "category": "ev3dev"
+                "title": "Delete"
             },
             {
                 "command": "ev3devBrowser.pickDevice",
