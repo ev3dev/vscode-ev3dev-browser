@@ -266,7 +266,7 @@ class Device extends vscode.TreeItem {
 	constructor(readonly provider: Ev3devBrowserProvider, public service: dnssd.Service) {
         super(service.name);
         this.username = service.txt['ev3dev.robot.user']
-        this.contextValue = 'ev3devDevice';
+        this.contextValue = 'ev3devBrowser.device.connecting';
         this.command = { command: 'ev3devBrowser.deviceClicked', title: '', arguments: [this]};
         this.client = new ssh2.Client();
         this.client.on('ready', () => this.handleClientReady());
@@ -372,12 +372,14 @@ class Device extends vscode.TreeItem {
                 this.provider.fireDeviceChanged(this);
             });
             
+            this.contextValue = 'ev3devBrowser.device.connected';
             this.iconPath.dark = path.join(resourceDir, 'icons', 'dark', 'green-circle.svg');
             this.iconPath.light = path.join(resourceDir, 'icons', 'light', 'green-circle.svg');
         });
     }
 
     private handleClientError(err: any): void {
+        this.contextValue = 'ev3devBrowser.device.disconnected';
         this.iconPath.dark = path.join(resourceDir, 'icons', 'dark', 'red-circle.svg');
         this.iconPath.light = path.join(resourceDir, 'icons', 'light', 'red-circle.svg');
         this.rootDirectory = undefined;

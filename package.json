@@ -138,11 +138,11 @@
             "view/item/context": [
                 {
                     "command": "ev3devBrowser.openSshTerminal",
-                    "when": "view == ev3devBrowser && viewItem == ev3devDevice"
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected"
                 },
                 {
                     "command": "ev3devBrowser.captureScreenshot",
-                    "when": "view == ev3devBrowser && viewItem == ev3devDevice"
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected"
                 },
                 {
                     "command": "ev3devBrowser.remoteRun",
