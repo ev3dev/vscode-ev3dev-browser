@@ -23,6 +23,26 @@
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/out/test/**/*.js" ],
             "preLaunchTask": "npm"
+        },
+        {
+            "name": "Launch Debug Server",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/src/debugServer.ts",
+            "args": [
+                "--server=4711"
+            ],
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/out/src/**/*.js"
+            ],
+            "preLaunchTask": "npm"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Ext + Server",
+            "configurations": ["Launch Extension", "Launch Debug Server"]
         }
     ]
 }

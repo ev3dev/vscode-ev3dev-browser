@@ -49,7 +49,7 @@ export async function activate(context: vscode.ExtensionContext) : Promise<void>
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteDelete', f => f.delete()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.pickDevice', () => pickDevice()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.download', () => download()));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.downloadAndRun', (a, w) => downloadAndRun(a, w)));
+    context.subscriptions.push(vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e)));
 }
 
 // this method is called when your extension is deactivated
@@ -64,34 +64,38 @@ export function deactivate() {
     temp.cleanupSync();
 }
 
-interface LaunchAttributes {
-    type: 'ev3devBrowser';
-    name: string;
-    request: 'launch' | 'attach';
-    program: string;
-}
-
-async function downloadAndRun(attrs: LaunchAttributes, workspace: vscode.Uri): Promise<void> {
-    if (!await download()) {
-        // download() shows error messages, so nothing to do here.
-        return;
-    }
-    try {
+async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Promise<void> {
+    switch (event.event) {
+    case 'ev3devBrowser.downloadAndRun':
+        if (!await download()) {
+            // download() shows error messages, so don't show additional message here.
+            await event.session.customRequest('ev3devBrowser.terminate');
+            return;
+        }
+        try {
+            const device = ev3devBrowserProvider.getDevice();
+            const stat = await device.stat(event.body.program);
+            const parts = event.body.program.split('/');
+            const filename = parts.pop();
+            parts.push(''); // so we get trailing '/'
+            const dirname = parts.join('/');
+            const file = new File(device, null, dirname, {
+                filename: filename,
+                longname: '',
+                attrs: stat
+            });
+            file.run();
+        }
+        catch (err) {
+            vscode.window.showErrorMessage(`Failed to run file: ${err.message}`);
+        }
+        break;
+    case 'ev3devBrowser.stop':
         const device = ev3devBrowserProvider.getDevice();
-        const stat = await device.stat(attrs.program);
-        const parts = attrs.program.split('/');
-        const filename = parts.pop();
-        parts.push(''); // so we get trailing '/'
-        const dirname = parts.join('/');
-        const file = new File(device, null, dirname, {
-            filename: filename,
-            longname: '',
-            attrs: stat
-        });
-        file.run();
-    }
-    catch (err) {
-        vscode.window.showErrorMessage(`Failed to run file: ${err.message}`);
+        if (device) {
+            device.exec('conrun-kill');
+        }
+        break;
     }
 }
 

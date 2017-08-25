@@ -14,7 +14,7 @@
         "url": "https://github.com/ev3dev/vscode-ev3dev-browser/issues"
     },
     "engines": {
-        "vscode": "^1.13.0"
+        "vscode": "^1.15.0"
     },
     "categories": [
         "Other"
@@ -106,16 +106,14 @@
                     "light": "resources/icons/light/download.svg"
                 },
                 "category": "ev3dev"
-            },
-            {
-                "command": "ev3devBrowser.downloadAndRun",
-                "title": "Download and Run"
             }
         ],
         "debuggers": [
             {
                 "type": "ev3devBrowser",
                 "label": "ev3dev",
+                "program": "./out/src/debugServer.js",
+                "runtime": "node",
                 "configurationAttributes": {
                     "launch": {
                         "required": [
@@ -125,7 +123,7 @@
                             "program": {
                                 "type": "string",
                                 "description": "Absolute path to an executable file on the remote device.",
-                                "default": "${command:AskForProgramName}"
+                                "default": "/home/robot/myproject/myprogram"
                             }
                         }
                     }
@@ -138,11 +136,10 @@
                             "name": "Download and Run",
                             "type": "ev3devBrowser",
                             "request": "launch",
-                            "program": "/home/robot/myprogram (replace this with the actual path)"
+                            "program": "^\"/home/robot/\\${workspaceRootFolderName}/${1:myprogram}\""
                         }
                     }
                 ],
-                "startSessionCommand": "ev3devBrowser.downloadAndRun",
                 "initialConfigurations": [
                     {
                         "name": "Download and Run",
@@ -233,6 +230,7 @@
         "dnode": "^1.2.2",
         "ssh2": "~0.5.5",
         "ssh2-streams": "~0.1.19",
-        "temp": "^0.8.3"
+        "temp": "^0.8.3",
+        "vscode-debugadapter": "^1.22.0"
     }
 }
