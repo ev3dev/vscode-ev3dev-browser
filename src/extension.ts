@@ -235,11 +235,11 @@ async function download(): Promise<boolean> {
 }
 
 class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
-    private _onDidChangeTreeData: vscode.EventEmitter<Device | File | undefined> = new vscode.EventEmitter<Device | File | undefined>();
-	readonly onDidChangeTreeData: vscode.Event<Device | File | undefined> = this._onDidChangeTreeData.event;
+    private _onDidChangeTreeData: vscode.EventEmitter<Device | File> = new vscode.EventEmitter<Device | File>();
+	readonly onDidChangeTreeData: vscode.Event<Device | File> = this._onDidChangeTreeData.event;
     private device: Device;
 
-    setDevice(service: dnssd.Service | undefined) {
+    setDevice(service: dnssd.Service) {
         if (this.device) {
             this.device.destroy();
             this.device = undefined;
@@ -648,7 +648,7 @@ class File extends vscode.TreeItem {
     readonly isExecutable: boolean;
     readonly isDirectory: boolean;
 
-    constructor(public device: Device, public parent: File | undefined, directory: string,
+    constructor(public device: Device, public parent: File, directory: string,
                 private fileInfo: ssh2Streams.FileEntry) {
         super(fileInfo.filename);
         // work around bad typescript bindings
