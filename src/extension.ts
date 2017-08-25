@@ -698,6 +698,15 @@ class Device extends vscode.TreeItem {
 	};
 }
 
+/**
+ * File states are used for the context value of a File.
+ */
+enum FileState {
+    None = 'ev3devBrowser.file',
+    Folder = 'ev3devBrowser.file.folder',
+    Executable = 'ev3devBrowser.file.executable'
+}
+
 class File extends vscode.TreeItem {
     private fileCache: File[] = new Array<File>();
     readonly path: string;
@@ -714,13 +723,13 @@ class File extends vscode.TreeItem {
         this.isDirectory = stats.isDirectory();
         if (this.isDirectory) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
-            this.contextValue = 'folder';
+            this.contextValue = FileState.Folder;
         }
         else if (this.isExecutable) {
-            this.contextValue = 'executableFile';
+            this.contextValue = FileState.Executable;
         }
         else {
-            this.contextValue = "file";
+            this.contextValue = FileState.None;
         }
         this.command = { command: 'ev3devBrowser.fileClicked', title: '', arguments: [this]};
     }

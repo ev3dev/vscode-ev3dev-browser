@@ -184,15 +184,15 @@
                 },
                 {
                     "command": "ev3devBrowser.remoteRun",
-                    "when": "view == ev3devBrowser && viewItem == executableFile"
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.executable"
                 },
                 {
                     "command": "ev3devBrowser.remoteDelete",
-                    "when": "view == ev3devBrowser && viewItem == file"
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file"
                 },
                 {
                     "command": "ev3devBrowser.remoteDelete",
-                    "when": "view == ev3devBrowser && viewItem == executableFile"
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.executable"
                 }
             ]
         },
