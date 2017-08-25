@@ -39,17 +39,19 @@ export async function activate(context: vscode.ExtensionContext) : Promise<void>
     }
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
-    context.subscriptions.push(vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.openSshTerminal', d => ev3devBrowserProvider.openSshTerminal(d)));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.captureScreenshot', d => ev3devBrowserProvider.captureScreenshot(d)));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.deviceClicked', d => d.handleClick()));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteTerm', f => f.stop()));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteDelete', f => f.delete()));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.pickDevice', () => pickDevice()));
-    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.download', () => download()));
-    context.subscriptions.push(vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e)));
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider),
+        vscode.commands.registerCommand('ev3devBrowser.openSshTerminal', d => ev3devBrowserProvider.openSshTerminal(d)),
+        vscode.commands.registerCommand('ev3devBrowser.captureScreenshot', d => ev3devBrowserProvider.captureScreenshot(d)),
+        vscode.commands.registerCommand('ev3devBrowser.deviceClicked', d => d.handleClick()),
+        vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()),
+        vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()),
+        vscode.commands.registerCommand('ev3devBrowser.remoteTerm', f => f.stop()),
+        vscode.commands.registerCommand('ev3devBrowser.remoteDelete', f => f.delete()),
+        vscode.commands.registerCommand('ev3devBrowser.pickDevice', () => pickDevice()),
+        vscode.commands.registerCommand('ev3devBrowser.download', () => download()),
+        vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e))
+    );
 }
 
 // this method is called when your extension is deactivated
