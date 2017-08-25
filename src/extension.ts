@@ -56,7 +56,7 @@ export async function activate(context: vscode.ExtensionContext) : Promise<void>
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-    const device = ev3devBrowserProvider.getDevice();
+    const device = ev3devBrowserProvider.getDeviceSync();
     if (device) {
         device.destroy();
     }
@@ -75,7 +75,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
             return;
         }
         try {
-            const device = ev3devBrowserProvider.getDevice();
+            const device = ev3devBrowserProvider.getDeviceSync();
             const stat = await device.stat(event.body.program);
             const parts = event.body.program.split('/');
             const filename = parts.pop();
@@ -93,7 +93,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
         }
         break;
     case 'ev3devBrowser.stop':
-        const device = ev3devBrowserProvider.getDevice();
+        const device = ev3devBrowserProvider.getDeviceSync();
         if (device) {
             device.exec('conrun-kill');
         }
@@ -189,11 +189,17 @@ async function download(): Promise<boolean> {
         return false;
     }
 
-    let device = ev3devBrowserProvider.getDevice();
+    let device = await ev3devBrowserProvider.getDevice();
     if (!device) {
-        vscode.window.showErrorMessage('No ev3dev device is connected.');
+        // get device will have shown an error message, so we don't need another here
         return false;
     }
+    const connected = await device.checkConnection();
+    if (!connected) {
+        vscode.window.showErrorMessage('Device is not connected.');
+        return false;
+    }
+
     const config = vscode.workspace.getConfiguration('ev3devBrowser.download');
     const includeFiles = config.get<string>('include');
     const excludeFiles = config.get<string>('exclude');
@@ -237,12 +243,12 @@ async function download(): Promise<boolean> {
 class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
     private _onDidChangeTreeData: vscode.EventEmitter<Device | File> = new vscode.EventEmitter<Device | File>();
 	readonly onDidChangeTreeData: vscode.Event<Device | File> = this._onDidChangeTreeData.event;
-    private device: Device;
+    private device: Device = null;
 
     setDevice(service: dnssd.Service) {
         if (this.device) {
             this.device.destroy();
-            this.device = undefined;
+            this.device = null;
         }
         if (service) {
             this.device = new Device(this, service);
@@ -252,8 +258,24 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
 
     /**
      * Gets the current device.
+     * 
+     * Will prompt the user to select a device if there is not one already connected
      */
-    getDevice(): Device {
+    async getDevice(): Promise<Device> {
+        if (!this.device) {
+            const connectNow = 'Connect Now';
+            const result = await vscode.window.showErrorMessage('No ev3dev device is connected.', connectNow);
+            if (result == connectNow) {
+                await pickDevice();
+            }
+        }
+        return this.device;
+    }
+
+    /**
+     * Gets the current device or null if no device is connected.
+     */
+    getDeviceSync(): Device {
         return this.device;
     }
 
@@ -304,6 +326,17 @@ class ServiceItem implements vscode.QuickPickItem {
     }
 }
 
+/**
+ * Possible states for a Device.
+ * 
+ * These are used for the tree view context value.
+ */
+enum DeviceState {
+    Disconnected = 'ev3devBrowser.device.disconnected',
+    Connecting = 'ev3devBrowser.device.connecting',
+    Connected = 'ev3devBrowser.device.connected'
+}
+
 class Device extends vscode.TreeItem {
     private client: ssh2.Client;
     private sftp: ssh2.SFTPWrapper;
@@ -314,18 +347,18 @@ class Device extends vscode.TreeItem {
 	constructor(readonly provider: Ev3devBrowserProvider, public service: dnssd.Service) {
         super(service.name);
         this.username = service.txt['ev3dev.robot.user']
-        this.contextValue = 'ev3devBrowser.device.connecting';
+        this.contextValue = DeviceState.Connecting;
         this.command = { command: 'ev3devBrowser.deviceClicked', title: '', arguments: [this]};
         this.client = new ssh2.Client();
         this.client.on('ready', () => this.handleClientReady());
         this.client.on('error', err => this.handleClientError(err));
         this.client.on('end', () => {
             // this has the effect of calling this.destroy()
-            this.provider.setDevice(undefined);
+            this.provider.setDevice(null);
         });
         this.client.on('close', () => {
             // this has the effect of calling this.destroy()
-            this.provider.setDevice(undefined);
+            this.provider.setDevice(null);
         });
         this.client.on('keyboard-interactive', async (name, instructions, lang, prompts, finish) => {
             const answers = new Array<string>();
@@ -397,6 +430,29 @@ class Device extends vscode.TreeItem {
         this.client.destroy();
     }
 
+    /**
+     * Checks if the device is connected. If the device is currently connecting,
+     * the promise will not resolve until the connection is complete or has
+     * failed, otherwise the function returns immediately.
+     * @return Promise of true if the device is connected, otherwise false.
+     */
+    async checkConnection(): Promise<boolean> {
+        switch (this.contextValue) {
+        case DeviceState.Connecting:
+            return await new Promise<boolean>((resolve, reject) => {
+                // recursively call checkConnection() until it is no longer connecting
+                // FIXME: this is not pretty. we need to separate the Device
+                // object from the TreeItem view so that the Device can be
+                // an event emitter.
+                setTimeout(() => this.checkConnection().then(r => resolve(r), err => reject(err)), 100);
+            });
+        case DeviceState.Connected:
+            return true;
+        case DeviceState.Disconnected:
+            return false;
+        }
+    }
+
     private handleClientReady(): void {
         this.client.sftp((err, sftp) => {
             if (err) {
@@ -420,14 +476,14 @@ class Device extends vscode.TreeItem {
                 this.provider.fireDeviceChanged(this);
             });
             
-            this.contextValue = 'ev3devBrowser.device.connected';
+            this.contextValue = DeviceState.Connected;
             this.iconPath.dark = path.join(resourceDir, 'icons', 'dark', 'green-circle.svg');
             this.iconPath.light = path.join(resourceDir, 'icons', 'light', 'green-circle.svg');
         });
     }
 
     private handleClientError(err: any): void {
-        this.contextValue = 'ev3devBrowser.device.disconnected';
+        this.contextValue = DeviceState.Disconnected;
         this.iconPath.dark = path.join(resourceDir, 'icons', 'dark', 'red-circle.svg');
         this.iconPath.light = path.join(resourceDir, 'icons', 'light', 'red-circle.svg');
         this.rootDirectory = undefined;
