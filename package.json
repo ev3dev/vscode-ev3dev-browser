@@ -106,6 +106,51 @@
                     "light": "resources/icons/light/download.svg"
                 },
                 "category": "ev3dev"
+            },
+            {
+                "command": "ev3devBrowser.downloadAndRun",
+                "title": "Download and Run"
+            }
+        ],
+        "debuggers": [
+            {
+                "type": "ev3devBrowser",
+                "label": "ev3dev",
+                "configurationAttributes": {
+                    "launch": {
+                        "required": [
+                            "program"
+                        ],
+                        "properties": {
+                            "program": {
+                                "type": "string",
+                                "description": "Absolute path to an executable file on the remote device.",
+                                "default": "${command:AskForProgramName}"
+                            }
+                        }
+                    }
+                },
+                "configurationSnippets": [
+                    {
+                        "label": "ev3dev: Download and Run",
+                        "description": "Configuration for downloading and running a program on an ev3dev device.",
+                        "body": {
+                            "name": "Download and Run",
+                            "type": "ev3devBrowser",
+                            "request": "launch",
+                            "program": "/home/robot/myprogram (replace this with the actual path)"
+                        }
+                    }
+                ],
+                "startSessionCommand": "ev3devBrowser.downloadAndRun",
+                "initialConfigurations": [
+                    {
+                        "name": "Download and Run",
+                        "type": "ev3devBrowser",
+                        "request": "launch",
+                        "program": "/home/robot/myprogram (replace this with the actual path)"
+                    }
+                ]
             }
         ],
         "menus": {

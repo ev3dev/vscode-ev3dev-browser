@@ -49,6 +49,7 @@ export async function activate(context: vscode.ExtensionContext) : Promise<void>
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteDelete', f => f.delete()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.pickDevice', () => pickDevice()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.download', () => download()));
+    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.downloadAndRun', (a, w) => downloadAndRun(a, w)));
 }
 
 // this method is called when your extension is deactivated
@@ -61,6 +62,37 @@ export function deactivate() {
 
     // The "temp" module should clean up automatically, but do this just in case.
     temp.cleanupSync();
+}
+
+interface LaunchAttributes {
+    type: 'ev3devBrowser';
+    name: string;
+    request: 'launch' | 'attach';
+    program: string;
+}
+
+async function downloadAndRun(attrs: LaunchAttributes, workspace: vscode.Uri): Promise<void> {
+    if (!await download()) {
+        // download() shows error messages, so nothing to do here.
+        return;
+    }
+    try {
+        const device = ev3devBrowserProvider.getDevice();
+        const stat = await device.stat(attrs.program);
+        const parts = attrs.program.split('/');
+        const filename = parts.pop();
+        parts.push(''); // so we get trailing '/'
+        const dirname = parts.join('/');
+        const file = new File(device, null, dirname, {
+            filename: filename,
+            longname: '',
+            attrs: stat
+        });
+        file.run();
+    }
+    catch (err) {
+        vscode.window.showErrorMessage(`Failed to run file: ${err.message}`);
+    }
 }
 
 /**
@@ -138,26 +170,33 @@ async function pickDevice(): Promise<void> {
     }
 }
 
-async function download(): Promise<void> {
+/**
+ * Download the current project directory to the device.
+ * 
+ * @return Promise of true on success, otherwise false.
+ */
+async function download(): Promise<boolean> {
     await vscode.workspace.saveAll();
     const localDir = vscode.workspace.rootPath;
     if (!localDir) {
         vscode.window.showErrorMessage('Must have a folder open to send files to device.');
-        return;
+        return false;
     }
 
     let device = ev3devBrowserProvider.getDevice();
     if (!device) {
         vscode.window.showErrorMessage('No ev3dev device is connected.');
-        return;
+        return false;
     }
     const config = vscode.workspace.getConfiguration('ev3devBrowser.download');
     const includeFiles = config.get<string>('include');
     const excludeFiles = config.get<string>('exclude');
     const projectDir = config.get<string>('directory') || path.basename(localDir);
     const remoteBaseDir = device.rootDirectory.path + `/${projectDir}/`;
-    vscode.window.withProgress({
-        location: vscode.ProgressLocation.Window
+    let success = false;
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Window,
+        title: 'Downloading'
     }, async progress => {
         try {
             const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
@@ -179,11 +218,14 @@ async function download(): Promise<void> {
             }
             // make sure any new files show up in the browser
             device.provider.fireDeviceChanged(device);
+            success = true;
         }
         catch (err) {
             vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
         }
     });
+
+    return success;
 }
 
 class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
