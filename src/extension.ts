@@ -100,6 +100,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                 event.session.customRequest('ev3devBrowser.debugger.terminate');
             });
             channel.on('exit', (code, signal, coreDump, desc) => {
+                output.appendLine('----------');
                 if (code === 0) {
                     output.appendLine('Completed successfully.');
                 }
@@ -117,7 +118,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                 output.append(chunk.toString());
             });
             output.appendLine('Started.');
-            output.appendLine('');
+            output.appendLine('----------');
         }
         catch (err) {
             await event.session.customRequest('ev3devBrowser.debugger.terminate');
