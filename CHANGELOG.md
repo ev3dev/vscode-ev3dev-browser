@@ -5,9 +5,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 ### Added
+- Debugger contribution point to allow download and run by pressing F5
 - Device connect/disconnect commands
 - Command to capture a screenshot from the remote device
 ### Fixed
+- Extra commands listed in command palette
+- Device context menu shown when device not connected
 - Fix downloading projects with subdirectories
 
 ## 0.2.0 - 2017-08-15
