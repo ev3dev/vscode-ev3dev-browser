@@ -184,17 +184,17 @@
                 {
                     "command": "ev3devBrowser.deviceTreeItem.disconnect",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected",
-                    "group": "group@9"
+                    "group": "secondary@9"
                 },
                 {
                     "command": "ev3devBrowser.deviceTreeItem.openSshTerminal",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected",
-                    "group": "group@1"
+                    "group": "primary@1"
                 },
                 {
                     "command": "ev3devBrowser.deviceTreeItem.captureScreenshot",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected",
-                    "group": "group@2"
+                    "group": "primary@2"
                 },
                 {
                     "command": "ev3devBrowser.fileTreeItem.run",
