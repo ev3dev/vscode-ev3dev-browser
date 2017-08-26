@@ -9,7 +9,7 @@ Learn more about ev3dev at <http://www.ev3dev.org>.
 ## Requirements
 
 This extension is only compatible with **ev3dev-stretch** [snapshot images] starting
-with `2017-08-11`. It will not work with other versions of ev3dev.
+with `2017-08-26`. It will not work with other versions of ev3dev.
 
 Additional information can be found on the [wiki].
 
@@ -22,7 +22,7 @@ Additional information can be found on the [wiki].
 *   **Discover devices**: Any connected ev3dev device should be automatically discovered.
     No configuration necessary.
 
-    ![Device connect button screenshot](.README/device-connect-button.png)
+    ![Device connect button screenshot](.README/device-connect-tree-item.png)
 
     ![Device quick-pick screenshot](.README/device-quick-pick.png)
 
@@ -48,10 +48,36 @@ Additional information can be found on the [wiki].
 
     ![Output pane screenshot](.README/output-pane.png)
 
+*   **Build, Download and Run with a single click (or F5)**: Create a `launch.json`
+    file with an `"ev3devBrowser"` type to use this feature.
+
+    ```json
+    {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Download and Run",
+                "type": "ev3devBrowser",
+                "request": "launch",
+                "program": "/home/robot/${workspaceRootFolderName}/hello",
+                "preLaunchTask": "build"
+            }
+        ]
+    }
+    ```
+
+
 *   **Start a remote SSH session**: You can start an SSH session in the terminal pane
     by right-clicking on a device.
 
     ![Device context menu screenshot](.README/device-context-menu.png)
+
+*   **Take a screenshot**: You can easily take screenshot by right-clicking
+    a device.
+
+    ![Device context menu screenshot](.README/device-context-menu-screenshot.png)
+
+    ![Meta screenshot](.README/screenshot.png)
 
 
 ## Extension Settings
@@ -78,4 +104,5 @@ This extension contributes the following settings:
 *   Stopping a program only sends `SIGTERM`. If that doesn't actually stop the
     program then it can't be stopped remotely. There is not a way to send
     `SIGKILL` to forcefully stop it.
+*   If your program crashes, motors will not be stopped.
 *   USB disconnection is not detected on macOS.
