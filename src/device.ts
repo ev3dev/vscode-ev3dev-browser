@@ -332,7 +332,7 @@ export class Device extends vscode.Disposable {
      * @param local The path to a local file.
      * @param remote The remote path where the file will be saved.
      */
-    put(local: string, remote: string): Promise<void> {
+    public put(local: string, remote: string): Promise<void> {
         return new Promise((resolve, reject) => {
             this.sftp.fastPut(local, remote, (err) => {
                 if (err) {
@@ -393,6 +393,25 @@ export class Device extends vscode.Disposable {
                     resolve();
                 }
             })
+        });
+    }
+
+    public getSystemInfo(): Promise<string> {
+        return new Promise((resolve, reject) => {
+            this.exec('ev3dev-sysinfo').then(conn => {
+                let sysinfoString = '';
+                conn.stdout.on('data', buffer => sysinfoString += buffer.toString());
+                conn.stdout.on('error', (err) => {
+                    conn.close();
+                    conn.stdout.removeAllListeners('end');
+                    reject(err);
+                });
+
+                conn.stdout.on('end', () => {
+                    conn.close();
+                    resolve(sysinfoString);
+                });
+            }, reject);
         });
     }
 

@@ -44,6 +44,7 @@ export function activate(context: vscode.ExtensionContext) : void {
         vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.openSshTerminal', d => d.openSshTerminal()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.captureScreenshot', d => d.captureScreenshot()),
+        vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.printSysinfo', d => d.printSysinfo()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.connect', d => d.connect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.disconnect', d => d.disconnect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.select', d => d.handleClick()),
@@ -407,6 +408,24 @@ class DeviceTreeItem extends vscode.TreeItem {
         }
         catch (e) {
             handleCaptureError(e);
+        }
+    }
+
+    public async printSysinfo() {
+        const messageBarItem = new StatusBarProgressionMessage("Grabbing ev3dev system info...");
+        try {
+            const sysinfo = await this.device.getSystemInfo();
+
+            output.appendLine("========== ev3dev-sysinfo ==========");
+            output.appendLine(sysinfo);
+            output.appendLine("");
+            output.show();
+
+            messageBarItem.finish("System info downloaded; see output window.");
+        }
+        catch(err) {
+            vscode.window.showErrorMessage("An error occurred while capturing system info: " + (err.message || err));
+            messageBarItem.finish();
         }
     }
 
