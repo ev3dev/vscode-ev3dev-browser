@@ -166,13 +166,13 @@ async function download(): Promise<boolean> {
     let success = false;
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Window,
-        title: 'Downloading'
+        title: 'Sending'
     }, async progress => {
         try {
             const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
             for (const f of files) {
                 progress.report({
-                    message: `Copying ${f.fsPath}`
+                    message: f.fsPath
                 });
                 const basename = path.basename(f.fsPath);
                 const relativeDir = path.dirname(vscode.workspace.asRelativePath(f.fsPath)) + '/';
@@ -189,6 +189,7 @@ async function download(): Promise<boolean> {
             // make sure any new files show up in the browser
             ev3devBrowserProvider.fireDeviceChanged();
             success = true;
+            vscode.window.setStatusBarMessage(`Done sending project to ${device.name}.`, 5000);
         }
         catch (err) {
             vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
