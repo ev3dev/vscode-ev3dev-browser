@@ -9,4 +9,4 @@ src/**
 build-native.*
 tsconfig.json
 vsc-extension-quickstart.md
-.nexe
+.nexe/**
