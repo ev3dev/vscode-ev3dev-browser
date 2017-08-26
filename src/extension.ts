@@ -398,7 +398,7 @@ class DeviceTreeItem extends vscode.TreeItem {
                 const pngHeader = [ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A ];
                 if (await verifyFileHeader(screenshotFile, pngHeader)) {
                     statusBarMessage.finish(`Screenshot "${screenshotBaseName}" successfully captured`);
-                    vscode.commands.executeCommand('vscode.open', vscode.Uri.file(screenshotFile));
+                    vscode.commands.executeCommand('vscode.open', vscode.Uri.file(screenshotFile), vscode.ViewColumn.Two);
                 }
                 else {
                     handleCaptureError("The screenshot was not in the correct format. You may need to upgrade to fbcat 0.5.0.");
