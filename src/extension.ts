@@ -49,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) : void {
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.run', f => f.run()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.delete', f => f.delete()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.select', f => f.handleClick()),
-        vscode.commands.registerCommand('ev3devBrowser.pickDevice', () => pickDevice()),
+        vscode.commands.registerCommand('ev3devBrowser.action.pickDevice', () => pickDevice()),
         vscode.commands.registerCommand('ev3devBrowser.download', () => download()),
         vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e))
     );
@@ -197,10 +197,12 @@ async function download(): Promise<boolean> {
     return success;
 }
 
-class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeDataProvider<DeviceTreeItem | File> {
-    private _onDidChangeTreeData: vscode.EventEmitter<DeviceTreeItem | File> = new vscode.EventEmitter<DeviceTreeItem | File>();
-    readonly onDidChangeTreeData: vscode.Event<DeviceTreeItem | File> = this._onDidChangeTreeData.event;
+class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeDataProvider<DeviceTreeItem | File | CommandTreeItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<DeviceTreeItem | File | CommandTreeItem> =
+        new vscode.EventEmitter<DeviceTreeItem | File | CommandTreeItem>();
+    readonly onDidChangeTreeData: vscode.Event<DeviceTreeItem | File | CommandTreeItem> = this._onDidChangeTreeData.event;
     private device: DeviceTreeItem;
+    private readonly noDeviceTreeItem = new CommandTreeItem('Click here to connect to a device.', 'ev3devBrowser.action.pickDevice');
 
     constructor() {
         super(() => {
@@ -242,16 +244,13 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
         return this.device && this.device.device;
     }
 
-    getTreeItem(element: DeviceTreeItem | File): vscode.TreeItem {
+    getTreeItem(element: DeviceTreeItem | File | CommandTreeItem): vscode.TreeItem {
         return element;
     }
 
-    getChildren(element?: DeviceTreeItem | File): vscode.ProviderResult<DeviceTreeItem[] | File[]> {
+    getChildren(element?: DeviceTreeItem | File | CommandTreeItem): vscode.ProviderResult<DeviceTreeItem[] | File[] | CommandTreeItem[]> {
         if (!element) {
-            if (!this.device) {
-                return [];
-            }
-            return [this.device];
+            return [this.device || this.noDeviceTreeItem];
         }
         if (element instanceof DeviceTreeItem) {
             return [element.rootDirectory];
@@ -259,6 +258,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
         if (element instanceof File) {
             return element.getFiles();
         }
+        return [];
     }
 
     fireDeviceChanged(): void {
@@ -548,5 +548,18 @@ class File extends vscode.TreeItem {
         }, err => {
             vscode.window.showErrorMessage(`Error deleting '${this.path}': ${err.message}`);
         });
+    }
+}
+
+/**
+ * A tree view item that runs a command when clicked.
+ */
+class CommandTreeItem extends vscode.TreeItem {
+    constructor(label: string, command: string) {
+        super(label);
+        this.command = {
+            command: command,
+            title: ''
+        };
     }
 }

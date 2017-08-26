@@ -94,12 +94,8 @@
                 "title": "Delete"
             },
             {
-                "command": "ev3devBrowser.pickDevice",
+                "command": "ev3devBrowser.action.pickDevice",
                 "title": "Connect to a device",
-                "icon": {
-                    "dark": "resources/icons/green-plus-sign.svg",
-                    "light": "resources/icons/green-plus-sign.svg"
-                },
                 "category": "ev3dev"
             },
             {
@@ -165,7 +161,7 @@
         "menus": {
             "commandPalette": [
                 {
-                    "command": "ev3devBrowser.pickDevice",
+                    "command": "ev3devBrowser.action.pickDevice",
                     "when": "config.ev3devBrowser.visible"
                 },
                 {
@@ -174,11 +170,6 @@
                 }
             ],
             "view/title": [
-                {
-                    "command": "ev3devBrowser.pickDevice",
-                    "group": "navigation",
-                    "when": "view == ev3devBrowser"
-                },
                 {
                     "command": "ev3devBrowser.download",
                     "group": "navigation",
