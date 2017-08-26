@@ -45,10 +45,10 @@ export function activate(context: vscode.ExtensionContext) : void {
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.connect', d => d.connect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.disconnect', d => d.disconnect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.select', d => d.handleClick()),
-        vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()),
-        vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()),
-        vscode.commands.registerCommand('ev3devBrowser.remoteTerm', f => f.stop()),
-        vscode.commands.registerCommand('ev3devBrowser.remoteDelete', f => f.delete()),
+        vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.run', f => f.run()),
+        vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.stop', f => f.stop()),
+        vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.delete', f => f.delete()),
+        vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.select', f => f.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.pickDevice', () => pickDevice()),
         vscode.commands.registerCommand('ev3devBrowser.download', () => download()),
         vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e))
@@ -435,7 +435,7 @@ class File extends vscode.TreeItem {
         else {
             this.contextValue = FileState.None;
         }
-        this.command = { command: 'ev3devBrowser.fileClicked', title: '', arguments: [this]};
+        this.command = { command: 'ev3devBrowser.fileTreeItem.select', title: '', arguments: [this] };
     }
 
     private createOrUpdate(device: Device, directory: string, fileInfo: any): File {

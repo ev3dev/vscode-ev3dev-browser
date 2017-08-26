@@ -78,15 +78,15 @@
                 "title": "Take Screenshot"
             },
             {
-                "command": "ev3devBrowser.remoteRun",
+                "command": "ev3devBrowser.fileTreeItem.run",
                 "title": "Run"
             },
             {
-                "command": "ev3devBrowser.remoteTerm",
+                "command": "ev3devBrowser.fileTreeItem.stop",
                 "title": "Stop"
             },
             {
-                "command": "ev3devBrowser.remoteDelete",
+                "command": "ev3devBrowser.fileTreeItem.delete",
                 "title": "Delete"
             },
             {
@@ -202,16 +202,19 @@
                     "group": "group@2"
                 },
                 {
-                    "command": "ev3devBrowser.remoteRun",
-                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.executable"
+                    "command": "ev3devBrowser.fileTreeItem.run",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.executable",
+                    "group": "group@1"
                 },
                 {
-                    "command": "ev3devBrowser.remoteDelete",
-                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file"
+                    "command": "ev3devBrowser.fileTreeItem.delete",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file",
+                    "group": "group@5"
                 },
                 {
-                    "command": "ev3devBrowser.remoteDelete",
-                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.executable"
+                    "command": "ev3devBrowser.fileTreeItem.delete",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.executable",
+                    "group": "group@5"
                 }
             ]
         },
