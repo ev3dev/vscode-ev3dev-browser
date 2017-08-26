@@ -99,7 +99,7 @@
                 "category": "ev3dev"
             },
             {
-                "command": "ev3devBrowser.download",
+                "command": "ev3devBrowser.action.download",
                 "title": "Send project to device",
                 "icon": {
                     "dark": "resources/icons/dark/download.svg",
@@ -165,15 +165,15 @@
                     "when": "config.ev3devBrowser.visible"
                 },
                 {
-                    "command": "ev3devBrowser.download",
-                    "when": "config.ev3devBrowser.visible"
+                    "command": "ev3devBrowser.action.download",
+                    "when": "config.ev3devBrowser.visible && ev3devBrowser.context.connected"
                 }
             ],
             "view/title": [
                 {
-                    "command": "ev3devBrowser.download",
+                    "command": "ev3devBrowser.action.download",
                     "group": "navigation",
-                    "when": "view == ev3devBrowser"
+                    "when": "view == ev3devBrowser && ev3devBrowser.context.connected"
                 }
             ],
             "view/item/context": [

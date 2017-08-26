@@ -16,7 +16,8 @@ import {
     sanitizedDateString,
     getSharedTempDir,
     verifyFileHeader,
-    StatusBarProgressionMessage
+    StatusBarProgressionMessage,
+    setContext
 } from './utils';
 
 
@@ -50,7 +51,7 @@ export function activate(context: vscode.ExtensionContext) : void {
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.delete', f => f.delete()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.select', f => f.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.action.pickDevice', () => pickDevice()),
-        vscode.commands.registerCommand('ev3devBrowser.download', () => download()),
+        vscode.commands.registerCommand('ev3devBrowser.action.download', () => download()),
         vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e))
     );
 }
@@ -314,6 +315,7 @@ class DeviceTreeItem extends vscode.TreeItem {
 
     private handleConnectionState(state: DeviceState) {
         this.contextValue = state;
+        setContext('ev3devBrowser.context.connected', false);
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.rootDirectory = null;
         let icon: string;
@@ -322,6 +324,7 @@ class DeviceTreeItem extends vscode.TreeItem {
             icon = 'yellow-circle.svg';
             break;
         case DeviceState.Connected:
+            setContext('ev3devBrowser.context.connected', true);
             this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
             this.rootDirectory = new File(this.device, null, '', {
                 filename: this.device.homeDirectoryPath,

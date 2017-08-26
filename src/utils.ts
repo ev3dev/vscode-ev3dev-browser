@@ -109,3 +109,14 @@ export class StatusBarProgressionMessage {
         this.statusBarItem = null;
     }
 }
+
+/**
+ * Sets a context that can be use for when clauses in package.json
+ *
+ * This may become official vscode API some day.
+ * https://github.com/Microsoft/vscode/issues/10471
+ * @param context The context name
+ */
+export function setContext(context: string, state: boolean): void {
+    vscode.commands.executeCommand('setContext', context, state);
+}
