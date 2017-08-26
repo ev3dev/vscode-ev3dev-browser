@@ -42,6 +42,8 @@ export function activate(context: vscode.ExtensionContext) : void {
         vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider),
         vscode.commands.registerCommand('ev3devBrowser.openSshTerminal', d => ev3devBrowserProvider.openSshTerminal(d)),
         vscode.commands.registerCommand('ev3devBrowser.captureScreenshot', d => ev3devBrowserProvider.captureScreenshot(d)),
+        vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.connect', d => d.connect()),
+        vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.disconnect', d => d.disconnect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceClicked', d => d.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()),
@@ -393,6 +395,19 @@ class DeviceTreeItem extends vscode.TreeItem {
         dark: null,
         light: null
     };
+
+    async connect(): Promise<void> {
+        try {
+            await this.device.connect();
+        }
+        catch (err) {
+            vscode.window.showErrorMessage(`Failed to connect to ${this.label}: ${err.message}`);
+        }
+    }
+
+    disconnect(): void {
+        this.device.disconnect();
+    }
 }
 
 /**

@@ -106,6 +106,14 @@
                     "light": "resources/icons/light/download.svg"
                 },
                 "category": "ev3dev"
+            },
+            {
+                "command": "ev3devBrowser.deviceTreeItem.connect",
+                "title": "Connect"
+            },
+            {
+                "command": "ev3devBrowser.deviceTreeItem.disconnect",
+                "title": "Disconnect"
             }
         ],
         "debuggers": [
@@ -175,12 +183,23 @@
             ],
             "view/item/context": [
                 {
+                    "command": "ev3devBrowser.deviceTreeItem.connect",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.disconnected"
+                },
+                {
+                    "command": "ev3devBrowser.deviceTreeItem.disconnect",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected",
+                    "group": "group@9"
+                },
+                {
                     "command": "ev3devBrowser.openSshTerminal",
-                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected"
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected",
+                    "group": "group@1"
                 },
                 {
                     "command": "ev3devBrowser.captureScreenshot",
-                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected"
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected",
+                    "group": "group@2"
                 },
                 {
                     "command": "ev3devBrowser.remoteRun",
