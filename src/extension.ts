@@ -44,7 +44,7 @@ export function activate(context: vscode.ExtensionContext) : void {
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.captureScreenshot', d => d.captureScreenshot()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.connect', d => d.connect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.disconnect', d => d.disconnect()),
-        vscode.commands.registerCommand('ev3devBrowser.deviceClicked', d => d.handleClick()),
+        vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.select', d => d.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()),
         vscode.commands.registerCommand('ev3devBrowser.remoteTerm', f => f.stop()),
@@ -274,7 +274,7 @@ class DeviceTreeItem extends vscode.TreeItem {
 
     constructor(public readonly device: Device) {
         super(device.name);
-        this.command = { command: 'ev3devBrowser.deviceClicked', title: '', arguments: [this]};
+        this.command = { command: 'ev3devBrowser.deviceTreeItem.select', title: '', arguments: [this] };
         device.onWillConnect(() => this.handleConnectionState(DeviceState.Connecting));
         device.onDidConnect(() => this.handleConnectionState(DeviceState.Connected));
         device.onDidDisconnect(() => this.handleConnectionState(DeviceState.Disconnected));
