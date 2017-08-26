@@ -3,12 +3,15 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## Unreleased
+## 0.3.0 - 2017-08-26
 ### Added
 - Debugger contribution point to allow download and run by pressing F5
-- Device connect/disconnect commands
+- Device (re)connect/disconnect commands
 - Command to capture a screenshot from the remote device
+### Changed
+- Connect button is now an item in the tree view
 ### Fixed
+- Download button shown when no device is connected
 - Extra commands listed in command palette
 - Device context menu shown when device not connected
 - Fix downloading projects with subdirectories
