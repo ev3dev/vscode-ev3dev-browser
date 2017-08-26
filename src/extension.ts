@@ -9,8 +9,9 @@ import * as temp from 'temp';
 
 import * as vscode from 'vscode';
 
-import * as dnssd from './dnssd';
+import { LaunchRequestArguments } from './debugServer';
 import { Device } from './device';
+import * as dnssd from './dnssd';
 import {
     sanitizedDateString,
     getSharedTempDir,
@@ -46,7 +47,6 @@ export function activate(context: vscode.ExtensionContext) : void {
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.disconnect', d => d.disconnect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.select', d => d.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.run', f => f.run()),
-        vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.stop', f => f.stop()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.delete', f => f.delete()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.select', f => f.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.pickDevice', () => pickDevice()),
@@ -78,33 +78,55 @@ async function pickDevice(): Promise<void> {
 
 async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Promise<void> {
     switch (event.event) {
-    case 'ev3devBrowser.downloadAndRun':
-        if (!await download()) {
+    case 'ev3devBrowser.debugger.launch':
+        const args = <LaunchRequestArguments> event.body;
+
+        // optionally download before running
+        if (args.download !== false && !await download()) {
             // download() shows error messages, so don't show additional message here.
-            await event.session.customRequest('ev3devBrowser.terminate');
-            return;
+            await event.session.customRequest('ev3devBrowser.debugger.terminate');
+            break;
         }
+
+        // run the program
         try {
             const device = ev3devBrowserProvider.getDeviceSync();
-            const stat = await device.stat(event.body.program);
-            const parts = event.body.program.split('/');
-            const filename = parts.pop();
-            parts.push(''); // so we get trailing '/'
-            const dirname = parts.join('/');
-            const file = new File(device, null, dirname, {
-                filename: filename,
-                longname: '',
-                attrs: stat
+            const command = `conrun -e ${args.program}`;
+            output.show(true);
+            output.clear();
+            output.appendLine(`Starting: ${command}`);
+            const channel = await device.exec(command);
+            channel.on('close', () => {
+                event.session.customRequest('ev3devBrowser.debugger.terminate');
             });
-            file.run();
+            channel.on('exit', (code, signal, coreDump, desc) => {
+                if (code === 0) {
+                    output.appendLine('Completed successfully.');
+                }
+                else if (code) {
+                    output.appendLine(`Exited with error code ${code}.`);
+                }
+                else {
+                    output.appendLine(`Exited with signal ${signal}.`);
+                }
+            });
+            channel.on('data', (chunk) => {
+                output.append(chunk.toString());
+            });
+            channel.stderr.on('data', (chunk) => {
+                output.append(chunk.toString());
+            });
+            output.appendLine('Started.');
+            output.appendLine('');
         }
         catch (err) {
+            await event.session.customRequest('ev3devBrowser.debugger.terminate');
             vscode.window.showErrorMessage(`Failed to run file: ${err.message}`);
         }
         break;
-    case 'ev3devBrowser.stop':
+    case 'ev3devBrowser.debugger.stop':
         const device = ev3devBrowserProvider.getDeviceSync();
-        if (device) {
+        if (device && device.isConnected) {
             device.exec('conrun-kill');
         }
         break;
@@ -113,7 +135,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
 
 /**
  * Download the current project directory to the device.
- * 
+ *
  * @return Promise of true on success, otherwise false.
  */
 async function download(): Promise<boolean> {
@@ -154,7 +176,7 @@ async function download(): Promise<boolean> {
                 const relativeDir = path.dirname(vscode.workspace.asRelativePath(f.fsPath)) + '/';
                 const remoteDir = remoteBaseDir + relativeDir;
                 const remotePath = remoteDir + basename;
-                
+
                 // make sure the directory exists
                 await device.mkdir_p(remoteDir);
                 // then we can copy the file
@@ -198,7 +220,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
 
     /**
      * Gets the current device.
-     * 
+     *
      * Will prompt the user to select a device if there is not one already connected
      */
     async getDevice(): Promise<Device> {
@@ -252,7 +274,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
 class ServiceItem implements vscode.QuickPickItem {
     readonly label: string;
     readonly description: string;
-    
+
     constructor (public service: dnssd.Service) {
         this.label = service.name;
     }
@@ -260,7 +282,7 @@ class ServiceItem implements vscode.QuickPickItem {
 
 /**
  * Possible states for a Device.
- * 
+ *
  * These are used for the tree view context value.
  */
 enum DeviceState {
@@ -510,63 +532,13 @@ class File extends vscode.TreeItem {
     }
 
     run(): void {
-        const command = `conrun -e ${this.path}`;
-        output.show(true);
-        output.clear();
-        output.appendLine(`Starting: ${command}`);
-        this.device.exec(command).then(channel => {
-            const cancelSource = new vscode.CancellationTokenSource();
-            channel.on('close', () => {
-                cancelSource.dispose();
-            });
-            channel.on('exit', (code, signal, coreDump, desc) => {
-                if (code === 0) {
-                    output.appendLine('Completed successfully.');
-                }
-                else if (code) {
-                    output.appendLine(`Exited with error code ${code}.`);
-                }
-                else {
-                    output.appendLine(`Exited with signal ${signal}.`);
-                }
-            });
-            channel.on('data', (chunk) => {
-                output.append(chunk.toString());
-            });
-            channel.stderr.on('data', (chunk) => {
-                output.append(chunk.toString());
-            });
-            output.appendLine('Started.');
-            output.appendLine('');
-
-            // Use quick-pick to allow the user to stop a running program. This
-            // seems to be the best available UI at the moment. By using
-            // ignoreFocusOut: true, we can prevent the user from accidentally
-            // closing the quick-pick (unless they press ESC). Using the
-            // cancellation token will close it automatically when the program
-            // exits.
-            const stopItem = <vscode.QuickPickItem> {
-                label: 'Stop',
-                description: this.path
-            };
-            vscode.window.showQuickPick([stopItem], { ignoreFocusOut: true }, cancelSource.token).then(value => {
-                if (value == stopItem) {
-                    this.stop();
-                }
-            });
-        }, err => {
-            output.appendLine(`Failed: ${err.message}`);
+        const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(vscode.workspace.rootPath));
+        vscode.debug.startDebugging(folder, <vscode.DebugConfiguration> {
+            type: 'ev3devBrowser',
+            request: 'launch',
+            program: this.path,
+            download: false
         });
-    }
-
-    stop(): void {
-        // if (this.channel) {
-        //     // cast to any because of missing typescript binding
-        //     (<any> this.channel).signal('TERM');
-        // }
-
-        // signal() does not seem to work anyway
-        this.device.exec('conrun-kill');
     }
 
     delete(): void {

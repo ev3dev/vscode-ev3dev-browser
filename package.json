@@ -82,10 +82,6 @@
                 "title": "Run"
             },
             {
-                "command": "ev3devBrowser.fileTreeItem.stop",
-                "title": "Stop"
-            },
-            {
                 "command": "ev3devBrowser.fileTreeItem.delete",
                 "title": "Delete"
             },

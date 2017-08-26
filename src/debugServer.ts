@@ -6,7 +6,9 @@ import { DebugProtocol } from 'vscode-debugprotocol';
  */
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	/** An absolute path to the program to debug. */
-	program: string;
+    program: string;
+    /** Download files before running. Default is true. */
+    download?: boolean
 }
 
 
@@ -18,17 +20,14 @@ class Ev3devBrowserDebugSession extends DebugSession {
         this.sendResponse(response);
     }
 
-    protected launchRequest(response: DebugProtocol.LaunchResponse, args:LaunchRequestArguments): void {
-        this.sendEvent(new Event('ev3devBrowser.downloadAndRun', {
-            program: args.program
-        }));
-        // terminating for now since we are using existing quick-pick to stop program
-        this.sendEvent(new TerminatedEvent());
+    protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
+        this.sendEvent(new Event('ev3devBrowser.debugger.launch', args));
+        // We don't send a response so that the pause button does not become enabled.
     }
 
     protected customRequest(command: string, response: DebugProtocol.Response, args: any): void {
         switch (command) {
-        case 'ev3devBrowser.terminate':
+        case 'ev3devBrowser.debugger.terminate':
             this.sendEvent(new TerminatedEvent());
             this.sendResponse(response);
             break;
@@ -38,7 +37,7 @@ class Ev3devBrowserDebugSession extends DebugSession {
     protected disconnectRequest(response: DebugProtocol.DisconnectResponse,
         args: DebugProtocol.DisconnectArguments): void
     {
-        this.sendEvent(new Event('ev3devBrowser.stop'));
+        this.sendEvent(new Event('ev3devBrowser.debugger.stop'));
         this.sendResponse(response);
     }
 }
