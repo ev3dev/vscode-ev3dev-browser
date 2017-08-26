@@ -116,8 +116,16 @@
             {
                 "type": "ev3devBrowser",
                 "label": "ev3dev",
-                "program": "./out/src/debugServer.js",
-                "runtime": "node",
+                "linux": {
+                    "program": "./native/linux/helper"
+                },
+                "osx": {
+                    "program": "./native/darwin/helper"
+                },
+                "windows": {
+                    "program": "./native/win32/helper.exe"
+                },
+                "args": ["debugServer"],
                 "configurationAttributes": {
                     "launch": {
                         "required": [

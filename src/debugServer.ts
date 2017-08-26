@@ -42,4 +42,13 @@ class Ev3devBrowserDebugSession extends DebugSession {
     }
 }
 
-DebugSession.run(Ev3devBrowserDebugSession);
+/**
+ * Run the debug server.
+ */
+export function run(): void {
+    DebugSession.run(Ev3devBrowserDebugSession);
+}
+
+if (require.main === module) {
+    run();
+}

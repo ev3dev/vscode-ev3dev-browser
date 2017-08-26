@@ -24,7 +24,7 @@ const S_IXUSR = parseInt('00100', 8);
 
 let output: vscode.OutputChannel;
 let resourceDir: string;
-let shellPath: string;
+let helperExePath: string;
 let ev3devBrowserProvider: Ev3devBrowserProvider;
 
 // this method is called when your extension is activated
@@ -32,9 +32,9 @@ let ev3devBrowserProvider: Ev3devBrowserProvider;
 export function activate(context: vscode.ExtensionContext) : void {
     output = vscode.window.createOutputChannel('ev3dev');
     resourceDir = context.asAbsolutePath('resources');
-    shellPath = context.asAbsolutePath(path.join('native', process.platform, 'shell'));
+    helperExePath = context.asAbsolutePath(path.join('native', process.platform, 'helper'));
     if (process.platform == 'win32') {
-        shellPath += '.exe'
+        helperExePath += '.exe'
     }
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
@@ -355,8 +355,8 @@ class DeviceTreeItem extends vscode.TreeItem {
 
     openSshTerminal(): void {
         const term = vscode.window.createTerminal(`SSH: ${this.label}`,
-            shellPath,
-            [this.device.shellPort.toString()]);
+            helperExePath,
+            ['shell', this.device.shellPort.toString()]);
         term.show();
     }
     

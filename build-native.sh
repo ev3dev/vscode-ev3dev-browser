@@ -9,8 +9,8 @@
 # brew install upx
 
 platform=$(node -e 'console.log(process.platform)')
-out=native/$platform/shell
+out=native/$platform/helper
 
-browserify --node --exclude weak out/src/shell.js | nexe --output $out
+browserify --node --exclude weak out/src/helper.js | nexe --output $out
 strip $out
 upx $out

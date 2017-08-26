@@ -6,7 +6,7 @@ rem npm install -g nexe@beta
 rem
 rem choco install upx
 
-set out=native\win32\shell.exe
+set out=native\win32\helper.exe
 
-browserify --node --exclude weak out/src/shell.js | nexe --output %out% --vcBuild ia32
+browserify --node --exclude weak out/src/helper.js | nexe --output %out% --vcBuild ia32
 upx %out%
