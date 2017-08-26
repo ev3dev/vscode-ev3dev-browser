@@ -78,6 +78,14 @@
                 "title": "Take Screenshot"
             },
             {
+                "command": "ev3devBrowser.deviceTreeItem.connect",
+                "title": "Connect"
+            },
+            {
+                "command": "ev3devBrowser.deviceTreeItem.disconnect",
+                "title": "Disconnect"
+            },
+            {
                 "command": "ev3devBrowser.fileTreeItem.run",
                 "title": "Run"
             },
@@ -102,14 +110,6 @@
                     "light": "resources/icons/light/download.svg"
                 },
                 "category": "ev3dev"
-            },
-            {
-                "command": "ev3devBrowser.deviceTreeItem.connect",
-                "title": "Connect"
-            },
-            {
-                "command": "ev3devBrowser.deviceTreeItem.disconnect",
-                "title": "Disconnect"
             }
         ],
         "debuggers": [
