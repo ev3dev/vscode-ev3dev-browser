@@ -1,11 +1,21 @@
 import * as dnode from 'dnode';
-import * as net from 'net'
-import * as path from 'path'
-import * as ssh2 from 'ssh2'
-import * as ssh2Streams from 'ssh2-streams'
+import * as fs from 'fs';
+import * as net from 'net';
+
+import * as path from 'path';
+import * as ssh2 from 'ssh2';
+import * as ssh2Streams from 'ssh2-streams';
+import * as temp from 'temp';
+
 import * as vscode from 'vscode';
 
-import * as dnssd from './dnssd'
+import * as dnssd from './dnssd';
+import {
+    sanitizedDateString,
+    getSharedTempDir,
+    verifyFileHeader,
+    StatusBarProgressionMessage
+} from './utils';
 
 const S_IXUSR = parseInt('00100', 8);
 
@@ -31,6 +41,7 @@ export async function activate(context: vscode.ExtensionContext) : Promise<void>
     ev3devBrowserProvider = new Ev3devBrowserProvider();
     context.subscriptions.push(vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.openSshTerminal', d => ev3devBrowserProvider.openSshTerminal(d)));
+    context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.captureScreenshot', d => ev3devBrowserProvider.captureScreenshot(d)));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.deviceClicked', d => d.handleClick()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.fileClicked', f => f.handleClick()));
     context.subscriptions.push(vscode.commands.registerCommand('ev3devBrowser.remoteRun', f => f.run()));
@@ -47,6 +58,9 @@ export function deactivate() {
         device.destroy();
     }
     dnssdClient.destroy();
+
+    // The "temp" module should clean up automatically, but do this just in case.
+    temp.cleanupSync();
 }
 
 /**
@@ -197,6 +211,10 @@ class Ev3devBrowserProvider implements vscode.TreeDataProvider<Device | File> {
 
     openSshTerminal(device: Device): void {
         device.openSshTerminal();
+    }
+    
+    captureScreenshot(device: Device): void {
+        device.captureScreenshot();
     }
 
 	getTreeItem(element: Device | File): vscode.TreeItem {
@@ -521,6 +539,52 @@ class Device extends vscode.TreeItem {
             [this.shellPort.toString()]);
         term.show();
     }
+    
+    async captureScreenshot() {
+        const statusBarMessage = new StatusBarProgressionMessage("Attempting to capture screenshot...");
+
+        const handleCaptureError = e => {
+            vscode.window.showErrorMessage("Error capturing screenshot: " + (e.message || e)); 
+            statusBarMessage.finish();
+        }
+
+        try {
+            const screenshotDirectory = await getSharedTempDir('ev3dev-screenshots');
+            const screenshotBaseName = `ev3dev-${sanitizedDateString()}.png`;
+            const screenshotFile = `${screenshotDirectory}/${screenshotBaseName}`;
+
+            const conn = await this.exec('fbgrab -');
+            const writeStream = fs.createWriteStream(screenshotFile);
+
+            conn.on('error', (e: Error) => {
+                writeStream.removeAllListeners('finish');
+                handleCaptureError(e);
+            });
+
+            writeStream.on('open', () => {
+                conn.stdout.pipe(writeStream);
+            });
+            
+            writeStream.on('error', (e: Error) => {
+                vscode.window.showErrorMessage("Error saving screenshot: " + e.message);
+                statusBarMessage.finish();
+            });
+
+            writeStream.on('finish', async () => {
+                const pngHeader = [ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A ];
+                if (await verifyFileHeader(screenshotFile, pngHeader)) {
+                    statusBarMessage.finish(`Screenshot "${screenshotBaseName}" successfully captured`);
+                    vscode.commands.executeCommand('vscode.open', vscode.Uri.file(screenshotFile));
+                }
+                else {
+                    handleCaptureError("The screenshot was not in the correct format. You may need to upgrade to fbcat 0.5.0.");
+                }
+            });
+        }
+        catch (e) {
+            handleCaptureError(e);
+        }
+    }
 
 	iconPath = {
 		dark: path.join(resourceDir, 'icons', 'dark', 'yellow-circle.svg'),
@@ -626,7 +690,7 @@ class File extends vscode.TreeItem {
         }
     }
 
-    run() :void {
+    run(): void {
         const command = `conrun -e ${this.path}`;
         output.show(true);
         output.clear();

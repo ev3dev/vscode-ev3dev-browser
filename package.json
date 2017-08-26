@@ -75,6 +75,10 @@
                 "category": "ev3dev"
             },
             {
+                "command": "ev3devBrowser.captureScreenshot",
+                "title": "Take Screenshot"
+            },
+            {
                 "command": "ev3devBrowser.remoteRun",
                 "title": "Run",
                 "category": "ev3dev"
@@ -137,6 +141,10 @@
                     "when": "view == ev3devBrowser && viewItem == ev3devDevice"
                 },
                 {
+                    "command": "ev3devBrowser.captureScreenshot",
+                    "when": "view == ev3devBrowser && viewItem == ev3devDevice"
+                },
+                {
                     "command": "ev3devBrowser.remoteRun",
                     "when": "view == ev3devBrowser && viewItem == executableFile"
                 },
@@ -172,6 +180,7 @@
         "@types/node": "^6.0.85",
         "@types/ssh2": "~0.5.35",
         "@types/ssh2-streams": "~0.1.2",
+        "@types/temp": "^0.8.3",
         "mocha": "^2.3.3",
         "typescript": "^2.4.2",
         "vscode": "^1.0.0"
@@ -182,6 +191,7 @@
         "dbus-native": "^0.2.2",
         "dnode": "^1.2.2",
         "ssh2": "~0.5.5",
-        "ssh2-streams": "~0.1.19"
+        "ssh2-streams": "~0.1.19",
+        "temp": "^0.8.3"
     }
 }
