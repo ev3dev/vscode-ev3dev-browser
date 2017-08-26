@@ -40,8 +40,8 @@ export function activate(context: vscode.ExtensionContext) : void {
     context.subscriptions.push(
         output, ev3devBrowserProvider,
         vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider),
-        vscode.commands.registerCommand('ev3devBrowser.openSshTerminal', d => ev3devBrowserProvider.openSshTerminal(d)),
-        vscode.commands.registerCommand('ev3devBrowser.captureScreenshot', d => ev3devBrowserProvider.captureScreenshot(d)),
+        vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.openSshTerminal', d => d.openSshTerminal()),
+        vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.captureScreenshot', d => d.captureScreenshot()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.connect', d => d.connect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.disconnect', d => d.disconnect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceClicked', d => d.handleClick()),
@@ -217,14 +217,6 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
      */
     getDeviceSync(): Device {
         return this.device && this.device.device;
-    }
-
-    openSshTerminal(device: DeviceTreeItem): void {
-        device.openSshTerminal();
-    }
-    
-    captureScreenshot(device: DeviceTreeItem): void {
-        device.captureScreenshot();
     }
 
     getTreeItem(element: DeviceTreeItem | File): vscode.TreeItem {

@@ -3,8 +3,8 @@
 //
 // Basic flow is like this:
 // - When extension.ts connects to a device, it starts a dnode server
-// - When extension.ts executes the ev3devBrowser.openSshTerminal command, it
-//   runs shell.ts (passing the port as an argument)
+// - When extension.ts executes the ev3devBrowser.deviceTreeItem.openSshTerminal
+//   command, it runs shell.ts (passing the port as an argument)
 // - shell.ts connects to the server
 // - when the connection is complete, the 'remote' event call the remote
 //   shell() method.

@@ -70,11 +70,11 @@
         },
         "commands": [
             {
-                "command": "ev3devBrowser.openSshTerminal",
+                "command": "ev3devBrowser.deviceTreeItem.openSshTerminal",
                 "title": "Open SSH Terminal"
             },
             {
-                "command": "ev3devBrowser.captureScreenshot",
+                "command": "ev3devBrowser.deviceTreeItem.captureScreenshot",
                 "title": "Take Screenshot"
             },
             {
@@ -192,12 +192,12 @@
                     "group": "group@9"
                 },
                 {
-                    "command": "ev3devBrowser.openSshTerminal",
+                    "command": "ev3devBrowser.deviceTreeItem.openSshTerminal",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected",
                     "group": "group@1"
                 },
                 {
-                    "command": "ev3devBrowser.captureScreenshot",
+                    "command": "ev3devBrowser.deviceTreeItem.captureScreenshot",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected",
                     "group": "group@2"
                 },
