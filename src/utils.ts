@@ -5,7 +5,7 @@ import { isArray } from 'util';
 
 const toastDuration = 5000;
 
-export function sanitizedDateString(date?: Date) {
+export function sanitizedDateString(date?: Date): string {
     const d = date || new Date();
     const pad = (num: number) => ("00" + num).slice(-2);
 
@@ -60,7 +60,7 @@ export async function verifyFileHeader(filePath: string, expectedHeader: Buffer 
     return header.compare(bufferExpectedHeader) == 0;
 }
 
-export function toastStatusBarMessage(message: string) {
+export function toastStatusBarMessage(message: string): void {
     vscode.window.setStatusBarMessage(message, toastDuration);
 }
 

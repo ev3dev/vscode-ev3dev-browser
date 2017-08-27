@@ -29,7 +29,7 @@ let ev3devBrowserProvider: Ev3devBrowserProvider;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) : void {
+export function activate(context: vscode.ExtensionContext): void {
     output = vscode.window.createOutputChannel('ev3dev');
     resourceDir = context.asAbsolutePath('resources');
     helperExePath = context.asAbsolutePath(path.join('native', process.platform, 'helper'));
@@ -56,7 +56,7 @@ export function activate(context: vscode.ExtensionContext) : void {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {
+export function deactivate(): void {
     // The "temp" module should clean up automatically, but do this just in case.
     temp.cleanupSync();
 }
@@ -211,7 +211,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
         });
     }
 
-    setDevice(device: Device) {
+    public setDevice(device: Device): void {
         if (this.device) {
             this.device.device.disconnect();
             this.device = null;
@@ -227,7 +227,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
      *
      * Will prompt the user to select a device if there is not one already connected
      */
-    async getDevice(): Promise<Device> {
+    public async getDevice(): Promise<Device> {
         if (!this.device) {
             const connectNow = 'Connect Now';
             const result = await vscode.window.showErrorMessage('No ev3dev device is connected.', connectNow);
@@ -241,15 +241,15 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
     /**
      * Gets the current device or null if no device is connected.
      */
-    getDeviceSync(): Device {
+    public getDeviceSync(): Device {
         return this.device && this.device.device;
     }
 
-    getTreeItem(element: DeviceTreeItem | File | CommandTreeItem): vscode.TreeItem {
+    public getTreeItem(element: DeviceTreeItem | File | CommandTreeItem): vscode.TreeItem {
         return element;
     }
 
-    getChildren(element?: DeviceTreeItem | File | CommandTreeItem): vscode.ProviderResult<DeviceTreeItem[] | File[] | CommandTreeItem[]> {
+    public getChildren(element?: DeviceTreeItem | File | CommandTreeItem): vscode.ProviderResult<DeviceTreeItem[] | File[] | CommandTreeItem[]> {
         if (!element) {
             return [this.device || this.noDeviceTreeItem];
         }
@@ -262,13 +262,13 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
         return [];
     }
 
-    fireDeviceChanged() {
+    public fireDeviceChanged(): void {
         // not sure why, but if we pass device to fire(), vscode does not call
         // back to getTreeItem(), so we are refreshing the entire tree for now
         this._onDidChangeTreeData.fire();
     }
 
-    fireFileChanged(file: File) {
+    public fireFileChanged(file: File): void {
         this._onDidChangeTreeData.fire(file);
     }
 }
@@ -285,7 +285,7 @@ enum DeviceState {
 }
 
 class DeviceTreeItem extends vscode.TreeItem {
-    rootDirectory : File;
+    private rootDirectory : File;
 
     constructor(public readonly device: Device) {
         super(device.name);
@@ -304,7 +304,7 @@ class DeviceTreeItem extends vscode.TreeItem {
         }
     }
 
-    private handleConnectionState(state: DeviceState) {
+    private handleConnectionState(state: DeviceState): void {
         this.contextValue = state;
         setContext('ev3devBrowser.context.connected', false);
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
@@ -334,7 +334,7 @@ class DeviceTreeItem extends vscode.TreeItem {
         ev3devBrowserProvider.fireDeviceChanged();
     }
 
-    handleClick() {
+    public handleClick(): void {
         // Attempt to keep he collapsible state correct. If we don't do this,
         // strange things happen on a refresh.
         switch(this.collapsibleState) {
@@ -347,14 +347,14 @@ class DeviceTreeItem extends vscode.TreeItem {
         }
     }
 
-    openSshTerminal():void {
+    public openSshTerminal(): void {
         const term = vscode.window.createTerminal(`SSH: ${this.label}`,
             helperExePath,
             ['shell', this.device.shellPort.toString()]);
         term.show();
     }
     
-    async captureScreenshot() {
+    public async captureScreenshot(): Promise<void> {
         vscode.window.withProgress({
             location: vscode.ProgressLocation.Window,
             title: "Capturing screenshot..."
@@ -411,7 +411,7 @@ class DeviceTreeItem extends vscode.TreeItem {
         light: null
     };
 
-    async connect(): Promise<void> {
+    public async connect(): Promise<void> {
         try {
             await this.device.connect();
         }
@@ -420,7 +420,7 @@ class DeviceTreeItem extends vscode.TreeItem {
         }
     }
 
-    disconnect() {
+    public disconnect(): void {
         this.device.disconnect();
     }
 }
@@ -509,7 +509,7 @@ class File extends vscode.TreeItem {
         });
     }
 
-    handleClick() {
+    public handleClick(): void {
         // keep track of state so that it is preserved during refresh
         if (this.collapsibleState == vscode.TreeItemCollapsibleState.Expanded) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
@@ -532,7 +532,7 @@ class File extends vscode.TreeItem {
         }
     }
 
-    run() {
+    public run(): void {
         const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(vscode.workspace.rootPath));
         vscode.debug.startDebugging(folder, <vscode.DebugConfiguration> {
             type: 'ev3devBrowser',
@@ -542,7 +542,7 @@ class File extends vscode.TreeItem {
         });
     }
 
-    delete() {
+    public delete(): void {
         this.device.rm(this.path).then(() => {
             ev3devBrowserProvider.fireFileChanged(this.parent);
         }, err => {

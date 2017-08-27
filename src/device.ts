@@ -175,7 +175,7 @@ export class Device extends vscode.Disposable {
     /**
      * Disconnect from the device.
      */
-    public disconnect() {
+    public disconnect(): void {
         this._isConnected = false;
         if (this.shellServer) {
             this.shellServer.close();
@@ -332,7 +332,7 @@ export class Device extends vscode.Disposable {
      * @param local The path to a local file.
      * @param remote The remote path where the file will be saved.
      */
-    put(local: string, remote: string): Promise<void> {
+    public put(local: string, remote: string): Promise<void> {
         return new Promise((resolve, reject) => {
             this.sftp.fastPut(local, remote, (err) => {
                 if (err) {
@@ -481,8 +481,8 @@ export class Device extends vscode.Disposable {
  * Quick pick item used in DeviceManager.pickDevice().
  */
 class ServiceItem implements vscode.QuickPickItem {
-    readonly label: string;
-    readonly description: string;
+    public readonly label: string;
+    public readonly description: string;
 
     constructor (public service: dnssd.Service) {
         this.label = service.name;
