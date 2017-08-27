@@ -11,17 +11,16 @@ import * as vscode from 'vscode';
 
 import { LaunchRequestArguments } from './debugServer';
 import { Device } from './device';
-import * as dnssd from './dnssd';
 import {
     sanitizedDateString,
     getSharedTempDir,
     verifyFileHeader,
-    StatusBarProgressionMessage,
+    toastStatusBarMessage,
     setContext
 } from './utils';
 
 
-const S_IXUSR = parseInt('00100', 8);
+const S_IXUSR = 0o0100;
 
 let output: vscode.OutputChannel;
 let resourceDir: string;
@@ -275,15 +274,6 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
     }
 }
 
-class ServiceItem implements vscode.QuickPickItem {
-    readonly label: string;
-    readonly description: string;
-
-    constructor (public service: dnssd.Service) {
-        this.label = service.name;
-    }
-}
-
 /**
  * Possible states for a Device.
  *
@@ -366,49 +356,55 @@ class DeviceTreeItem extends vscode.TreeItem {
     }
     
     async captureScreenshot() {
-        const statusBarMessage = new StatusBarProgressionMessage("Attempting to capture screenshot...");
-
-        const handleCaptureError = e => {
-            vscode.window.showErrorMessage("Error capturing screenshot: " + (e.message || e)); 
-            statusBarMessage.finish();
-        }
-
-        try {
-            const screenshotDirectory = await getSharedTempDir('ev3dev-screenshots');
-            const screenshotBaseName = `ev3dev-${sanitizedDateString()}.png`;
-            const screenshotFile = `${screenshotDirectory}/${screenshotBaseName}`;
-
-            const conn = await this.device.exec('fbgrab -');
-            const writeStream = fs.createWriteStream(screenshotFile);
-
-            conn.on('error', (e: Error) => {
-                writeStream.removeAllListeners('finish');
-                handleCaptureError(e);
-            });
-
-            writeStream.on('open', () => {
-                conn.stdout.pipe(writeStream);
-            });
-            
-            writeStream.on('error', (e: Error) => {
-                vscode.window.showErrorMessage("Error saving screenshot: " + e.message);
-                statusBarMessage.finish();
-            });
-
-            writeStream.on('finish', async () => {
-                const pngHeader = [ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A ];
-                if (await verifyFileHeader(screenshotFile, pngHeader)) {
-                    statusBarMessage.finish(`Screenshot "${screenshotBaseName}" successfully captured`);
-                    vscode.commands.executeCommand('vscode.open', vscode.Uri.file(screenshotFile), vscode.ViewColumn.Two);
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Window,
+            title: "Capturing screenshot..."
+        }, progress => {
+            return new Promise(async (resolve, reject) => {
+                const handleCaptureError = e => {
+                    vscode.window.showErrorMessage("Error capturing screenshot: " + (e.message || e));
+                    reject();
                 }
-                else {
-                    handleCaptureError("The screenshot was not in the correct format. You may need to upgrade to fbcat 0.5.0.");
+        
+                try {
+                    const screenshotDirectory = await getSharedTempDir('ev3dev-screenshots');
+                    const screenshotBaseName = `ev3dev-${sanitizedDateString()}.png`;
+                    const screenshotFile = `${screenshotDirectory}/${screenshotBaseName}`;
+        
+                    const conn = await this.device.exec('fbgrab -');
+                    const writeStream = fs.createWriteStream(screenshotFile);
+        
+                    conn.on('error', (e: Error) => {
+                        writeStream.removeAllListeners('finish');
+                        handleCaptureError(e);
+                    });
+        
+                    writeStream.on('open', () => {
+                        conn.stdout.pipe(writeStream);
+                    });
+                    
+                    writeStream.on('error', (e: Error) => {
+                        vscode.window.showErrorMessage("Error saving screenshot: " + e.message);
+                        reject();
+                    });
+        
+                    writeStream.on('finish', async () => {
+                        const pngHeader = [ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A ];
+                        if (await verifyFileHeader(screenshotFile, pngHeader)) {
+                            toastStatusBarMessage("Screenshot captured");
+                            resolve();
+                            vscode.commands.executeCommand('vscode.open', vscode.Uri.file(screenshotFile), vscode.ViewColumn.Two);
+                        }
+                        else {
+                            handleCaptureError("The screenshot was not in the correct format. You may need to upgrade to fbcat 0.5.0.");
+                        }
+                    });
+                }
+                catch (e) {
+                    handleCaptureError(e);
                 }
             });
-        }
-        catch (e) {
-            handleCaptureError(e);
-        }
+        });
     }
 
     public async printSysinfo() {
