@@ -64,13 +64,20 @@ async function pickDevice(): Promise<void> {
         // user canceled
         return;
     }
-    ev3devBrowserProvider.setDevice(device);
-    try {
-        await device.connect();
-    }
-    catch (err) {
-        vscode.window.showErrorMessage(`Failed to connect to ${device.name}: ${err.message}`);
-    }
+    
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Window,
+        title: "Connecting..."
+    }, async progress => {
+        ev3devBrowserProvider.setDevice(device);
+        try {
+            await device.connect();
+            toastStatusBarMessage(`Connected`);
+        }
+        catch (err) {
+            vscode.window.showErrorMessage(`Failed to connect to ${device.name}: ${err.message}`);
+        }
+    });
 }
 
 async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Promise<void> {
