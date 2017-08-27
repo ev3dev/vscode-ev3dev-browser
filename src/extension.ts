@@ -262,13 +262,13 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
         return [];
     }
 
-    fireDeviceChanged(): void {
+    fireDeviceChanged() {
         // not sure why, but if we pass device to fire(), vscode does not call
         // back to getTreeItem(), so we are refreshing the entire tree for now
         this._onDidChangeTreeData.fire();
     }
 
-    fireFileChanged(file: File): void {
+    fireFileChanged(file: File) {
         this._onDidChangeTreeData.fire(file);
     }
 }
@@ -334,7 +334,7 @@ class DeviceTreeItem extends vscode.TreeItem {
         ev3devBrowserProvider.fireDeviceChanged();
     }
 
-    handleClick(): void {
+    handleClick() {
         // Attempt to keep he collapsible state correct. If we don't do this,
         // strange things happen on a refresh.
         switch(this.collapsibleState) {
@@ -347,7 +347,7 @@ class DeviceTreeItem extends vscode.TreeItem {
         }
     }
 
-    openSshTerminal(): void {
+    openSshTerminal():void {
         const term = vscode.window.createTerminal(`SSH: ${this.label}`,
             helperExePath,
             ['shell', this.device.shellPort.toString()]);
@@ -420,7 +420,7 @@ class DeviceTreeItem extends vscode.TreeItem {
         }
     }
 
-    disconnect(): void {
+    disconnect() {
         this.device.disconnect();
     }
 }
@@ -509,7 +509,7 @@ class File extends vscode.TreeItem {
         });
     }
 
-    handleClick(): void {
+    handleClick() {
         // keep track of state so that it is preserved during refresh
         if (this.collapsibleState == vscode.TreeItemCollapsibleState.Expanded) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
@@ -532,7 +532,7 @@ class File extends vscode.TreeItem {
         }
     }
 
-    run(): void {
+    run() {
         const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(vscode.workspace.rootPath));
         vscode.debug.startDebugging(folder, <vscode.DebugConfiguration> {
             type: 'ev3devBrowser',
@@ -542,7 +542,7 @@ class File extends vscode.TreeItem {
         });
     }
 
-    delete(): void {
+    delete() {
         this.device.rm(this.path).then(() => {
             ev3devBrowserProvider.fireFileChanged(this.parent);
         }, err => {
