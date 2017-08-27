@@ -289,7 +289,7 @@ enum DeviceState {
 }
 
 class DeviceTreeItem extends vscode.TreeItem {
-    private rootDirectory : File;
+    public rootDirectory : File;
 
     constructor(public readonly device: Device) {
         super(device.name);
