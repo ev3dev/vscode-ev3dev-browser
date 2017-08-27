@@ -408,24 +408,22 @@ class DeviceTreeItem extends vscode.TreeItem {
     }
 
     public async showSysinfo() {
-        vscode.window.withProgress({
-            location: vscode.ProgressLocation.Window,
-            title: 'Grabbing ev3dev system info...'
-        }, async progress => {
-            try {
-                const sysinfo = await this.device.getSystemInfo();
+        try {
+            const sysinfo = await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Window,
+                title: 'Grabbing ev3dev system info...'
+            }, progress => this.device.getSystemInfo());
     
-                output.clear();
-                output.appendLine('========== ev3dev-sysinfo ==========');
-                output.appendLine(sysinfo);
-                output.show();
-    
-                toastStatusBarMessage('System info retrieved.');
-            }
-            catch(err) {
-                vscode.window.showErrorMessage('An error occurred while getting system info: ' + (err.message || err));
-            }
-        });
+            output.clear();
+            output.appendLine('========== ev3dev-sysinfo ==========');
+            output.appendLine(sysinfo);
+            output.show();
+
+            toastStatusBarMessage('System info retrieved');
+        }
+        catch(err) {
+            vscode.window.showErrorMessage('An error occurred while getting system info: ' + (err.message || err));
+        }
     }
 
     iconPath = {
