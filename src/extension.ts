@@ -207,7 +207,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
         new vscode.EventEmitter<DeviceTreeItem | File | CommandTreeItem>();
     readonly onDidChangeTreeData: vscode.Event<DeviceTreeItem | File | CommandTreeItem> = this._onDidChangeTreeData.event;
     private device: DeviceTreeItem;
-    private readonly noDeviceTreeItem = new CommandTreeItem('Click here to connect to a device.', 'ev3devBrowser.action.pickDevice');
+    private readonly noDeviceTreeItem = new CommandTreeItem('Click here to connect to a device', 'ev3devBrowser.action.pickDevice');
 
     constructor() {
         super(() => {
