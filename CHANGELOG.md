@@ -3,6 +3,12 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+### Added
+- Command to get system info from remote device (@WasabiFan)
+### Fixed
+- Incorrect date stamp in screenshots (@WasabiFan)
+
 ## 0.3.1 - 2017-08-26
 ### Fixed
 - Extra development files published with extension, resulting in large download
@@ -11,7 +17,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Added
 - Debugger contribution point to allow download and run by pressing F5
 - Device (re)connect/disconnect commands
-- Command to capture a screenshot from the remote device
+- Command to capture a screenshot from the remote device (@WasabiFan)
 ### Changed
 - Connect button is now an item in the tree view
 ### Fixed
