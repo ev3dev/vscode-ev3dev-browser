@@ -7,7 +7,8 @@ export function sanitizedDateString(date?: Date) {
     const d = date || new Date();
     const pad = (num: number) => ("00" + num).slice(-2);
 
-    return `${d.getFullYear()}-${pad(d.getMonth())}-${pad(d.getDay())}-${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+    // Months are zero-indexed
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
 }
 
 const tempDirs: { [sharedKey: string]: string } = {};
