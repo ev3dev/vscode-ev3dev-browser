@@ -1,9 +1,5 @@
-import * as dnode from 'dnode';
 import * as fs from 'fs';
-import * as net from 'net';
-
 import * as path from 'path';
-import * as ssh2 from 'ssh2';
 import * as ssh2Streams from 'ssh2-streams';
 import * as temp from 'temp';
 
