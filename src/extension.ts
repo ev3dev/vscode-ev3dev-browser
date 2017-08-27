@@ -68,7 +68,7 @@ async function pickDevice(): Promise<void> {
         return;
     }
     
-    vscode.window.withProgress({
+    await vscode.window.withProgress({
         location: vscode.ProgressLocation.Window,
         title: "Connecting..."
     }, async progress => {
