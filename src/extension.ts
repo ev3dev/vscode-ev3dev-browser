@@ -11,7 +11,6 @@ import * as vscode from 'vscode';
 
 import { LaunchRequestArguments } from './debugServer';
 import { Device } from './device';
-import * as dnssd from './dnssd';
 import {
     sanitizedDateString,
     getSharedTempDir,
@@ -271,15 +270,6 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
 
     fireFileChanged(file: File): void {
         this._onDidChangeTreeData.fire(file);
-    }
-}
-
-class ServiceItem implements vscode.QuickPickItem {
-    readonly label: string;
-    readonly description: string;
-
-    constructor (public service: dnssd.Service) {
-        this.label = service.name;
     }
 }
 
