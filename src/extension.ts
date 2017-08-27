@@ -68,12 +68,15 @@ async function pickDevice(): Promise<void> {
         // user canceled
         return;
     }
+    const statusBarMessage = new StatusBarProgressionMessage(`Connecting to device ${device.name}...`);
     ev3devBrowserProvider.setDevice(device);
     try {
         await device.connect();
+        statusBarMessage.finish(`Successfully connected to device ${device.name}`);
     }
     catch (err) {
         vscode.window.showErrorMessage(`Failed to connect to ${device.name}: ${err.message}`);
+        statusBarMessage.finish();
     }
 }
 
