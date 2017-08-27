@@ -78,8 +78,8 @@
                 "title": "Take Screenshot"
             },
             {
-                "command": "ev3devBrowser.deviceTreeItem.printSysinfo",
-                "title": "Get ev3dev system info"
+                "command": "ev3devBrowser.deviceTreeItem.showSysinfo",
+                "title": "Get system info"
             },
             {
                 "command": "ev3devBrowser.deviceTreeItem.connect",
@@ -203,9 +203,9 @@
                     "group": "primary@2"
                 },
                 {
-                    "command": "ev3devBrowser.deviceTreeItem.printSysinfo",
+                    "command": "ev3devBrowser.deviceTreeItem.showSysinfo",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.connected",
-                    "group": "primary@2"
+                    "group": "primary@3"
                 },
                 {
                     "command": "ev3devBrowser.fileTreeItem.run",

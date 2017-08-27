@@ -397,21 +397,16 @@ export class Device extends vscode.Disposable {
     }
 
     public getSystemInfo(): Promise<string> {
-        return new Promise((resolve, reject) => {
-            this.exec('ev3dev-sysinfo').then(conn => {
-                let sysinfoString = '';
-                conn.stdout.on('data', buffer => sysinfoString += buffer.toString());
-                conn.stdout.on('error', (err) => {
-                    conn.close();
-                    conn.stdout.removeAllListeners('end');
-                    reject(err);
-                });
+        return new Promise(async (resolve, reject) => {
+            const conn = await this.exec('ev3dev-sysinfo');
+            let sysinfoString = '';
+            conn.stdout.on('data', buffer => sysinfoString += buffer.toString());
+            conn.stdout.once('error', (err) => {
+                conn.close();
+                reject(err);
+            });
 
-                conn.stdout.on('end', () => {
-                    conn.close();
-                    resolve(sysinfoString);
-                });
-            }, reject);
+            conn.stdout.once('end', () => resolve(sysinfoString));
         });
     }
 
