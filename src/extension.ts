@@ -367,7 +367,7 @@ class DeviceTreeItem extends vscode.TreeItem {
     async captureScreenshot() {
         vscode.window.withProgress({
             location: vscode.ProgressLocation.Window,
-            title: "Attempting to capture screenshot..."
+            title: "Capturing screenshot..."
         }, progress => {
             return new Promise(async (resolve, reject) => {
                 const handleCaptureError = e => {
@@ -400,7 +400,7 @@ class DeviceTreeItem extends vscode.TreeItem {
                     writeStream.on('finish', async () => {
                         const pngHeader = [ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A ];
                         if (await verifyFileHeader(screenshotFile, pngHeader)) {
-                            toastStatusBarMessage(`Screenshot "${screenshotBaseName}" successfully captured`);
+                            toastStatusBarMessage("Screenshot captured");
                             resolve();
                             vscode.commands.executeCommand('vscode.open', vscode.Uri.file(screenshotFile), vscode.ViewColumn.Two);
                         }
