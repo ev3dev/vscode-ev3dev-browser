@@ -14,6 +14,6 @@ platform=$(node -e 'console.log(process.platform)')
 out=native/$platform/helper
 
 mkdir -p $(dirname $out)
-browserify --node --exclude weak out/src/helper.js | nexe --output $out
+browserify --node --exclude weak out/src/native-helper/helper.js | nexe --output $out
 strip $out
 upx $out
