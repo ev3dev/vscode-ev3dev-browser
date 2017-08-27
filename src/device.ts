@@ -424,64 +424,64 @@ export class Device extends vscode.Disposable {
      */
     public static async pickDevice(): Promise<Device> {
         const selectedItem = await new Promise<ServiceItem>(async (resolve, reject) => {
-                // start browsing for devices
-                const dnssdClient = await Device.getDnssdClient();
-                const browser = await dnssdClient.browse({ service: 'sftp-ssh' });
-                const items = new Array<ServiceItem>();
-                let cancelSource: vscode.CancellationTokenSource;
-                let done = false;
+            // start browsing for devices
+            const dnssdClient = await Device.getDnssdClient();
+            const browser = await dnssdClient.browse({ service: 'sftp-ssh' });
+            const items = new Array<ServiceItem>();
+            let cancelSource: vscode.CancellationTokenSource;
+            let done = false;
 
-                // if a device is added or removed, cancel the quick-pick
-                // and then show a new one with the update list
-                browser.on('added', (service) => {
-                    if (service.txt['ev3dev.robot.home']) {
-                        // this looks like an ev3dev device
-                        const item = new ServiceItem(service);
-                        items.push(item);
-                        cancelSource.cancel();
-                    }
-                });
-                browser.on('removed', (service) => {
-                    const index = items.findIndex(si => si.service == service);
-                    if (index > -1) {
-                        items.splice(index, 1);
-                        cancelSource.cancel();
-                    }
-                });
-
-                // if there is a browser error, cancel the quick-pick and show
-                // an error message
-                browser.on('error', err => {
+            // if a device is added or removed, cancel the quick-pick
+            // and then show a new one with the update list
+            browser.on('added', (service) => {
+                if (service.txt['ev3dev.robot.home']) {
+                    // this looks like an ev3dev device
+                    const item = new ServiceItem(service);
+                    items.push(item);
                     cancelSource.cancel();
-                    browser.destroy();
-                    done = true;
-                    reject(err);
-                });
-
-                while (!done) {
-                    cancelSource = new vscode.CancellationTokenSource();
-                    // using this promise in the quick-pick will cause a progress
-                    // bar to show if there are no items.
-                    const list = new Promise<ServiceItem[]>((resolve, reject) => {
-                        if (items) {
-                            resolve(items);
-                        }
-                        else {
-                            reject();
-                        }
-                    })
-                    const selected = await vscode.window.showQuickPick(list, {
-                        ignoreFocusOut: true,
-                        placeHolder: "Searching for devices..."
-                    }, cancelSource.token);
-                    if (cancelSource.token.isCancellationRequested) {
-                        continue;
-                    }
-                    browser.destroy();
-                    done = true;
-                    resolve(selected);
                 }
             });
+            browser.on('removed', (service) => {
+                const index = items.findIndex(si => si.service == service);
+                if (index > -1) {
+                    items.splice(index, 1);
+                    cancelSource.cancel();
+                }
+            });
+
+            // if there is a browser error, cancel the quick-pick and show
+            // an error message
+            browser.on('error', err => {
+                cancelSource.cancel();
+                browser.destroy();
+                done = true;
+                reject(err);
+            });
+
+            while (!done) {
+                cancelSource = new vscode.CancellationTokenSource();
+                // using this promise in the quick-pick will cause a progress
+                // bar to show if there are no items.
+                const list = new Promise<ServiceItem[]>((resolve, reject) => {
+                    if (items) {
+                        resolve(items);
+                    }
+                    else {
+                        reject();
+                    }
+                })
+                const selected = await vscode.window.showQuickPick(list, {
+                    ignoreFocusOut: true,
+                    placeHolder: "Searching for devices..."
+                }, cancelSource.token);
+                if (cancelSource.token.isCancellationRequested) {
+                    continue;
+                }
+                browser.destroy();
+                done = true;
+                resolve(selected);
+            }
+        });
         if (!selectedItem) {
             // cancelled
             return null;
@@ -495,8 +495,8 @@ export class Device extends vscode.Disposable {
  * Quick pick item used in DeviceManager.pickDevice().
  */
 class ServiceItem implements vscode.QuickPickItem {
-    readonly label: string;
-    readonly description: string;
+    public readonly label: string;
+    public readonly description: string;
 
     constructor (public service: dnssd.Service) {
         this.label = service.name;
