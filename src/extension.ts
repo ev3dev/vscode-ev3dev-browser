@@ -21,7 +21,7 @@ import {
 } from './utils';
 
 
-const S_IXUSR = parseInt('00100', 8);
+const S_IXUSR = 0o0100;
 
 let output: vscode.OutputChannel;
 let resourceDir: string;
