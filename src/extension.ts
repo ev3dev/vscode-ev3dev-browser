@@ -39,6 +39,7 @@ export function activate(context: vscode.ExtensionContext) : void {
         vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.openSshTerminal', d => d.openSshTerminal()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.captureScreenshot', d => d.captureScreenshot()),
+        vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.showSysinfo', d => d.showSysinfo()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.connect', d => d.connect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.disconnect', d => d.disconnect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.select', d => d.handleClick()),
@@ -400,6 +401,25 @@ class DeviceTreeItem extends vscode.TreeItem {
                 }
             });
         });
+    }
+
+    public async showSysinfo() {
+        try {
+            const sysinfo = await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Window,
+                title: 'Grabbing ev3dev system info...'
+            }, progress => this.device.getSystemInfo());
+    
+            output.clear();
+            output.appendLine('========== ev3dev-sysinfo ==========');
+            output.appendLine(sysinfo);
+            output.show();
+
+            toastStatusBarMessage('System info retrieved');
+        }
+        catch(err) {
+            vscode.window.showErrorMessage('An error occurred while getting system info: ' + (err.message || err));
+        }
     }
 
     iconPath = {
