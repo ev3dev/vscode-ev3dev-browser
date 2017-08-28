@@ -95,7 +95,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
         // run the program
         try {
             const device = ev3devBrowserProvider.getDeviceSync();
-            const command = `conrun -e ${args.program}`;
+            const command = `brickrun ${args.program}`;
             output.show(true);
             output.clear();
             output.appendLine(`Starting: ${command}`);
@@ -132,7 +132,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
     case 'ev3devBrowser.debugger.stop':
         const device = ev3devBrowserProvider.getDeviceSync();
         if (device && device.isConnected) {
-            device.exec('conrun-kill');
+            device.exec('conrun-kill --signal=SIGKILL');
         }
         break;
     }
