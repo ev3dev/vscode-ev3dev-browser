@@ -5,7 +5,7 @@ import * as temp from 'temp';
 
 import * as vscode from 'vscode';
 
-import { LaunchRequestArguments } from './debugServer';
+import { LaunchRequestArguments } from './native-helper/debugServer';
 import { Device } from './device';
 import {
     sanitizedDateString,

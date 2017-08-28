@@ -28,7 +28,7 @@
             "name": "Launch Debug Server",
             "type": "node",
             "request": "launch",
-            "program": "${workspaceRoot}/src/debugServer.ts",
+            "program": "${workspaceRoot}/src/native-helper/debugServer.ts",
             "args": [
                 "--server=4711"
             ],
