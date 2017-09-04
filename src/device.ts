@@ -106,7 +106,7 @@ export class Device extends vscode.Disposable {
                 username: this.username,
                 password: vscode.workspace.getConfiguration('ev3devBrowser').get('password'),
                 tryKeyboard: true,
-                keepaliveInterval: 300,
+                keepaliveInterval: 1000,
                 readyTimeout: 10000
             });
         });
