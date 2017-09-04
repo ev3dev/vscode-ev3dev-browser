@@ -335,7 +335,9 @@ export class Device extends vscode.Disposable {
      */
     public put(local: string, remote: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            this.sftp.fastPut(local, remote, (err) => {
+            this.sftp.fastPut(local, remote, {
+                concurrency: 1,
+            }, (err) => {
                 if (err) {
                     reject(err);
                 }
