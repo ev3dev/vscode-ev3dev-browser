@@ -333,10 +333,11 @@ export class Device extends vscode.Disposable {
      * @param local The path to a local file.
      * @param remote The remote path where the file will be saved.
      */
-    public put(local: string, remote: string): Promise<void> {
+    public put(local: string, remote: string, mode: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            this.sftp.fastPut(local, remote, {
+            this.sftp.fastPut(local, remote, <any> {
                 concurrency: 1,
+                mode: mode
             }, (err) => {
                 if (err) {
                     reject(err);
