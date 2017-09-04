@@ -432,10 +432,38 @@ export class Device extends vscode.Disposable {
     }
 
     /**
+     * Read additional device definitions from the config and convert them to
+     * ServiceItems
+     */
+    private static getServicesFromConfig(): ServiceItem[] {
+        const devices = vscode.workspace.getConfiguration('ev3devBrowser').get<AdditionalDevice[]>('additionalDevices');
+        const services = new Array<ServiceItem>();
+        for (const device of devices) {
+            const txt = {};
+            txt['ev3dev.robot.user'] = device.username || 'robot';
+            txt['ev3dev.robot.home'] = device.homeDirectory || `/home/${txt['ev3dev.robot.user']}`;
+            services.push(<ServiceItem> {
+                label: device.name,
+                service: {
+                    name: device.name,
+                    address: device.ipAddress,
+                    ipv: 'IPv4',
+                    port: 22,
+                    service: 'sftp-ssh',
+                    transport: 'tcp',
+                    txt: txt
+                }
+            });
+        }
+        return services;
+    }
+
+    /**
      * Use a quick-pick to browse discovered devices and select one.
      * @returns A new Device or null if the user canceled the request
      */
     public static async pickDevice(): Promise<Device> {
+        const configItems = this.getServicesFromConfig();
         const selectedItem = await new Promise<ServiceItem>(async (resolve, reject) => {
             // start browsing for devices
             const dnssdClient = await Device.getDnssdClient();
@@ -477,7 +505,10 @@ export class Device extends vscode.Disposable {
                 // bar to show if there are no items.
                 const list = new Promise<ServiceItem[]>((resolve, reject) => {
                     if (items) {
-                        resolve(items);
+                        resolve(items.concat(configItems));
+                    }
+                    else if (configItems) {
+                        resolve(configItems);
                     }
                     else {
                         reject();
@@ -514,4 +545,11 @@ class ServiceItem implements vscode.QuickPickItem {
     constructor (public service: dnssd.Service) {
         this.label = service.name;
     }
+}
+
+interface AdditionalDevice {
+    name: string;
+    ipAddress: string;
+    username: string;
+    homeDirectory: string;
 }

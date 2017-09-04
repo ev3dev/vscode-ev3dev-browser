@@ -65,6 +65,38 @@
                     ],
                     "default": null,
                     "description": "The directory on the remote device where the files will be saved. The default is to use the name of the vscode project directory."
+                },
+                "ev3devBrowser.additionalDevices": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "pattern": "[a-zA-Z0-9_\\-]{1,}"
+                            },
+                            "ipAddress": {
+                                "type": "string",
+                                "pattern": "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"
+                            },
+                            "username": {
+                                "type": "string",
+                                "pattern": "[a-zA-Z0-9_\\-]{1,}",
+                                "default": "robot"
+                            },
+                            "homeDirectory": {
+                                "type": "string",
+                                "default": "/home/robot"
+                            }
+                        },
+                        "required":[
+                            "name",
+                            "ipAddress"
+                        ]
+                    },
+                    "uniqueItems": true,
+                    "default": [],
+                    "description": "A list of devices to add to the pick list. This is intended to work around troublesome network connections, such as Bluetooth"
                 }
             }
         },
