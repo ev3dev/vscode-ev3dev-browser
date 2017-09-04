@@ -332,11 +332,20 @@ export class Device extends vscode.Disposable {
      * Copy a local file to the remote device.
      * @param local The path to a local file.
      * @param remote The remote path where the file will be saved.
+     * @param mode The file permissions
+     * @param progress A progress callback function from vscode.withProgress()
      */
-    public put(local: string, remote: string, mode: string): Promise<void> {
+    public put(local: string, remote: string, mode?: string, progress?: vscode.Progress<{message: string}>): Promise<void> {
         return new Promise((resolve, reject) => {
             this.sftp.fastPut(local, remote, <any> {
                 concurrency: 1,
+                step: (transferred, chunk, total) => {
+                    if (progress) {
+                        progress.report({
+                            message: `${remote} - ${Math.round(transferred / total * 100)}%`
+                        });
+                    }
+                },
                 mode: mode
             }, (err) => {
                 if (err) {

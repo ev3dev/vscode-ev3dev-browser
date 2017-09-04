@@ -186,7 +186,7 @@ async function download(): Promise<boolean> {
                 await device.mkdir_p(remoteDir);
                 // then we can copy the file
                 // TODO: selectively make files executable
-                await device.put(f.fsPath, remotePath, '755');
+                await device.put(f.fsPath, remotePath, '755', progress);
             }
             // make sure any new files show up in the browser
             ev3devBrowserProvider.fireDeviceChanged();
