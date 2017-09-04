@@ -42,6 +42,12 @@
                 },
                 "ev3devBrowser.env": {
                     "type": "object",
+                    "patternProperties": {
+                        "[A-Za-z_]{1,}": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
                     "default": {
                         "PYTHONUNBUFFERED": "TRUE"
                     },
