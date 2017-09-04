@@ -59,7 +59,7 @@ export class Device extends vscode.Disposable {
 
         });
         this.client.on('close', () => {
-
+            this.disconnect();
         });
         this.client.on('keyboard-interactive', async (name, instructions, lang, prompts, finish) => {
             const answers = new Array<string>();
@@ -106,7 +106,9 @@ export class Device extends vscode.Disposable {
                 host: this.service.address,
                 username: this.username,
                 password: vscode.workspace.getConfiguration('ev3devBrowser').get('password'),
-                tryKeyboard: true
+                tryKeyboard: true,
+                keepaliveInterval: 300,
+                readyTimeout: 10000
             });
         });
     }
