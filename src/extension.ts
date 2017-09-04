@@ -438,7 +438,13 @@ class DeviceTreeItem extends vscode.TreeItem {
 
     public async connect(): Promise<void> {
         try {
-            await this.device.connect();
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Window,
+                title: `Connecting to ${this.label}`
+            }, async progress => {
+                await this.device.connect();
+            });
+            toastStatusBarMessage(`Connected to ${this.label}`);
         }
         catch (err) {
             vscode.window.showErrorMessage(`Failed to connect to ${this.label}: ${err.message}`);
