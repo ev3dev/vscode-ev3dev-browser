@@ -178,9 +178,9 @@ async function download(): Promise<boolean> {
                     message: f.fsPath
                 });
                 const basename = path.basename(f.fsPath);
-                const relativeDir = path.dirname(vscode.workspace.asRelativePath(f.fsPath)) + '/';
-                const remoteDir = remoteBaseDir + relativeDir;
-                const remotePath = remoteDir + basename;
+                const relativeDir = path.dirname(vscode.workspace.asRelativePath(f.fsPath));
+                const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
+                const remotePath = path.posix.resolve(remoteDir, basename);
 
                 // make sure the directory exists
                 await device.mkdir_p(remoteDir);
