@@ -71,7 +71,6 @@ export class Device extends vscode.Disposable {
                 });
                 answers.push(choice);
             }
-            // another type binding workaround
             finish(answers);
         });
     }
