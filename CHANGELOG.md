@@ -6,8 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## Unreleased
 ### Added
 - Command to get system info from remote device (@WasabiFan)
+- Configuration option and UI for adding devices that are not automatically
+  discovered
 ### Fixed
 - Incorrect date stamp in screenshots (@WasabiFan)
+- Device still shows connected when the device is unplugged or the network is
+  disconnected
+- Tree view commands listed in command palette
 
 ## 0.3.1 - 2017-08-26
 ### Fixed
