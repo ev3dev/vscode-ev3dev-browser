@@ -215,6 +215,9 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
     }
 
     public setDevice(device: Device): void {
+        if ((this.device && this.device.device) == device) {
+            return;
+        }
         if (this.device) {
             this.device.device.disconnect();
             this.device = null;

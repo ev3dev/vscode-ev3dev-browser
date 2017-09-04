@@ -431,6 +431,21 @@ export class Device extends vscode.Disposable {
         return Device.dnssdClient;
     }
 
+    private static additionalDeviceToDnssdService(device: AdditionalDevice): dnssd.Service {
+        const txt = {};
+        txt['ev3dev.robot.user'] = device.username || 'robot';
+        txt['ev3dev.robot.home'] = device.homeDirectory || `/home/${txt['ev3dev.robot.user']}`;
+        return <dnssd.Service> {
+            name: device.name,
+            address: device.ipAddress,
+            ipv: 'IPv4',
+            port: 22,
+            service: 'sftp-ssh',
+            transport: 'tcp',
+            txt: txt
+        };
+    }
+
     /**
      * Read additional device definitions from the config and convert them to
      * ServiceItems
@@ -439,20 +454,9 @@ export class Device extends vscode.Disposable {
         const devices = vscode.workspace.getConfiguration('ev3devBrowser').get<AdditionalDevice[]>('additionalDevices');
         const services = new Array<ServiceItem>();
         for (const device of devices) {
-            const txt = {};
-            txt['ev3dev.robot.user'] = device.username || 'robot';
-            txt['ev3dev.robot.home'] = device.homeDirectory || `/home/${txt['ev3dev.robot.user']}`;
             services.push(<ServiceItem> {
                 label: device.name,
-                service: {
-                    name: device.name,
-                    address: device.ipAddress,
-                    ipv: 'IPv4',
-                    port: 22,
-                    service: 'sftp-ssh',
-                    transport: 'tcp',
-                    txt: txt
-                }
+                service: this.additionalDeviceToDnssdService(device)
             });
         }
         return services;
@@ -464,6 +468,10 @@ export class Device extends vscode.Disposable {
      */
     public static async pickDevice(): Promise<Device> {
         const configItems = this.getServicesFromConfig();
+        const manualEntry = <ServiceItem> {
+            label: "I don't see my device..."
+        };
+
         const selectedItem = await new Promise<ServiceItem>(async (resolve, reject) => {
             // start browsing for devices
             const dnssdClient = await Device.getDnssdClient();
@@ -503,20 +511,17 @@ export class Device extends vscode.Disposable {
                 cancelSource = new vscode.CancellationTokenSource();
                 // using this promise in the quick-pick will cause a progress
                 // bar to show if there are no items.
-                const list = new Promise<ServiceItem[]>((resolve, reject) => {
-                    if (items) {
-                        resolve(items.concat(configItems));
-                    }
-                    else if (configItems) {
-                        resolve(configItems);
-                    }
-                    else {
-                        reject();
-                    }
-                })
+                const list = new Array<ServiceItem>();
+                if (items) {
+                    list.push(...items)
+                }
+                if (configItems) {
+                    list.push(...configItems);
+                }
+                list.push(manualEntry);
                 const selected = await vscode.window.showQuickPick(list, {
                     ignoreFocusOut: true,
-                    placeHolder: "Searching for devices..."
+                    placeHolder: "Searching for devices... Select a device or press ESC to cancel."
                 }, cancelSource.token);
                 if (cancelSource.token.isCancellationRequested) {
                     continue;
@@ -529,6 +534,41 @@ export class Device extends vscode.Disposable {
         if (!selectedItem) {
             // cancelled
             return null;
+        }
+
+        if (selectedItem == manualEntry) {
+            const name = await vscode.window.showInputBox({
+                ignoreFocusOut: true,
+                prompt: "Enter a name for the device",
+                placeHolder: 'Example: "ev3dev"',
+                validateInput: (v) => !/^[a-zA-Z0-9_\-]{1,}$/.test(v) && 'Only a-z, A-Z, 0-9, - and _ allowed'
+            });
+            if (!name) {
+                // cancelled
+                return null;
+            }
+            const ipAddress = await vscode.window.showInputBox({
+                ignoreFocusOut: true,
+                prompt: "Enter the IP address of the device",
+                placeHolder: 'Example: "192.168.137.3"',
+                validateInput: (v) => !/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(v) && 'Not a valid IP address'
+            });
+            if (!ipAddress) {
+                // cancelled
+                return null;
+            }
+
+            const device = <AdditionalDevice> {
+                name: name,
+                ipAddress: ipAddress
+            };
+
+            const config = vscode.workspace.getConfiguration('ev3devBrowser');
+            const existing = config.get<AdditionalDevice[]>('additionalDevices');
+            existing.push(device);
+            config.update('additionalDevices', existing, vscode.ConfigurationTarget.Global);
+
+            return new Device(this.additionalDeviceToDnssdService(device));
         }
 
         return new Device(selectedItem.service);
