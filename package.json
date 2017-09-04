@@ -173,6 +173,34 @@
                 {
                     "command": "ev3devBrowser.action.download",
                     "when": "config.ev3devBrowser.visible && ev3devBrowser.context.connected"
+                },
+                {
+                    "command": "ev3devBrowser.deviceTreeItem.openSshTerminal",
+                    "when": "false"
+                },
+                {
+                    "command": "ev3devBrowser.deviceTreeItem.captureScreenshot",
+                    "when": "false"
+                },
+                {
+                    "command": "ev3devBrowser.deviceTreeItem.showSysinfo",
+                    "when": "false"
+                },
+                {
+                    "command": "ev3devBrowser.deviceTreeItem.connect",
+                    "when": "false"
+                },
+                {
+                    "command": "ev3devBrowser.deviceTreeItem.disconnect",
+                    "when": "false"
+                },
+                {
+                    "command": "ev3devBrowser.fileTreeItem.run",
+                    "when": "false"
+                },
+                {
+                    "command": "ev3devBrowser.fileTreeItem.delete",
+                    "when": "false"
                 }
             ],
             "view/title": [
