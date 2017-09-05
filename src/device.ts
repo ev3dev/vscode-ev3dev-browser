@@ -312,15 +312,24 @@ export class Device extends vscode.Disposable {
      */
     public async mkdir_p(path: string): Promise<void> {
         const names = path.split('/');
+
+        // If path had a preceding slash, remove the empty path segment
+        if(!names[0]) {
+            names.shift();
+        }
+
         let part = '';
         while (names.length) {
-            part += names.shift() + '/';
-            // have to make sure the directory exists on the remote device first
+            part += '/' + names.shift();
+            // Create the directory if it doesn't already exist
             try {
-                await this.stat(part);
+                const stat = await this.stat(part);
+                if (!stat.isDirectory()) {
+                    throw new Error("Cannot create directory: part of path exists but isn't a directory");
+                }
             }
             catch (err) {
-                if (err.code != 2 /* file does not exist */) {
+                if (err.code != ssh2.SFTP_STATUS_CODE.NO_SUCH_FILE) {
                     throw err;
                 }
                 await this.mkdir(part);
