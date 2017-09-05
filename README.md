@@ -8,8 +8,9 @@ Learn more about ev3dev at <http://www.ev3dev.org>.
 
 ## Requirements
 
-This extension is only compatible with **ev3dev-stretch** [snapshot images] starting
-with `2017-08-26`. It will not work with other versions of ev3dev.
+This extension is only compatible with devices running **ev3dev-stretch**
+[snapshot images] starting with `2017-09-01`. It will not work with other
+versions of ev3dev.
 
 Additional information can be found on the [wiki].
 
@@ -48,8 +49,8 @@ Additional information can be found on the [wiki].
 
     ![Output pane screenshot](.README/output-pane.png)
 
-*   **Build, Download and Run with a single click (or F5)**: Create a `launch.json`
-    file with an `"ev3devBrowser"` type to use this feature.
+*   **Build, Download and Run with a single click (or <kbd>F5</kbd>)**: Create
+    a `launch.json` file with an `"ev3devBrowser"` type to use this feature.
 
     ```json
     {
@@ -85,9 +86,12 @@ Additional information can be found on the [wiki].
 This extension contributes the following settings:
 
 *   `ev3devBrowser.password`: If you changed the password on your ev3dev device,
-     you will need to set the password here.
+     you will need to set the password here. If you want to manually enter the
+     password when you connect or use public key authentication, set this to
+     `null`.
 *   `ev3devBrowser.env`: If you need to set environment variables for running
-    remote programs, you can set them here.
+    remote programs, you can set them here. Each variable is defined as a
+    key/value pair.
 *   `ev3devBrowser.download.include`: Use this to specify which files to
     included when downloading files to the remote device. Can use glob patterns.
 *   `ev3devBrowser.download.exclude`: Use this to specify which files to
@@ -96,13 +100,15 @@ This extension contributes the following settings:
     a folder with the same name as the VS Code project. Use this setting to
     save the project files somewhere else. Paths are relative to the `/home/robot`
     directory.
+*   `ev3devBrowser.additionalDevices`: A list of additional devices to show in
+    the list when connecting to a device. This should only be needed in cases
+    where there are network problems interfering with device discover.
+*   `ev3devBrowser.visible`: This lets you hide the ev3dev browser when you are
+    not using it.
+
+More details and examples on the [wiki](https://github.com/ev3dev/vscode-ev3dev-browser/wiki/Settings).
 
 
 ## Known Issues
 
 *   Currently, all downloaded files have the executable bit set.
-*   Stopping a program only sends `SIGTERM`. If that doesn't actually stop the
-    program then it can't be stopped remotely. There is not a way to send
-    `SIGKILL` to forcefully stop it.
-*   If your program crashes, motors will not be stopped.
-*   USB disconnection is not detected on macOS.
