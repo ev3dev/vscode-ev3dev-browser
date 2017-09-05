@@ -1,0 +1,13 @@
+sudo: false
+
+os:
+  - linux
+
+language: node_js
+node_js: lts/*
+
+install:
+  - npm install --no-optional
+
+script:
+  - npm run vscode:prepublish
