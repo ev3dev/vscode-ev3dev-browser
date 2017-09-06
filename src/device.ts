@@ -308,14 +308,14 @@ export class Device extends vscode.Disposable {
 
     /**
      * Recursively create a directory (equivalent of mkdir -p).
-     * @param filePath the path of the directory
+     * @param dirPath the path of the directory
      */
-    public async mkdir_p(filePath: string): Promise<void> {
-        if (!path.posix.isAbsolute(filePath)) {
-            throw new URIError("The supplied file path must be absolute.");
+    public async mkdir_p(dirPath: string): Promise<void> {
+        if (!path.posix.isAbsolute(dirPath)) {
+            throw new Error("The supplied file path must be absolute.");
         }
 
-        const names = filePath.split('/');
+        const names = dirPath.split('/');
 
         // Leading slash produces empty first element
         names.shift();
