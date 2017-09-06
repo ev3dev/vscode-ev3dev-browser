@@ -3,6 +3,10 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+### Removed
+- ev3devBrowser.visible configuration setting
+
 ## 0.4.0 - 2017-09-04
 ### Added
 - Command to get system info from remote device (@WasabiFan)
