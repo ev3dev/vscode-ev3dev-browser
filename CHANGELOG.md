@@ -5,7 +5,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 ### Removed
-- ev3devBrowser.visible configuration setting
+- ev3devBrowser.visible configuration setting (@WasabiFan)
 
 ## 0.4.0 - 2017-09-04
 ### Added
