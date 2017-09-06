@@ -173,10 +173,13 @@ async function download(): Promise<boolean> {
     }, async progress => {
         try {
             const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
+            let fileIndex = 1;
+            const reportProgress = (message: string) => progress.report({ message: message });
+
             for (const f of files) {
-                progress.report({
-                    message: f.fsPath
-                });
+                const baseProgressMessage = `${f.fsPath} (${fileIndex}/${files.length})`;
+                reportProgress(baseProgressMessage);
+
                 const basename = path.basename(f.fsPath);
                 const relativeDir = path.dirname(vscode.workspace.asRelativePath(f.fsPath));
                 const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
@@ -186,7 +189,10 @@ async function download(): Promise<boolean> {
                 await device.mkdir_p(remoteDir);
                 // then we can copy the file
                 // TODO: selectively make files executable
-                await device.put(f.fsPath, remotePath, '755', progress);
+                await device.put(f.fsPath, remotePath, '755',
+                    percentage => reportProgress(`${baseProgressMessage} - ${percentage}%`));
+                
+                fileIndex++;
             }
             // make sure any new files show up in the browser
             ev3devBrowserProvider.fireDeviceChanged();
