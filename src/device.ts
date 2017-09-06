@@ -308,24 +308,26 @@ export class Device extends vscode.Disposable {
 
     /**
      * Recursively create a directory (equivalent of mkdir -p).
-     * @param path the path of the directory
+     * @param filePath the path of the directory
      */
-    public async mkdir_p(path: string): Promise<void> {
-        const names = path.split('/');
-
-        // If path had a preceding slash, remove the empty path segment
-        if(!names[0]) {
-            names.shift();
+    public async mkdir_p(filePath: string): Promise<void> {
+        if (!path.posix.isAbsolute(filePath)) {
+            throw new URIError("The supplied file path must be absolute.");
         }
+
+        const names = filePath.split('/');
+
+        // Leading slash produces empty first element
+        names.shift();
 
         let part = '';
         while (names.length) {
-            part += '/' + names.shift();
+            part = path.posix.join(part, names.shift());
             // Create the directory if it doesn't already exist
             try {
                 const stat = await this.stat(part);
                 if (!stat.isDirectory()) {
-                    throw new Error("Cannot create directory: part of path exists but isn't a directory");
+                    throw new Error(`Cannot create directory: "${part}" exists but isn't a directory`);
                 }
             }
             catch (err) {
