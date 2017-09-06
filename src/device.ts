@@ -308,19 +308,30 @@ export class Device extends vscode.Disposable {
 
     /**
      * Recursively create a directory (equivalent of mkdir -p).
-     * @param path the path of the directory
+     * @param dirPath the path of the directory
      */
-    public async mkdir_p(path: string): Promise<void> {
-        const names = path.split('/');
+    public async mkdir_p(dirPath: string): Promise<void> {
+        if (!path.posix.isAbsolute(dirPath)) {
+            throw new Error("The supplied file path must be absolute.");
+        }
+
+        const names = dirPath.split('/');
+
+        // Leading slash produces empty first element
+        names.shift();
+
         let part = '';
         while (names.length) {
-            part += names.shift() + '/';
-            // have to make sure the directory exists on the remote device first
+            part = path.posix.join(part, names.shift());
+            // Create the directory if it doesn't already exist
             try {
-                await this.stat(part);
+                const stat = await this.stat(part);
+                if (!stat.isDirectory()) {
+                    throw new Error(`Cannot create directory: "${part}" exists but isn't a directory`);
+                }
             }
             catch (err) {
-                if (err.code != 2 /* file does not exist */) {
+                if (err.code != ssh2.SFTP_STATUS_CODE.NO_SUCH_FILE) {
                     throw err;
                 }
                 await this.mkdir(part);
