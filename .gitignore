@@ -1,4 +1,6 @@
 out
 node_modules
 .nexe
-ev3dev-browser-*.vsix
+
+# built extension packages
+*.vsix
