@@ -103,8 +103,6 @@ This extension contributes the following settings:
 *   `ev3devBrowser.additionalDevices`: A list of additional devices to show in
     the list when connecting to a device. This should only be needed in cases
     where there are network problems interfering with device discover.
-*   `ev3devBrowser.visible`: This lets you hide the ev3dev browser when you are
-    not using it.
 
 More details and examples on the [wiki](https://github.com/ev3dev/vscode-ev3dev-browser/wiki/Settings).
 
