@@ -335,15 +335,13 @@ export class Device extends vscode.Disposable {
      * @param mode The file permissions
      * @param progress A progress callback function from vscode.withProgress()
      */
-    public put(local: string, remote: string, mode?: string, progress?: vscode.Progress<{message: string}>): Promise<void> {
+    public put(local: string, remote: string, mode?: string, reportPercentage?: (percentage: number) => void): Promise<void> {
         return new Promise((resolve, reject) => {
             this.sftp.fastPut(local, remote, <any> {
                 concurrency: 1,
                 step: (transferred, chunk, total) => {
-                    if (progress) {
-                        progress.report({
-                            message: `${remote} - ${Math.round(transferred / total * 100)}%`
-                        });
+                    if (reportPercentage) {
+                        reportPercentage(Math.round(transferred / total * 100));
                     }
                 },
                 mode: mode
