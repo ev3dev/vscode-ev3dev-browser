@@ -83,7 +83,7 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
                         this.emit('error', new dns.ServiceError(e, 'Resolving service failed.'));
                         return;
                     }
-                    const addrService = await s.getAddrInfo(0, i, dns.ServiceProtocol.IPv4, h,
+                    const addrService = await s.getAddrInfo(0, i, dns.ServiceProtocol.IPv6, h,
                         (s, f, i, e, h, a, ttl) => {
                             if (e) {
                                 this.emit('error', new dns.ServiceError(e, 'Querying service failed.'));
@@ -141,7 +141,7 @@ class DnssdService extends events.EventEmitter implements dnssd.Service {
     public readonly txt: dnssd.TxtRecords;
 
     constructor(
-        private readonly iface: number,
+        public readonly iface: number,
         public readonly name: string,
         readonly type: string,
         domain: string,
@@ -158,7 +158,7 @@ class DnssdService extends events.EventEmitter implements dnssd.Service {
         // strip trailing '.'
         this.host = host.replace(/\.$/, '');
         this.domain = domain.replace(/\.$/, '');
-        this.ipv = 'IPv4';
+        this.ipv = 'IPv6';
         this.txt = DnssdService.parseText(txt);
     }
 

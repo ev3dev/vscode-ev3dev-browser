@@ -1,6 +1,7 @@
 import * as dnode from 'dnode';
 import * as net from 'net';
 import * as path from 'path';
+import * as os from 'os';
 import * as ssh2 from 'ssh2';
 import * as ssh2Streams from 'ssh2-streams';
 import * as vscode from 'vscode';
@@ -101,8 +102,27 @@ export class Device extends vscode.Disposable {
         return new Promise((resolve, reject) => {
             this.client.once('ready', resolve);
             this.client.once('error', reject);
+            let address = this.service.address;
+            if (this.service.ipv == 'IPv6' && address.startsWith('fe80::')) {
+                // this is IPv6 link local address, so we need to add the network
+                // interface to the end
+                if (process.platform == 'win32') {
+                    // Windows uses the interface index
+                    address += `%${this.service.iface}`;
+                }
+                else {
+                    // everyone else uses the interface name
+                    const ifaces = os.networkInterfaces();
+                    for (const ifaceName in ifaces) {
+                        if (ifaces[ifaceName].find(v => v['scopeid'] == this.service.iface)) {
+                            address += `%${ifaceName}`;
+                            break;
+                        }
+                    }
+                }
+            }
             this.client.connect({
-                host: this.service.address,
+                host: address,
                 username: this.username,
                 password: vscode.workspace.getConfiguration('ev3devBrowser').get('password'),
                 tryKeyboard: true,
@@ -473,7 +493,10 @@ export class Device extends vscode.Disposable {
         const selectedItem = await new Promise<ServiceItem>(async (resolve, reject) => {
             // start browsing for devices
             const dnssdClient = await Device.getDnssdClient();
-            const browser = await dnssdClient.browse({ service: 'sftp-ssh' });
+            const browser = await dnssdClient.browse({
+                ipv: 'IPv6',
+                service: 'sftp-ssh'
+            });
             const items = new Array<ServiceItem>();
             let cancelSource: vscode.CancellationTokenSource;
             let done = false;

@@ -80,6 +80,11 @@ export interface Service {
     readonly domain: string;
 
     /**
+     * The network interface index
+     */
+    readonly iface: number
+
+    /**
      * The IP protocol version.
      */
     readonly ipv: 'IPv4' | 'IPv6';
