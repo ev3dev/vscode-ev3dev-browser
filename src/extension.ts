@@ -48,6 +48,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.select', f => f.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.action.pickDevice', () => pickDevice()),
         vscode.commands.registerCommand('ev3devBrowser.action.download', () => download()),
+        vscode.commands.registerCommand('ev3devBrowser.action.refresh', () => refresh()),
         vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e))
     );
 }
@@ -205,6 +206,10 @@ async function download(): Promise<boolean> {
     });
 
     return success;
+}
+
+function refresh(): void {
+    ev3devBrowserProvider.fireDeviceChanged();
 }
 
 class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeDataProvider<DeviceTreeItem | File | CommandTreeItem> {
