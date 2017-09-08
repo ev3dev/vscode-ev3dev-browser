@@ -112,13 +112,7 @@ export class Device extends vscode.Disposable {
                 }
                 else {
                     // everyone else uses the interface name
-                    const ifaces = os.networkInterfaces();
-                    for (const ifaceName in ifaces) {
-                        if (ifaces[ifaceName].find(v => v['scopeid'] == this.service.iface)) {
-                            address += `%${ifaceName}`;
-                            break;
-                        }
-                    }
+                    address += `%${this.service['ifaceName']}`;
                 }
             }
             this.client.connect({
@@ -517,6 +511,13 @@ export class Device extends vscode.Disposable {
             browser.on('added', (service) => {
                 if (service.txt['ev3dev.robot.home']) {
                     // this looks like an ev3dev device
+                    const ifaces = os.networkInterfaces();
+                    for (const ifaceName in ifaces) {
+                        if (ifaces[ifaceName].find(v => v['scopeid'] == service.iface)) {
+                            service['ifaceName'] = ifaceName;
+                            break;
+                        }
+                    }
                     const item = new ServiceItem(service);
                     items.push(item);
                     cancelSource.cancel();
@@ -616,6 +617,7 @@ class ServiceItem implements vscode.QuickPickItem {
 
     constructor (public service: dnssd.Service) {
         this.label = service.name;
+        this.description = service['ifaceName'];
     }
 }
 
