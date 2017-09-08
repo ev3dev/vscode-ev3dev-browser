@@ -1335,9 +1335,16 @@ export class Service {
         case ServiceType.A: // IPv4
             address = `${rData[0]}.${rData[1]}.${rData[2]}.${rData[3]}`;
             break;
-        case ServiceType.AAAA: // IPv6
-            // FIXME: format IPv6 address.
-            //address = ????;
+        case ServiceType.AAAA: // IPv6\
+            const g0 = rData.readUInt16BE(0).toString(16);
+            const g1 = rData.readUInt16BE(2).toString(16);
+            const g2 = rData.readUInt16BE(4).toString(16);
+            const g3 = rData.readUInt16BE(6).toString(16);
+            const g4 = rData.readUInt16BE(8).toString(16);
+            const g5 = rData.readUInt16BE(10).toString(16);
+            const g6 = rData.readUInt16BE(12).toString(16);
+            const g7 = rData.readUInt16BE(14).toString(16);
+            address = `${g0}:${g1}:${g2}:${g3}:${g4}:${g5}:${g6}:${g7}`.replace(/(:0)+(?::)/, '::');
             break;
         }
 

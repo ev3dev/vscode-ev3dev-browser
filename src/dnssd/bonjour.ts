@@ -42,8 +42,9 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
         const newAddresses = new Array<string>();
         const ifaces = os.networkInterfaces();
         for (let i in ifaces) {
-            // only supporting IPv4 for now
-            const addresses = ifaces[i].filter(v => v.family == 'IPv4').map(v => v.address);
+            // only supporting IPv6 for now
+            const addresses = ifaces[i].filter(v => v.family == 'IPv6').map(v =>
+                `${v.address}%${process.platform == 'win32' ? v['scopeid'] : i}`);
             newAddresses.push(...addresses);
         }
         const added = newAddresses.filter(a => this.ifaceAddresses.indexOf(a) == -1);
@@ -70,7 +71,12 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
     private createClient(ifaceAddress: string): void {
         // work around bonjour issue where error is not handled
         new Promise<bonjour.Bonjour>((resolve, reject) => {
-            const bClient = bonjour({interface: ifaceAddress});
+            const bClient = bonjour(<any> {
+                type: 'udp6',
+                ip: 'ff02::fb',
+                interface: ifaceAddress
+            });
+            bClient['iface'] = ifaceAddress.split('%')[1];
             (<any> bClient)._server.mdns.on('ready', () => resolve(bClient));
             (<any> bClient)._server.mdns.on('error', err => reject(err));
         }).then(bClient => {
@@ -136,9 +142,10 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
         });
         const services = new Array<BonjourService>();
         browser.on('up', s => {
-           const service =  new BonjourService(s);
-           services.push(service);
-           this.emit('added', service, false);
+            s['iface'] = bClient['iface'];
+            const service = new BonjourService(s);
+            services.push(service);
+            this.emit('added', service, false);
         });
         browser.on('down', s => {
             const index = services.findIndex(v => v.bService == s);
@@ -168,6 +175,7 @@ class BonjourService implements dnssd.Service {
     public readonly name: string;
     public readonly service: string;
     public readonly transport: 'tcp' | 'udp';
+    public readonly iface: number;
     public readonly host: string;
     public readonly domain: string;
     public readonly ipv: 'IPv4' | 'IPv6';
@@ -179,8 +187,10 @@ class BonjourService implements dnssd.Service {
         this.name = bService.name;
         this.service = bService.type;
         this.transport = <'tcp' | 'udp'> bService.protocol;
+        this.iface = bService['iface'];
         this.host = bService.host;
         this.domain = (<any> bService).domain;
+        this.ipv = 'IPv6';
         this.address = (<any> bService).addresses[0]; // FIXME
         this.port = bService.port;
         this.txt = <dnssd.TxtRecords> bService.txt;

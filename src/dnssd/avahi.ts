@@ -139,7 +139,7 @@ class AvahiService implements dnssd.Service {
     public readonly txt: dnssd.TxtRecords;
 
     constructor(
-        private readonly iface: number,
+        public readonly iface: number,
         private readonly protocol: number,
         public readonly name: string,
         private readonly type: string,
