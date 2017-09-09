@@ -89,7 +89,7 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
                                 this.emit('error', new dns.ServiceError(e, 'Querying service failed.'));
                                 return;
                             }
-                            if (this.services.findIndex(v => v.name == n && v.type == t && v.domain == d.replace(/\.$/, '')) != -1) {
+                            if (this.services.findIndex(v => v.iface == i && v.name == n && v.type == t && v.domain == d.replace(/\.$/, '')) != -1) {
                                 // ignore duplicates
                                 return;
                             }
