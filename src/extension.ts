@@ -178,7 +178,7 @@ async function download(): Promise<boolean> {
             const reportProgress = (message: string) => progress.report({ message: message });
 
             for (const f of files) {
-                const baseProgressMessage = `${f.fsPath} (${fileIndex}/${files.length})`;
+                const baseProgressMessage = `(${fileIndex}/${files.length}) ${f.fsPath}`;
                 reportProgress(baseProgressMessage);
 
                 const basename = path.basename(f.fsPath);
