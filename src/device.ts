@@ -334,7 +334,7 @@ export class Device extends vscode.Disposable {
         // Leading slash produces empty first element
         names.shift();
 
-        let part = '';
+        let part = '/';
         while (names.length) {
             part = path.posix.join(part, names.shift());
             // Create the directory if it doesn't already exist
