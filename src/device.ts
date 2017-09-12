@@ -2,9 +2,11 @@ import * as dnode from 'dnode';
 import * as net from 'net';
 import * as path from 'path';
 import * as os from 'os';
+import * as readline from 'readline';
 import * as ssh2 from 'ssh2';
 import * as ssh2Streams from 'ssh2-streams';
 import * as vscode from 'vscode';
+import * as Observable from 'zen-observable';
 
 import * as dnssd from './dnssd';
 
@@ -284,6 +286,40 @@ export class Device extends vscode.Disposable {
     }
 
     /**
+     * Create an observable that monitors the stdout and stderr of a command.
+     * @param command The command to execute.
+     */
+    public async createExecObservable(command: string): Promise<[Observable<string>, Observable<string>]> {
+        return new Promise<[Observable<string>, Observable<string>]>(async (resolve, reject) => {
+            try {
+                const conn = await this.exec(command);
+                const stdout = new Observable<string>(observer => {
+                    readline.createInterface({
+                        input: conn.stdout
+                    }).on('line', line => {
+                        observer.next(line);
+                    }).on('close', () => {
+                        observer.complete();
+                    });
+                });
+                const stderr = new Observable<string>(observer => {
+                    readline.createInterface({
+                        input: <NodeJS.ReadableStream> conn.stderr
+                    }).on('line', line => {
+                        observer.next(line);
+                    }).on('close', () => {
+                        observer.complete();
+                    });
+                });
+                resolve([stdout, stderr]);
+            }
+            catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    /**
      * Starts a new shell on the remote device.
      * @param window Optional pty settings or false to not allocate a pty.
      */
@@ -429,20 +465,6 @@ export class Device extends vscode.Disposable {
                     resolve();
                 }
             })
-        });
-    }
-
-    public getSystemInfo(): Promise<string> {
-        return new Promise(async (resolve, reject) => {
-            const conn = await this.exec('ev3dev-sysinfo');
-            let sysinfoString = '';
-            conn.stdout.on('data', buffer => sysinfoString += buffer.toString());
-            conn.stdout.once('error', (err) => {
-                conn.close();
-                reject(err);
-            });
-
-            conn.stdout.once('end', () => resolve(sysinfoString));
         });
     }
 

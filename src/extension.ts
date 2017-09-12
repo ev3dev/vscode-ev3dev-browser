@@ -425,15 +425,19 @@ class DeviceTreeItem extends vscode.TreeItem {
 
     public async showSysinfo() {
         try {
+            output.clear();
+            output.show();
+            output.appendLine('========== ev3dev-sysinfo ==========');
             const sysinfo = await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Window,
                 title: 'Grabbing ev3dev system info...'
-            }, progress => this.device.getSystemInfo());
-    
-            output.clear();
-            output.appendLine('========== ev3dev-sysinfo ==========');
-            output.appendLine(sysinfo);
-            output.show();
+            }, async progress => {
+                const [stdout, stderr] = await this.device.createExecObservable('ev3dev-sysinfo');
+                await Promise.all([
+                    stdout.forEach(v => output.appendLine(v)),
+                    stderr.forEach(v => output.appendLine(v))
+                ]);
+            });
 
             toastStatusBarMessage('System info retrieved');
         }

@@ -90,7 +90,7 @@
                                 "default": "/home/robot"
                             }
                         },
-                        "required":[
+                        "required": [
                             "name",
                             "ipAddress"
                         ]
@@ -324,6 +324,7 @@
         "@types/ssh2": "~0.5.35",
         "@types/ssh2-streams": "~0.1.2",
         "@types/temp": "^0.8.3",
+        "@types/zen-observable": "^0.5.3",
         "mocha": "^2.3.3",
         "typescript": "^2.4.2",
         "vscode": "^1.0.0"
@@ -336,6 +337,7 @@
         "ssh2": "~0.5.5",
         "ssh2-streams": "~0.1.19",
         "temp": "^0.8.3",
-        "vscode-debugadapter": "^1.22.0"
+        "vscode-debugadapter": "^1.22.0",
+        "zen-observable": "^0.5.2"
     }
 }
