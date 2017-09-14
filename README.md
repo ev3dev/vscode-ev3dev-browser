@@ -9,7 +9,7 @@ Learn more about ev3dev at <http://www.ev3dev.org>.
 ## Requirements
 
 This extension is only compatible with devices running **ev3dev-stretch**
-[snapshot images] starting with `2017-09-01`. It will not work with other
+[snapshot images] starting with `2017-09-14`. It will not work with other
 versions of ev3dev.
 
 Additional information can be found on the [wiki].

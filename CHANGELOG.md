@@ -3,7 +3,7 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## Unreleased
+## 0.5.0 - 2017-09-14
 ### Added
 - Battery voltage monitoring
 - Refresh command/button
