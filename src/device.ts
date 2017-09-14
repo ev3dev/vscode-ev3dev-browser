@@ -8,6 +8,7 @@ import * as ssh2Streams from 'ssh2-streams';
 import * as vscode from 'vscode';
 import * as Observable from 'zen-observable';
 
+import { Brickd } from './brickd';
 import * as dnssd from './dnssd';
 
 /**
@@ -627,6 +628,29 @@ export class Device extends vscode.Disposable {
         }
 
         return new Device(selectedItem.service);
+    }
+
+    private async forwardOut(srcAddr: string, srcPort: number, destAddr: string, destPort: number): Promise<ssh2.ClientChannel> {
+        return new Promise<ssh2.ClientChannel>((resolve, reject) => {
+            this.client.forwardOut(srcAddr, srcPort, destAddr, destPort, (err, channel) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(channel);
+                }
+            });
+        });
+    }
+
+    /**
+     * Gets a new connection to brickd.
+     * 
+     * @returns A promise of a Brickd object.
+     */
+    public async brickd(): Promise<Brickd> {
+        const channel = await this.forwardOut('localhost', 0, 'localhost', 31313);
+        return new Brickd(channel);
     }
 }
 

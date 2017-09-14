@@ -332,6 +332,7 @@
     "dependencies": {
         "avahi-dbus": "^0.1.0",
         "bonjour": "^3.5.0",
+        "compare-versions": "^3.0.1",
         "dbus-native": "^0.2.2",
         "dnode": "^1.2.2",
         "ssh2": "~0.5.5",

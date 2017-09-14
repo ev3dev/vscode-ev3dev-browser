@@ -5,6 +5,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 ### Added
+- Battery voltage monitoring
 - Refresh command/button
 ### Removed
 - ev3devBrowser.visible configuration setting (@WasabiFan)

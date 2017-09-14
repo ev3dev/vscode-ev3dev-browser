@@ -6,6 +6,7 @@ import * as temp from 'temp';
 import * as vscode from 'vscode';
 
 import { LaunchRequestArguments } from './native-helper/debugServer';
+import { Brickd } from './brickd';
 import { Device } from './device';
 import {
     sanitizedDateString,
@@ -271,7 +272,13 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
             return [this.device || this.noDeviceTreeItem];
         }
         if (element instanceof DeviceTreeItem) {
-            return [element.rootDirectory];
+            if (element.device.isConnected) {
+                return [element.statusItem, element.rootDirectory];
+            }
+            return [];
+        }
+        if (element instanceof DeviceStatusTreeItem) {
+            return element.children;
         }
         if (element instanceof File) {
             return element.getFiles();
@@ -288,6 +295,10 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
     public fireFileChanged(file: File): void {
         this._onDidChangeTreeData.fire(file);
     }
+
+    public fireStatusChanged(status: DeviceStatusTreeItem) {
+        this._onDidChangeTreeData.fire(status);
+    }
 }
 
 /**
@@ -303,6 +314,7 @@ enum DeviceState {
 
 class DeviceTreeItem extends vscode.TreeItem {
     public rootDirectory : File;
+    public statusItem: DeviceStatusTreeItem;
 
     constructor(public readonly device: Device) {
         super(device.name);
@@ -319,6 +331,7 @@ class DeviceTreeItem extends vscode.TreeItem {
         else {
             this.handleConnectionState(DeviceState.Disconnected)
         }
+        this.statusItem = new DeviceStatusTreeItem(device);
     }
 
     private handleConnectionState(state: DeviceState): void {
@@ -341,6 +354,7 @@ class DeviceTreeItem extends vscode.TreeItem {
             });
             this.rootDirectory.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
             icon = 'green-circle.svg';
+            this.statusItem.connectBrickd();
             break;
         case DeviceState.Disconnected:
             icon = 'red-circle.svg';
@@ -606,6 +620,54 @@ class CommandTreeItem extends vscode.TreeItem {
         this.command = {
             command: command,
             title: ''
+        };
+    }
+}
+
+class DeviceStatusTreeItem extends CommandTreeItem {
+    private readonly defaultBatteryLabel = "Battery: N/A";
+    public children = new Array<CommandTreeItem>();
+    private batteryItem = new CommandTreeItem(this.defaultBatteryLabel, undefined);
+    private brickd: Brickd;
+
+    public constructor(private device: Device) {
+        super("Status", undefined);
+        this.children.push(this.batteryItem);
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+    }
+
+    public async connectBrickd() {
+        if (this.brickd) {
+            this.brickd.removeAllListeners();
+            this.brickd = null;
+            this.batteryItem.label = this.defaultBatteryLabel;
+        }
+        try {
+            this.brickd = await this.device.brickd();
+            this.brickd.on('message', message => {
+                const [m1, ...m2] = message.split(' ');
+                switch (m1) {
+                case 'WARN':
+                case 'CRITICAL':
+                    vscode.window.showWarningMessage(m2.join(' '));
+                    break;
+                case 'PROPERTY':
+                    switch (m2[0]) {
+                    case "system.battery.voltage":
+                        const voltage = Number(m2[1]) / 1000;
+                        this.batteryItem.label = `Battery: ${voltage.toFixed(2)}V`;
+                        ev3devBrowserProvider.fireStatusChanged(this);
+                    }
+                    break;
+                }
+            });
+            this.brickd.on('error', err => {
+                vscode.window.showErrorMessage(`${this.device.name}: ${err.message}`);
+            });
+        }
+        catch (err)  {
+            vscode.window.showWarningMessage('Failed to get brickd connection. No status will be available.');
+            return;
         };
     }
 }
