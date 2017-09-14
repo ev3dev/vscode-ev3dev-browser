@@ -603,8 +603,7 @@ export class Device extends vscode.Disposable {
             const name = await vscode.window.showInputBox({
                 ignoreFocusOut: true,
                 prompt: "Enter a name for the device",
-                placeHolder: 'Example: "ev3dev"',
-                validateInput: (v) => !/^[a-zA-Z0-9_\-]{1,}$/.test(v) && 'Only a-z, A-Z, 0-9, - and _ allowed'
+                placeHolder: 'Example: "ev3dev (Bluetooth)"'
             });
             if (!name) {
                 // cancelled
