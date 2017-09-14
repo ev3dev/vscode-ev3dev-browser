@@ -649,7 +649,7 @@ class DeviceStatusTreeItem extends CommandTreeItem {
                 switch (m1) {
                 case 'WARN':
                 case 'CRITICAL':
-                    vscode.window.showWarningMessage(m2.join(' '));
+                    vscode.window.showWarningMessage(`${this.device.name}: ${m2.join(' ')}`);
                     break;
                 case 'PROPERTY':
                     switch (m2[0]) {
