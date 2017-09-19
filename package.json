@@ -115,8 +115,8 @@
                 "title": "Get system info"
             },
             {
-                "command": "ev3devBrowser.deviceTreeItem.connect",
-                "title": "Connect"
+                "command": "ev3devBrowser.deviceTreeItem.reconnect",
+                "title": "Reconnect"
             },
             {
                 "command": "ev3devBrowser.deviceTreeItem.disconnect",
@@ -232,7 +232,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "ev3devBrowser.deviceTreeItem.connect",
+                    "command": "ev3devBrowser.deviceTreeItem.reconnect",
                     "when": "false"
                 },
                 {
@@ -262,7 +262,7 @@
             ],
             "view/item/context": [
                 {
-                    "command": "ev3devBrowser.deviceTreeItem.connect",
+                    "command": "ev3devBrowser.deviceTreeItem.reconnect",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.disconnected"
                 },
                 {

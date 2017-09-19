@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.openSshTerminal', d => d.openSshTerminal()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.captureScreenshot', d => d.captureScreenshot()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.showSysinfo', d => d.showSysinfo()),
-        vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.connect', d => d.connect()),
+        vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.reconnect', d => d.connect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.disconnect', d => d.disconnect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.select', d => d.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.run', f => f.run()),
