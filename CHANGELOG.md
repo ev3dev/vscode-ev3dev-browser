@@ -6,6 +6,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## Unreleased
 ### Added
 - Context menu item to connect to a different device
+### Fixed
+- Connection timeout issues with Bluetooth and Wi-Fi
 
 ## 0.5.0 - 2017-09-14
 ### Added
