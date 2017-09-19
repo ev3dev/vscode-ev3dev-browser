@@ -119,6 +119,10 @@
                 "title": "Reconnect"
             },
             {
+                "command": "ev3devBrowser.deviceTreeItem.connectNew",
+                "title": "Connect to a different device"
+            },
+            {
                 "command": "ev3devBrowser.deviceTreeItem.disconnect",
                 "title": "Disconnect"
             },
@@ -236,6 +240,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "ev3devBrowser.deviceTreeItem.connectNew",
+                    "when": "false"
+                },
+                {
                     "command": "ev3devBrowser.deviceTreeItem.disconnect",
                     "when": "false"
                 },
@@ -263,7 +271,13 @@
             "view/item/context": [
                 {
                     "command": "ev3devBrowser.deviceTreeItem.reconnect",
-                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.disconnected"
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.disconnected",
+                    "group": "group@0"
+                },
+                {
+                    "command": "ev3devBrowser.deviceTreeItem.connectNew",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.disconnected",
+                    "group": "group@1"
                 },
                 {
                     "command": "ev3devBrowser.deviceTreeItem.disconnect",
