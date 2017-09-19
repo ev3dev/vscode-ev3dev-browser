@@ -132,14 +132,7 @@ export class Device extends vscode.Disposable {
 
     private getSftp(): Promise<ssh2.SFTPWrapper> {
         return new Promise((resolve, reject) => {
-            // This can keep the connection busy for a long time. On Bluetooth,
-            // it is enough for the keepalive timeout to expire. So, we ignore
-            // the keepalive during this operation.
-            const timer = setInterval(() => {
-                (<any> this.client)._resetKA();
-            }, 1000);
             this.client.sftp((err, sftp) => {
-                clearInterval(timer);
                 if (err) {
                     reject(err);
                     return;
