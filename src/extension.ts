@@ -47,6 +47,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.select', d => d.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.run', f => f.run()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.delete', f => f.delete()),
+        vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.showInfo', f => f.showInfo()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.select', f => f.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.action.pickDevice', () => pickDevice()),
         vscode.commands.registerCommand('ev3devBrowser.action.download', () => download()),
@@ -609,6 +610,29 @@ class File extends vscode.TreeItem {
         }, err => {
             vscode.window.showErrorMessage(`Error deleting '${this.path}': ${err.message}`);
         });
+    }
+
+    public async showInfo(): Promise<void> {
+        output.clear();
+        output.show();
+        output.appendLine('Getting file info...');
+        output.appendLine('');
+        try {
+            let [stdout, stderr] = await this.device.createExecObservable(`/bin/ls -lh ${this.path}`);
+            await Promise.all([
+                stdout.forEach(line => output.appendLine(line)),
+                stderr.forEach(line => output.appendLine(line))
+            ]);
+            output.appendLine('');
+            [stdout, stderr] = await this.device.createExecObservable(`/usr/bin/file ${this.path}`);
+            await Promise.all([
+                stdout.forEach(line => output.appendLine(line)),
+                stderr.forEach(line => output.appendLine(line))
+            ]);
+        }
+        catch (err) {
+            output.appendLine(`Error: ${err.message}`);
+        }
     }
 }
 

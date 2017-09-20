@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## Unreleased
 ### Added
 - Context menu item to connect to a different device
+- Context menu item to show file info
 ### Fixed
 - Connection timeout issues with Bluetooth and Wi-Fi
 

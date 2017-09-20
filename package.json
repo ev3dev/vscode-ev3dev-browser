@@ -135,6 +135,10 @@
                 "title": "Delete"
             },
             {
+                "command": "ev3devBrowser.fileTreeItem.showInfo",
+                "title": "Show Info"
+            },
+            {
                 "command": "ev3devBrowser.action.pickDevice",
                 "title": "Connect to a device",
                 "category": "ev3dev"
@@ -254,6 +258,10 @@
                 {
                     "command": "ev3devBrowser.fileTreeItem.delete",
                     "when": "false"
+                },
+                {
+                    "command": "ev3devBrowser.fileTreeItem.showInfo",
+                    "when": "false"
                 }
             ],
             "view/title": [
@@ -313,6 +321,16 @@
                     "command": "ev3devBrowser.fileTreeItem.delete",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.executable",
                     "group": "group@5"
+                },
+                {
+                    "command": "ev3devBrowser.fileTreeItem.showInfo",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.executable",
+                    "group": "group@10"
+                },
+                {
+                    "command": "ev3devBrowser.fileTreeItem.showInfo",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file",
+                    "group": "group@10"
                 }
             ]
         },
