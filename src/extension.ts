@@ -9,11 +9,11 @@ import { LaunchRequestArguments } from './native-helper/debugServer';
 import { Brickd } from './brickd';
 import { Device } from './device';
 import {
-    sanitizedDateString,
     getSharedTempDir,
-    verifyFileHeader,
+    sanitizedDateString,
+    setContext,
     toastStatusBarMessage,
-    setContext
+    verifyFileHeader
 } from './utils';
 
 
@@ -189,13 +189,26 @@ async function download(): Promise<boolean> {
                 const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
                 const remotePath = path.posix.resolve(remoteDir, basename);
 
+                // File permission handling:
+                // - If the file starts with a shebang, then assume it should be
+                //   executable.
+                // - Otherwise use the existing file permissions. On Windows
+                //   all files will be executable.
+                let mode: string = undefined;
+                if (await verifyFileHeader(f.fsPath, new Buffer('#!/'))) {
+                    mode = '755';
+                }
+                else {
+                    const stat = fs.statSync(f.fsPath);
+                    mode = stat.mode.toString(8);
+                }
+
                 // make sure the directory exists
                 await device.mkdir_p(remoteDir);
                 // then we can copy the file
-                // TODO: selectively make files executable
-                await device.put(f.fsPath, remotePath, '755',
+                await device.put(f.fsPath, remotePath, mode,
                     percentage => reportProgress(`${baseProgressMessage} - ${percentage}%`));
-                
+
                 fileIndex++;
             }
             // make sure any new files show up in the browser
