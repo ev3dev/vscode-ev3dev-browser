@@ -43,11 +43,11 @@ export function openAndRead(path: string, offset: number, length: number, positi
 
             const buffer = new Buffer(length);
             fs.read(fd, buffer, offset, length, position, (err, bytesRead, buffer) => {
+                fs.close(fd);
                 if (err) {
                     reject(err);
                     return;
                 }
-
                 resolve(buffer);
             });
         });
