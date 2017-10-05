@@ -13,13 +13,17 @@ import {
     sanitizedDateString,
     setContext,
     toastStatusBarMessage,
-    verifyFileHeader
+    verifyFileHeader,
+    localPathToRemote,
+    WorkspaceChangeTracker,
+    FileUpdateInfo
 } from './utils';
 
 let output: vscode.OutputChannel;
 let resourceDir: string;
 let helperExePath: string;
 let ev3devBrowserProvider: Ev3devBrowserProvider;
+let changeTracker: WorkspaceChangeTracker = null;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -74,6 +78,13 @@ async function pickDevice(): Promise<void> {
         try {
             await device.connect();
             toastStatusBarMessage(`Connected`);
+            
+            device.onDidDisconnect(() => {
+                if (changeTracker) {
+                    changeTracker.dispose();
+                }
+                changeTracker = null;
+            });
         }
         catch (err) {
             vscode.window.showErrorMessage(`Failed to connect to ${device.name}: ${err.message}`);
@@ -173,18 +184,34 @@ async function download(): Promise<boolean> {
         title: 'Sending'
     }, async progress => {
         try {
-            const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
-            let fileIndex = 1;
-            const reportProgress = (message: string) => progress.report({ message: message });
+            let fileUpdates: FileUpdateInfo;
+            if(changeTracker) {
+                fileUpdates = changeTracker.getFileUpdatesAndReset();
+            }
+            else {
+                // If we lack tracking info, initialize the tracker and assume all files are "created" and must be re-deployed
+                changeTracker = new WorkspaceChangeTracker();
+                const uris = await vscode.workspace.findFiles(includeFiles, excludeFiles);
+                const allFiles = uris.map(uri => uri.fsPath);
+                fileUpdates = { created: allFiles, updated: [], deleted: [] };
+            }
 
-            for (const f of files) {
-                const baseProgressMessage = `(${fileIndex}/${files.length}) ${f.fsPath}`;
+            const reportProgress = (message: string) => progress.report({ message: message });
+            const totalChangeCount = fileUpdates.created.length + fileUpdates.updated.length + fileUpdates.deleted.length;
+
+            if(totalChangeCount <= 0) {
+                toastStatusBarMessage("Download complete; there was nothing to do!");
+                success = true;
+                return;
+            }
+
+            let currentChangeCount = 1;
+
+            for (const filePath of [ ...fileUpdates.created, ...fileUpdates.updated ]) {
+                const baseProgressMessage = `(${currentChangeCount}/${Object.keys(fileUpdates).length}) ${filePath}`;
                 reportProgress(baseProgressMessage);
 
-                const basename = path.basename(f.fsPath);
-                const relativeDir = path.dirname(vscode.workspace.asRelativePath(f.fsPath));
-                const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
-                const remotePath = path.posix.resolve(remoteDir, basename);
+                const remoteInfo = localPathToRemote(filePath, remoteBaseDir);
 
                 // File permission handling:
                 // - If the file starts with a shebang, then assume it should be
@@ -192,29 +219,41 @@ async function download(): Promise<boolean> {
                 // - Otherwise use the existing file permissions. On Windows
                 //   all files will be executable.
                 let mode: string = undefined;
-                if (await verifyFileHeader(f.fsPath, new Buffer('#!/'))) {
+                if (await verifyFileHeader(filePath, new Buffer('#!/'))) {
                     mode = '755';
                 }
                 else {
-                    const stat = fs.statSync(f.fsPath);
+                    const stat = fs.statSync(filePath);
                     mode = stat.mode.toString(8);
                 }
 
                 // make sure the directory exists
-                await device.mkdir_p(remoteDir);
+                await device.mkdir_p(remoteInfo.remoteDir);
                 // then we can copy the file
-                await device.put(f.fsPath, remotePath, mode,
+                await device.put(filePath, remoteInfo.remotePath, mode,
                     percentage => reportProgress(`${baseProgressMessage} - ${percentage}%`));
 
-                fileIndex++;
+                currentChangeCount++;
             }
+
+            for (const filePath of fileUpdates.deleted) {
+                reportProgress(`Deleting ${filePath}...`);
+                const remoteInfo = localPathToRemote(filePath, remoteBaseDir);
+
+                await device.rm(remoteInfo.remotePath);
+            }
+
             // make sure any new files show up in the browser
             ev3devBrowserProvider.fireDeviceChanged();
             success = true;
-            vscode.window.setStatusBarMessage(`Done sending project to ${device.name}.`, 5000);
+            toastStatusBarMessage(`Done sending project to ${device.name}.`);
         }
         catch (err) {
             vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
+            if(changeTracker) {
+                changeTracker.dispose();
+            }
+            changeTracker = null;
         }
     });
 

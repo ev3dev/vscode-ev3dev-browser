@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as temp from 'temp';
 import * as fs from 'fs';
+import * as path from 'path';
 import { isArray } from 'util';
 
 const toastDuration = 5000;
@@ -73,4 +74,74 @@ export function toastStatusBarMessage(message: string): void {
  */
 export function setContext(context: string, state: boolean): void {
     vscode.commands.executeCommand('setContext', context, state);
+}
+
+export function localPathToRemote(localPath: string, remoteBaseDir: string): { remoteDir: string, remotePath: string } {
+    const basename = path.basename(localPath);
+    const relativeDir = path.dirname(vscode.workspace.asRelativePath(localPath));
+    const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
+    const remotePath = path.posix.resolve(remoteDir, basename);
+
+    return { remoteDir: remoteDir, remotePath: remotePath };
+}
+
+export type FileUpdateInfo = { created: string[], updated: string[], deleted: string[] };
+
+export class WorkspaceChangeTracker {
+    private watcher: vscode.FileSystemWatcher;
+    private fileUpdates = { created: new Set<string>(), updated: new Set<string>(), deleted: new Set<string>() };
+
+    constructor() {
+        this.watcher = vscode.workspace.createFileSystemWatcher("**");
+
+        this.watcher.onDidCreate(uri => {
+            const filePath = uri.fsPath;
+            if (!fs.statSync(filePath).isFile()) {
+                return;
+            }
+
+            this.fileUpdates.deleted.delete(filePath);
+            this.fileUpdates.created.add(filePath);
+        });
+
+        this.watcher.onDidChange(uri => {
+            const filePath = uri.fsPath;
+            if (!fs.statSync(filePath).isFile()) {
+                return;
+            }
+            if (!this.fileUpdates.created.has(filePath) && !this.fileUpdates.deleted.has(filePath)) {
+                this.fileUpdates.updated.add(filePath);
+            }
+        });
+
+        this.watcher.onDidDelete(uri => {
+            const filePath = uri.fsPath;
+            
+            if (!this.fileUpdates.created.delete(filePath)) {
+                this.fileUpdates.updated.delete(filePath);
+                this.fileUpdates.deleted.add(filePath);
+            }
+        });
+    }
+
+    public reset() {
+        this.fileUpdates.created.clear();
+        this.fileUpdates.updated.clear();
+        this.fileUpdates.deleted.clear();
+    }
+
+    public getFileUpdatesAndReset(): FileUpdateInfo {
+        const updateInfo = {
+            created: Array.from(this.fileUpdates.created.values()),
+            updated: Array.from(this.fileUpdates.updated.values()),
+            deleted: Array.from(this.fileUpdates.deleted.values())
+        };
+        this.reset();
+
+        return updateInfo;
+    }
+
+    public dispose() {
+        this.watcher.dispose()
+    }
 }
