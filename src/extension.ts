@@ -53,8 +53,16 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.action.pickDevice', () => pickDevice()),
         vscode.commands.registerCommand('ev3devBrowser.action.download', () => download()),
         vscode.commands.registerCommand('ev3devBrowser.action.refresh', () => refresh()),
+        vscode.workspace.onDidChangeWorkspaceFolders(e => handleWorkspaceFoldersChangeEvent(e)),
         vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e))
     );
+
+    if (vscode.workspace.workspaceFolders) {
+        handleWorkspaceFoldersChangeEvent({
+            added: vscode.workspace.workspaceFolders,
+            removed: undefined
+        });
+    }
 }
 
 // this method is called when your extension is deactivated
@@ -78,18 +86,22 @@ async function pickDevice(): Promise<void> {
         try {
             await device.connect();
             toastStatusBarMessage(`Connected`);
-            
-            device.onDidDisconnect(() => {
-                if (changeTracker) {
-                    changeTracker.dispose();
-                    changeTracker = undefined;
-                }
-            });
         }
         catch (err) {
             vscode.window.showErrorMessage(`Failed to connect to ${device.name}: ${err.message}`);
         }
     });
+}
+
+function handleWorkspaceFoldersChangeEvent(event: vscode.WorkspaceFoldersChangeEvent): void {
+    // TODO: handle multiple workspace folders
+    if (event.added) {
+        changeTracker = new WorkspaceChangeTracker();
+        changeTracker.init(); // async
+    }
+    if (event.removed) {
+        changeTracker = undefined;
+    }
 }
 
 async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Promise<void> {
@@ -184,34 +196,37 @@ async function download(): Promise<boolean> {
         title: 'Sending'
     }, async progress => {
         try {
-            let fileUpdates: FileUpdateInfo;
+            let updatedFiles: { remoteDir: string, remotePath: string }[];
+            let deletedFiles: { remoteDir: string, remotePath: string }[];
             if (changeTracker) {
-                fileUpdates = changeTracker.getFileUpdatesAndReset();
+                const updates = changeTracker.getFileUpdatesAndReset();
+                updatedFiles = updates.updated.map(p => localPathToRemote(p, remoteBaseDir));
+                deletedFiles = updates.deleted.map(p => localPathToRemote(p, remoteBaseDir));
             }
-            else {
-                // If we lack tracking info, initialize the tracker and assume all files are "created" and must be re-deployed
-                changeTracker = new WorkspaceChangeTracker();
-                const uris = await vscode.workspace.findFiles(includeFiles, excludeFiles);
-                const allFiles = uris.map(uri => uri.fsPath);
-                fileUpdates = { updated: allFiles, deleted: [] };
-            }
+            const uris = await vscode.workspace.findFiles(includeFiles, excludeFiles);
+            const matchedFiles = uris.map(uri => uri.fsPath);
 
             const reportProgress = (message: string) => progress.report({ message: message });
-            const totalChangeCount = fileUpdates.updated.length + fileUpdates.deleted.length;
-
-            if (totalChangeCount <= 0) {
-                toastStatusBarMessage("Download complete. There was nothing to do!");
-                success = true;
-                return;
-            }
 
             let currentChangeCount = 1;
 
-            for (const filePath of fileUpdates.updated) {
-                const baseProgressMessage = `(${currentChangeCount}/${fileUpdates.updated.length}) ${filePath}`;
+            for (const filePath of matchedFiles) {
+                const baseProgressMessage = `(${currentChangeCount}/${matchedFiles.length}) ${filePath}`;
                 reportProgress(baseProgressMessage);
 
                 const remoteInfo = localPathToRemote(filePath, remoteBaseDir);
+
+                try {
+                    const stat = await device.stat(remoteInfo.remotePath);
+                    if (updatedFiles && !updatedFiles.find(f => f.remotePath == remoteInfo.remotePath)) {
+                        // this file was not updated since the last download, so skip it
+                        continue;
+                    }
+                }
+                catch (err) {
+                    // probably means that the remote file does not exist, so
+                    // continue with the download
+                }
 
                 // File permission handling:
                 // - If the file starts with a shebang, then assume it should be
@@ -236,11 +251,11 @@ async function download(): Promise<boolean> {
                 currentChangeCount++;
             }
 
-            for (const filePath of fileUpdates.deleted) {
-                reportProgress(`Deleting ${filePath}...`);
-                const remoteInfo = localPathToRemote(filePath, remoteBaseDir);
-
-                await device.rm(remoteInfo.remotePath);
+            if (deletedFiles) {
+                for (const filePath of deletedFiles) {
+                    reportProgress(`Deleting ${filePath.remotePath}...`);
+                    await device.rm(filePath.remotePath);
+                }
             }
 
             // make sure any new files show up in the browser
@@ -251,9 +266,8 @@ async function download(): Promise<boolean> {
         catch (err) {
             vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
             if (changeTracker) {
-                changeTracker.dispose();
+                await changeTracker.init();
             }
-            changeTracker = null;
         }
     });
 
@@ -406,6 +420,10 @@ class DeviceTreeItem extends vscode.TreeItem {
             this.rootDirectory.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
             icon = 'green-circle.svg';
             this.statusItem.connectBrickd();
+            if (changeTracker) {
+                changeTracker.reset();
+                changeTracker.init();
+            }
             break;
         case DeviceState.Disconnected:
             icon = 'red-circle.svg';

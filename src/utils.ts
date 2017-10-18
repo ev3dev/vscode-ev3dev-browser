@@ -122,6 +122,17 @@ export class WorkspaceChangeTracker {
         });
     }
 
+    /**
+     * Initialize the updated files with all files in the workspace.
+     *
+     * This must be called after the constructor because it is async.
+     */
+    public async init(): Promise<void> {
+        for (const f of await vscode.workspace.findFiles('**/*')) {
+            this.fileUpdates.updated.add(f.fsPath);
+        }
+    }
+
     public reset() {
         this.fileUpdates.updated.clear();
         this.fileUpdates.deleted.clear();
