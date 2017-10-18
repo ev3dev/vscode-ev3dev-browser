@@ -167,6 +167,19 @@ async function download(): Promise<boolean> {
     const excludeFiles = config.get<string>('exclude');
     const projectDir = config.get<string>('directory') || path.basename(localDir);
     const remoteBaseDir = device.homeDirectoryPath + `/${projectDir}/`;
+
+    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 5);
+    statusBarItem.text = '$(circle-slash) Cancel';
+    statusBarItem.tooltip = `Cancel download to ${device.name}`;
+    statusBarItem.command = 'ev3devBrowser.cancelDownload';
+    statusBarItem.show();
+
+    const cancelSource = new vscode.CancellationTokenSource();
+    const cancelCommand = vscode.commands.registerCommand('ev3devBrowser.cancelDownload', () => {
+        cancelSource.cancel();
+        statusBarItem.hide();
+    });
+
     let success = false;
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Window,
@@ -178,6 +191,12 @@ async function download(): Promise<boolean> {
             const reportProgress = (message: string) => progress.report({ message: message });
 
             for (const f of files) {
+                if (cancelSource.token.isCancellationRequested) {
+                    ev3devBrowserProvider.fireDeviceChanged();
+                    toastStatusBarMessage('Download canceled');
+                    return;
+                }
+
                 const baseProgressMessage = `(${fileIndex}/${files.length}) ${f.fsPath}`;
                 reportProgress(baseProgressMessage);
 
@@ -217,6 +236,10 @@ async function download(): Promise<boolean> {
             vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
         }
     });
+
+    statusBarItem.dispose();
+    cancelCommand.dispose();
+    cancelSource.dispose();
 
     return success;
 }

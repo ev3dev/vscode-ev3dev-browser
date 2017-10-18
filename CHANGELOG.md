@@ -9,6 +9,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Context menu item to show file info
 ### Changed
 - Remote directories can be deleted
+- Downloads can be canceled
 ### Fixed
 - Connection timeout issues with Bluetooth and Wi-Fi
 
