@@ -193,11 +193,11 @@ async function download(): Promise<boolean> {
                 changeTracker = new WorkspaceChangeTracker();
                 const uris = await vscode.workspace.findFiles(includeFiles, excludeFiles);
                 const allFiles = uris.map(uri => uri.fsPath);
-                fileUpdates = { created: allFiles, updated: [], deleted: [] };
+                fileUpdates = { updated: allFiles, deleted: [] };
             }
 
             const reportProgress = (message: string) => progress.report({ message: message });
-            const totalChangeCount = fileUpdates.created.length + fileUpdates.updated.length + fileUpdates.deleted.length;
+            const totalChangeCount = fileUpdates.updated.length + fileUpdates.deleted.length;
 
             if (totalChangeCount <= 0) {
                 toastStatusBarMessage("Download complete. There was nothing to do!");
@@ -207,8 +207,8 @@ async function download(): Promise<boolean> {
 
             let currentChangeCount = 1;
 
-            for (const filePath of [ ...fileUpdates.created, ...fileUpdates.updated ]) {
-                const baseProgressMessage = `(${currentChangeCount}/${Object.keys(fileUpdates).length}) ${filePath}`;
+            for (const filePath of fileUpdates.updated) {
+                const baseProgressMessage = `(${currentChangeCount}/${fileUpdates.updated.length}) ${filePath}`;
                 reportProgress(baseProgressMessage);
 
                 const remoteInfo = localPathToRemote(filePath, remoteBaseDir);

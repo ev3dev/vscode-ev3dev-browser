@@ -85,11 +85,11 @@ export function localPathToRemote(localPath: string, remoteBaseDir: string): { r
     return { remoteDir: remoteDir, remotePath: remotePath };
 }
 
-export type FileUpdateInfo = { created: string[], updated: string[], deleted: string[] };
+export type FileUpdateInfo = { updated: string[], deleted: string[] };
 
 export class WorkspaceChangeTracker {
     private watcher: vscode.FileSystemWatcher;
-    private fileUpdates = { created: new Set<string>(), updated: new Set<string>(), deleted: new Set<string>() };
+    private fileUpdates = { updated: new Set<string>(), deleted: new Set<string>() };
 
     constructor() {
         this.watcher = vscode.workspace.createFileSystemWatcher("**");
@@ -101,7 +101,7 @@ export class WorkspaceChangeTracker {
             }
 
             this.fileUpdates.deleted.delete(filePath);
-            this.fileUpdates.created.add(filePath);
+            this.fileUpdates.updated.add(filePath);
         });
 
         this.watcher.onDidChange(uri => {
@@ -109,30 +109,26 @@ export class WorkspaceChangeTracker {
             if (!fs.statSync(filePath).isFile()) {
                 return;
             }
-            if (!this.fileUpdates.created.has(filePath) && !this.fileUpdates.deleted.has(filePath)) {
-                this.fileUpdates.updated.add(filePath);
-            }
+
+            this.fileUpdates.deleted.delete(filePath);
+            this.fileUpdates.updated.add(filePath);
         });
 
         this.watcher.onDidDelete(uri => {
             const filePath = uri.fsPath;
             
-            if (!this.fileUpdates.created.delete(filePath)) {
-                this.fileUpdates.updated.delete(filePath);
-                this.fileUpdates.deleted.add(filePath);
-            }
+            this.fileUpdates.updated.delete(filePath);
+            this.fileUpdates.deleted.add(filePath);
         });
     }
 
     public reset() {
-        this.fileUpdates.created.clear();
         this.fileUpdates.updated.clear();
         this.fileUpdates.deleted.clear();
     }
 
     public getFileUpdatesAndReset(): FileUpdateInfo {
         const updateInfo = {
-            created: Array.from(this.fileUpdates.created.values()),
             updated: Array.from(this.fileUpdates.updated.values()),
             deleted: Array.from(this.fileUpdates.deleted.values())
         };
