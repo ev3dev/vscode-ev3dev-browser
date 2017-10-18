@@ -140,18 +140,11 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
 }
 
 /**
- * Download the current project directory to the device.
+ * Download the current workspace folders to the device.
  *
  * @return Promise of true on success, otherwise false.
  */
 async function download(): Promise<boolean> {
-    await vscode.workspace.saveAll();
-    const localDir = vscode.workspace.rootPath;
-    if (!localDir) {
-        vscode.window.showErrorMessage('Must have a folder open to send files to device.');
-        return false;
-    }
-
     let device = await ev3devBrowserProvider.getDevice();
     if (!device) {
         // get device will have shown an error message, so we don't need another here
@@ -162,84 +155,100 @@ async function download(): Promise<boolean> {
         return false;
     }
 
-    const config = vscode.workspace.getConfiguration('ev3devBrowser.download');
-    const includeFiles = config.get<string>('include');
-    const excludeFiles = config.get<string>('exclude');
-    const projectDir = config.get<string>('directory') || path.basename(localDir);
-    const remoteBaseDir = device.homeDirectoryPath + `/${projectDir}/`;
-
-    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 5);
-    statusBarItem.text = '$(circle-slash) Cancel';
-    statusBarItem.tooltip = `Cancel download to ${device.name}`;
-    statusBarItem.command = 'ev3devBrowser.cancelDownload';
-    statusBarItem.show();
-
-    const cancelSource = new vscode.CancellationTokenSource();
-    const cancelCommand = vscode.commands.registerCommand('ev3devBrowser.cancelDownload', () => {
-        cancelSource.cancel();
-        statusBarItem.hide();
-    });
-
+    if (!vscode.workspace.workspaceFolders) {
+        vscode.window.showErrorMessage('Must have a folder open to send files to device.');
+        return false;
+    }
+    await vscode.workspace.saveAll();
+    
     let success = false;
-    await vscode.window.withProgress({
-        location: vscode.ProgressLocation.Window,
-        title: 'Sending'
-    }, async progress => {
-        try {
-            const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
-            let fileIndex = 1;
-            const reportProgress = (message: string) => progress.report({ message: message });
 
-            for (const f of files) {
-                if (cancelSource.token.isCancellationRequested) {
-                    ev3devBrowserProvider.fireDeviceChanged();
-                    toastStatusBarMessage('Download canceled');
-                    return;
+    for (const localFolder of vscode.workspace.workspaceFolders) {
+        const config = vscode.workspace.getConfiguration('ev3devBrowser.download', localFolder.uri);
+        const includeFiles = new vscode.RelativePattern(localFolder, config.get<string>('include'));
+        const excludeFiles = new vscode.RelativePattern(localFolder, config.get<string>('exclude'));
+        const projectDir = config.get<string>('directory') || path.basename(localFolder.uri.fsPath);
+        const remoteBaseDir = path.posix.join(device.homeDirectoryPath, projectDir);
+
+        const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 5);
+        statusBarItem.text = '$(circle-slash) Cancel';
+        statusBarItem.tooltip = `Cancel download to ${device.name}`;
+        statusBarItem.command = 'ev3devBrowser.cancelDownload';
+        statusBarItem.show();
+
+        const cancelSource = new vscode.CancellationTokenSource();
+        const cancelCommand = vscode.commands.registerCommand('ev3devBrowser.cancelDownload', () => {
+            cancelSource.cancel();
+            statusBarItem.hide();
+        });
+
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Window,
+            title: 'Sending'
+        }, async progress => {
+            try {
+                const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
+                let fileIndex = 1;
+                const reportProgress = (message: string) => progress.report({ message: message });
+
+                for (const f of files) {
+                    if (cancelSource.token.isCancellationRequested) {
+                        ev3devBrowserProvider.fireDeviceChanged();
+                        toastStatusBarMessage('Download canceled');
+                        return;
+                    }
+
+                    const baseProgressMessage = `(${fileIndex}/${files.length}) ${f.fsPath}`;
+                    reportProgress(baseProgressMessage);
+
+                    const basename = path.basename(f.fsPath);
+                    const relativeDir = path.dirname(vscode.workspace.asRelativePath(f, false));
+                    const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
+                    const remotePath = path.posix.resolve(remoteDir, basename);
+
+                    // File permission handling:
+                    // - If the file starts with a shebang, then assume it should be
+                    //   executable.
+                    // - Otherwise use the existing file permissions. On Windows
+                    //   all files will be executable.
+                    let mode: string = undefined;
+                    if (await verifyFileHeader(f.fsPath, new Buffer('#!/'))) {
+                        mode = '755';
+                    }
+                    else {
+                        const stat = fs.statSync(f.fsPath);
+                        mode = stat.mode.toString(8);
+                    }
+
+                    // make sure the directory exists
+                    await device.mkdir_p(remoteDir);
+                    // then we can copy the file
+                    await device.put(f.fsPath, remotePath, mode,
+                        percentage => reportProgress(`${baseProgressMessage} - ${percentage}%`));
+
+                    fileIndex++;
                 }
-
-                const baseProgressMessage = `(${fileIndex}/${files.length}) ${f.fsPath}`;
-                reportProgress(baseProgressMessage);
-
-                const basename = path.basename(f.fsPath);
-                const relativeDir = path.dirname(vscode.workspace.asRelativePath(f.fsPath));
-                const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
-                const remotePath = path.posix.resolve(remoteDir, basename);
-
-                // File permission handling:
-                // - If the file starts with a shebang, then assume it should be
-                //   executable.
-                // - Otherwise use the existing file permissions. On Windows
-                //   all files will be executable.
-                let mode: string = undefined;
-                if (await verifyFileHeader(f.fsPath, new Buffer('#!/'))) {
-                    mode = '755';
-                }
-                else {
-                    const stat = fs.statSync(f.fsPath);
-                    mode = stat.mode.toString(8);
-                }
-
-                // make sure the directory exists
-                await device.mkdir_p(remoteDir);
-                // then we can copy the file
-                await device.put(f.fsPath, remotePath, mode,
-                    percentage => reportProgress(`${baseProgressMessage} - ${percentage}%`));
-
-                fileIndex++;
+                // make sure any new files show up in the browser
+                ev3devBrowserProvider.fireDeviceChanged();
+                success = true;
             }
-            // make sure any new files show up in the browser
-            ev3devBrowserProvider.fireDeviceChanged();
-            success = true;
-            vscode.window.setStatusBarMessage(`Done sending project to ${device.name}.`, 5000);
-        }
-        catch (err) {
-            vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
-        }
-    });
+            catch (err) {
+                vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
+            }
+        });
 
-    statusBarItem.dispose();
-    cancelCommand.dispose();
-    cancelSource.dispose();
+        statusBarItem.dispose();
+        cancelCommand.dispose();
+        cancelSource.dispose();
+
+        if (!success) {
+            break;
+        }
+    }
+
+    if (success) {
+        toastStatusBarMessage(`Download to ${device.name} complete`);
+    }
 
     return success;
 }

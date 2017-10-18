@@ -3,6 +3,10 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+### Added
+- Mulit-root workspace support
+
 ## 0.6.0 - 2017-10-18
 ### Added
 - Context menu item to connect to a different device

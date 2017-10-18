@@ -14,7 +14,7 @@
         "url": "https://github.com/ev3dev/vscode-ev3dev-browser/issues"
     },
     "engines": {
-        "vscode": "^1.15.0"
+        "vscode": "^1.17.0"
     },
     "categories": [
         "Other"
@@ -28,6 +28,7 @@
             "title": "ev3dev browser configuration",
             "properties": {
                 "ev3devBrowser.password": {
+                    "scope": "window",
                     "type": [
                         "string",
                         "null"
@@ -36,6 +37,7 @@
                     "description": "The password for the 'robot' user. Set to \"null\" to prompt for password (or use public key authentication)."
                 },
                 "ev3devBrowser.env": {
+                    "scope": "window",
                     "type": "object",
                     "patternProperties": {
                         "[A-Za-z_]{1,}": {
@@ -50,16 +52,19 @@
                     "uniqueItems": true
                 },
                 "ev3devBrowser.download.include": {
+                    "scope": "resource",
                     "type": "string",
                     "default": "**/*",
                     "description": "Files to include when sending project to remote devices."
                 },
                 "ev3devBrowser.download.exclude": {
+                    "scope": "resource",
                     "type": "string",
                     "default": "**/.*",
                     "description": "Files to exclude when sending project to remote devices."
                 },
                 "ev3devBrowser.download.directory": {
+                    "scope": "resource",
                     "type": [
                         "string",
                         "null"
@@ -68,11 +73,13 @@
                     "description": "The directory on the remote device where the files will be saved. The default is to use the name of the vscode project directory."
                 },
                 "ev3devBrowser.confirmDelete": {
-                    "type":"boolean",
+                    "scope": "window",
+                    "type": "boolean",
                     "default": true,
                     "description": "Prompt for confirmation before deleting remote files."
                 },
                 "ev3devBrowser.additionalDevices": {
+                    "scope": "window",
                     "type": "array",
                     "items": {
                         "type": "object",
