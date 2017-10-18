@@ -649,7 +649,7 @@ class File extends vscode.TreeItem {
                     const deleteItem = "Delete";
                     const dontShowAgainItem = "Don't show this again";
                     const result = await vscode.window.showInformationMessage(
-                        `Are you sure you want to delete '${path}'? This cannot be undone.`,
+                        `Are you sure you want to delete '${this.path}'? This cannot be undone.`,
                         deleteItem, dontShowAgainItem);
                     if (!result) {
                         return;
