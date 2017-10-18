@@ -615,10 +615,18 @@ class File extends vscode.TreeItem {
     }
 
     public delete(): void {
-        this.device.rm_rf(this.path).then(() => {
-            ev3devBrowserProvider.fireFileChanged(this.parent);
-        }, err => {
-            vscode.window.showErrorMessage(`Error deleting '${this.path}': ${err.message}`);
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Window,
+            title: `Deleting '${this.path}'`
+        }, async progress => {
+            try {
+                await this.device.rm_rf(this.path);
+                ev3devBrowserProvider.fireFileChanged(this.parent);
+                toastStatusBarMessage(`Deleted '${this.path}'`);
+            }
+            catch (err) {
+                vscode.window.showErrorMessage(`Error deleting '${this.path}': ${err.message}`);
+            }
         });
     }
 
