@@ -620,6 +620,21 @@ class File extends vscode.TreeItem {
             title: `Deleting '${this.path}'`
         }, async progress => {
             try {
+                const config = vscode.workspace.getConfiguration('ev3devBrowser');
+                const confirm = config.get<boolean>('confirmDelete');
+                if (confirm) {
+                    const deleteItem = "Delete";
+                    const dontShowAgainItem = "Don't show this again";
+                    const result = await vscode.window.showInformationMessage(
+                        `Are you sure you want to delete '${path}'? This cannot be undone.`,
+                        deleteItem, dontShowAgainItem);
+                    if (!result) {
+                        return;
+                    }
+                    else if (result == dontShowAgainItem) {
+                        config.update('confirmDelete', false, vscode.ConfigurationTarget.Global);
+                    }
+                }
                 await this.device.rm_rf(this.path);
                 ev3devBrowserProvider.fireFileChanged(this.parent);
                 toastStatusBarMessage(`Deleted '${this.path}'`);
