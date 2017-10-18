@@ -9,7 +9,7 @@ Learn more about ev3dev at <http://www.ev3dev.org>.
 ## Requirements
 
 This extension is only compatible with devices running **ev3dev-stretch**
-[snapshot images] starting with `2017-09-14`. It will not work with other
+[snapshot images] starting with `2017-09-30`. It will not work with other
 versions of ev3dev.
 
 Additional information can be found on the [wiki].
@@ -103,5 +103,7 @@ This extension contributes the following settings:
 *   `ev3devBrowser.additionalDevices`: A list of additional devices to show in
     the list when connecting to a device. This should only be needed in cases
     where there are network problems interfering with device discover.
+*   `ev3devBrowser.confirmDelete`: Setting to `false` will suppress the
+    confirmation message when deleting a remote file or directory.
 
 More details and examples on the [wiki](https://github.com/ev3dev/vscode-ev3dev-browser/wiki/Settings).
