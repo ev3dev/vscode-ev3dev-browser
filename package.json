@@ -323,6 +323,11 @@
                     "group": "group@5"
                 },
                 {
+                    "command": "ev3devBrowser.fileTreeItem.delete",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.folder",
+                    "group": "group@5"
+                },
+                {
                     "command": "ev3devBrowser.fileTreeItem.showInfo",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.executable",
                     "group": "group@10"

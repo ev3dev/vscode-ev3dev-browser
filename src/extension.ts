@@ -615,7 +615,7 @@ class File extends vscode.TreeItem {
     }
 
     public delete(): void {
-        this.device.rm(this.path).then(() => {
+        this.device.rm_rf(this.path).then(() => {
             ev3devBrowserProvider.fireFileChanged(this.parent);
         }, err => {
             vscode.window.showErrorMessage(`Error deleting '${this.path}': ${err.message}`);

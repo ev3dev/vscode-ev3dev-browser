@@ -473,7 +473,33 @@ export class Device extends vscode.Disposable {
                 else {
                     resolve();
                 }
-            })
+            });
+        });
+    }
+
+    public async rm_rf(path: string): Promise<void> {
+        const stat = await this.stat(path);
+        if (stat.isDirectory()) {
+            for (const f of await this.ls(path)) {
+                await this.rm_rf(`${path}/${f.filename}`);
+            }
+            await this.rmdir(path);
+        }
+        else {
+            await this.rm(path);
+        }
+    }
+
+    public rmdir(path: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.sftp.rmdir(path, err => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve();
+                }
+            });
         });
     }
 
