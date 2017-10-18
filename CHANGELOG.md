@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## Unreleased
 ### Added
 - Mulit-root workspace support
+- Upload command
 
 ## 0.6.0 - 2017-10-18
 ### Added

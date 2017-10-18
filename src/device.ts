@@ -399,11 +399,37 @@ export class Device extends vscode.Disposable {
     }
 
     /**
+     * Copy a remote file to the local host.
+     * @param remote The remote path.
+     * @param local The path where the file will be saved.
+     * @param reportPercentage An optional progress reporting callback
+     */
+    public get(remote: string, local: string, reportPercentage?: (percentage: number) => void): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.sftp.fastGet(remote, local, <any> {
+                concurrency: 1,
+                step: (transferred, chunk, total) => {
+                    if (reportPercentage) {
+                        reportPercentage(Math.round(transferred / total * 100));
+                    }
+                },
+            }, err => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve();
+                }
+            })
+        });
+    }
+
+    /**
      * Copy a local file to the remote device.
      * @param local The path to a local file.
      * @param remote The remote path where the file will be saved.
      * @param mode The file permissions
-     * @param progress A progress callback function from vscode.withProgress()
+     * @param reportPercentage An optional progress reporting callback
      */
     public put(local: string, remote: string, mode?: string, reportPercentage?: (percentage: number) => void): Promise<void> {
         return new Promise((resolve, reject) => {

@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import * as ssh2Streams from 'ssh2-streams';
 import * as temp from 'temp';
@@ -45,6 +46,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.run', f => f.run()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.delete', f => f.delete()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.showInfo', f => f.showInfo()),
+        vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.upload', f => f.upload()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.select', f => f.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.action.pickDevice', () => pickDevice()),
         vscode.commands.registerCommand('ev3devBrowser.action.download', () => download()),
@@ -698,6 +700,25 @@ class File extends vscode.TreeItem {
         catch (err) {
             output.appendLine(`Error: ${err.message}`);
         }
+    }
+
+    public async upload(): Promise<void> {
+        const result = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.file(path.join(os.homedir(), path.posix.basename(this.path)))
+        });
+        
+        if (!result) {
+            return;
+        }
+
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Window,
+            title: 'Uploading'
+        }, async progress => {
+            await this.device.get(this.path, result.fsPath, percentage => {
+                progress.report({message: `${this.path} - ${percentage}%`});
+            });
+        });
     }
 }
 
