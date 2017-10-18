@@ -628,9 +628,9 @@ class File extends vscode.TreeItem {
     }
 
     public run(): void {
-        const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(vscode.workspace.rootPath));
-        vscode.debug.startDebugging(folder, <vscode.DebugConfiguration> {
+        vscode.debug.startDebugging(undefined, <vscode.DebugConfiguration> {
             type: 'ev3devBrowser',
+            name: 'Run',
             request: 'launch',
             program: this.path,
             download: false
