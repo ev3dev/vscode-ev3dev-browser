@@ -33,7 +33,7 @@ export class Brickd extends events.EventEmitter {
 
         let state = BrickdConnectionState.start;
         observable.forEach(line => {
-            const [m1, ...m2] = line.split(/ /);
+            const [m1, ...m2] = line.split(' ');
 
             // emit messages
             if (m1 == "MSG") {
