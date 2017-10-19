@@ -155,6 +155,10 @@
                 "title": "Upload"
             },
             {
+                "command": "ev3devBrowser.fileTreeItem.view",
+                "title": "View"
+            },
+            {
                 "command": "ev3devBrowser.action.pickDevice",
                 "title": "Connect to a device",
                 "category": "ev3dev"
@@ -282,6 +286,10 @@
                 {
                     "command": "ev3devBrowser.fileTreeItem.upload",
                     "when": "false"
+                },
+                {
+                    "command": "ev3devBrowser.fileTreeItem.view",
+                    "when": "false"
                 }
             ],
             "view/title": [
@@ -354,6 +362,16 @@
                 },
                 {
                     "command": "ev3devBrowser.fileTreeItem.upload",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file",
+                    "group": "group@9"
+                },
+                {
+                    "command": "ev3devBrowser.fileTreeItem.view",
+                    "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file.executable",
+                    "group": "group@9"
+                },
+                {
+                    "command": "ev3devBrowser.fileTreeItem.view",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file",
                     "group": "group@9"
                 },

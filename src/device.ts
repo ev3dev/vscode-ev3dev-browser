@@ -14,8 +14,9 @@ import * as dnssd from './dnssd';
 /**
  * Object that represents a remote ev3dev device.
  */
-export class Device extends vscode.Disposable {
+export class Device extends vscode.Disposable implements vscode.TextDocumentContentProvider {
     private readonly client: ssh2.Client;
+    private readonly documentProvider: vscode.Disposable
     private sftp: ssh2.SFTPWrapper;
     private shellServer: net.Server;
     private _homeDirectoryAttr: ssh2Streams.Attributes;
@@ -49,6 +50,10 @@ export class Device extends vscode.Disposable {
      */
     public readonly onDidDisconnect = this._onDidDisconnect.event;
 
+    private readonly _onDidChange = new vscode.EventEmitter<vscode.Uri>();
+
+    public readonly onDidChange = this._onDidChange.event;
+
     constructor(private readonly service: dnssd.Service) {
         super(() => {
             this.disconnect();
@@ -57,6 +62,7 @@ export class Device extends vscode.Disposable {
             this._onDidDisconnect.dispose();
             this.client.destroy();
         });
+        this.documentProvider = vscode.workspace.registerTextDocumentContentProvider('ev3devBrowserRemoteFile', this);
         this.username = service.txt['ev3dev.robot.user']
         this.client = new ssh2.Client();
         this.client.on('end', () => {
@@ -212,6 +218,7 @@ export class Device extends vscode.Disposable {
             this.sftp = null;
         }
         this.client.end();
+        this.documentProvider.dispose();
         this._onDidDisconnect.fire();
     }
 
@@ -704,12 +711,21 @@ export class Device extends vscode.Disposable {
 
     /**
      * Gets a new connection to brickd.
-     * 
+     *
      * @returns A promise of a Brickd object.
      */
     public async brickd(): Promise<Brickd> {
         const channel = await this.forwardOut('localhost', 0, 'localhost', 31313);
         return new Brickd(channel);
+    }
+
+    public async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string> {
+        const [stdout, stderr] = await this.createExecObservable(`cat ${uri.fsPath}`);
+        const content = new Array<string>();
+        await stdout.forEach(line => {
+            content.push(line);
+        });
+        return content.join('\n');
     }
 }
 
