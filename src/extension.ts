@@ -775,6 +775,10 @@ class DeviceStatusTreeItem extends CommandTreeItem {
             this.brickd.on('error', err => {
                 vscode.window.showErrorMessage(`${this.device.name}: ${err.message}`);
             });
+            this.brickd.on('ready', () => {
+                // serialNumber is used elsewhere, so tack it on to the device object
+                this.device['serialNumber'] = this.brickd.serialNumber;
+            });
         }
         catch (err)  {
             vscode.window.showWarningMessage('Failed to get brickd connection. No status will be available.');
