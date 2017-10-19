@@ -704,7 +704,7 @@ export class Device extends vscode.Disposable {
 
     /**
      * Gets a new connection to brickd.
-     * 
+     *
      * @returns A promise of a Brickd object.
      */
     public async brickd(): Promise<Brickd> {

@@ -10,7 +10,7 @@ import * as bonjour from './dnssd/bonjour';
  */
 export interface Client {
     /**
-     * Start browsing 
+     * Start browsing
      */
     browse(options: BrowseOptions): Promise<Browser>;
 

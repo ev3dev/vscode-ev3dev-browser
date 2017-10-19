@@ -67,7 +67,7 @@ async function pickDevice(): Promise<void> {
         // user canceled
         return;
     }
-    
+
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Window,
         title: "Connecting..."
@@ -162,7 +162,7 @@ async function download(): Promise<boolean> {
         return false;
     }
     await vscode.workspace.saveAll();
-    
+
     let success = false;
 
     for (const localFolder of vscode.workspace.workspaceFolders) {
@@ -430,7 +430,7 @@ class DeviceTreeItem extends vscode.TreeItem {
             ['shell', this.device.shellPort.toString()]);
         term.show();
     }
-    
+
     public async captureScreenshot(): Promise<void> {
         vscode.window.withProgress({
             location: vscode.ProgressLocation.Window,
@@ -441,29 +441,29 @@ class DeviceTreeItem extends vscode.TreeItem {
                     vscode.window.showErrorMessage("Error capturing screenshot: " + (e.message || e));
                     reject();
                 }
-        
+
                 try {
                     const screenshotDirectory = await getSharedTempDir('ev3dev-screenshots');
                     const screenshotBaseName = `ev3dev-${sanitizedDateString()}.png`;
                     const screenshotFile = `${screenshotDirectory}/${screenshotBaseName}`;
-        
+
                     const conn = await this.device.exec('fbgrab -');
                     const writeStream = fs.createWriteStream(screenshotFile);
-        
+
                     conn.on('error', (e: Error) => {
                         writeStream.removeAllListeners('finish');
                         handleCaptureError(e);
                     });
-        
+
                     writeStream.on('open', () => {
                         conn.stdout.pipe(writeStream);
                     });
-                    
+
                     writeStream.on('error', (e: Error) => {
                         vscode.window.showErrorMessage("Error saving screenshot: " + e.message);
                         reject();
                     });
-        
+
                     writeStream.on('finish', async () => {
                         const pngHeader = [ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A ];
                         if (await verifyFileHeader(screenshotFile, pngHeader)) {
@@ -706,7 +706,7 @@ class File extends vscode.TreeItem {
         const result = await vscode.window.showSaveDialog({
             defaultUri: vscode.Uri.file(path.join(os.homedir(), path.posix.basename(this.path)))
         });
-        
+
         if (!result) {
             return;
         }
