@@ -84,9 +84,18 @@ async function pickDevice(): Promise<void> {
 }
 
 async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Promise<void> {
+    let device: Device;
     switch (event.event) {
     case 'ev3devBrowser.debugger.launch':
         const args = <LaunchRequestArguments> event.body;
+        device = await ev3devBrowserProvider.getDevice();
+        if (device && !device.isConnected) {
+            await  ev3devBrowserProvider.getDeviceTreeItem().connect();
+        }
+        if (!device || !device.isConnected) {
+            await event.session.customRequest('ev3devBrowser.debugger.terminate');
+            break;
+        }
 
         // optionally download before running
         if (args.download !== false && !await download()) {
@@ -97,7 +106,6 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
 
         // run the program
         try {
-            const device = ev3devBrowserProvider.getDeviceSync();
             const command = `brickrun ${args.program}`;
             output.show(true);
             output.clear();
@@ -133,7 +141,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
         }
         break;
     case 'ev3devBrowser.debugger.stop':
-        const device = ev3devBrowserProvider.getDeviceSync();
+        device = ev3devBrowserProvider.getDeviceSync();
         if (device && device.isConnected) {
             device.exec('conrun-kill --signal=SIGKILL');
         }
@@ -302,7 +310,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
                 await pickDevice();
             }
         }
-        return this.device.device;
+        return this.device && this.device.device;
     }
 
     /**
@@ -310,6 +318,10 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
      */
     public getDeviceSync(): Device {
         return this.device && this.device.device;
+    }
+
+    public getDeviceTreeItem(): DeviceTreeItem {
+        return this.device;
     }
 
     public getTreeItem(element: DeviceTreeItem | File | CommandTreeItem): vscode.TreeItem {
