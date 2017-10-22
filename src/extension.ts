@@ -204,7 +204,10 @@ async function download(): Promise<boolean> {
                     reportProgress(baseProgressMessage);
 
                     const basename = path.basename(f.fsPath);
-                    const relativeDir = path.dirname(vscode.workspace.asRelativePath(f, false));
+                    let relativeDir = path.dirname(vscode.workspace.asRelativePath(f, false));
+                    if (path == path.win32) {
+                        relativeDir = relativeDir.replace(path.win32.sep, path.posix.sep);
+                    }
                     const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
                     const remotePath = path.posix.resolve(remoteDir, basename);
 

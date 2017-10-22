@@ -7,6 +7,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Added
 - Mulit-root workspace support
 - Upload command
+### Fixed
+- Backslashes in directory names when downloading (Windows only)
 
 ## 0.6.0 - 2017-10-18
 ### Added
