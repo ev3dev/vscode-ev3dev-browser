@@ -226,13 +226,26 @@ async function download(): Promise<boolean> {
                     // - If the file starts with a shebang, then assume it should be
                     //   executable.
                     // - Otherwise use the existing file permissions. On Windows
-                    //   all files will be executable.
-                    let mode: string = undefined;
+                    //   we also check for ELF file format to know if a file
+                    //   should be executable since Windows doesn't know about
+                    //   POSIX file permissions.
+                    let mode: string;
                     if (await verifyFileHeader(f.fsPath, new Buffer('#!/'))) {
                         mode = '755';
                     }
                     else {
                         const stat = fs.statSync(f.fsPath);
+                        if (process.platform == 'win32') {
+                            // fs.stat() on win32 return something like '100666'
+                            // See https://github.com/joyent/libuv/blob/master/src/win/fs.c
+                            // and search for `st_mode`
+
+                            // So, we check to see the file uses ELF format, if
+                            // so, make it executable.
+                            if (await verifyFileHeader(f.fsPath, new Buffer('\x7fELF'))) {
+                                stat.mode |= S_IXUSR;
+                            }
+                        }
                         mode = stat.mode.toString(8);
                     }
 
