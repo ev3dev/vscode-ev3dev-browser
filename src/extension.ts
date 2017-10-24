@@ -17,6 +17,9 @@ import {
     verifyFileHeader
 } from './utils';
 
+// fs.constants.S_IXUSR is undefined on win32!
+const S_IXUSR = 0o0100;
+
 let output: vscode.OutputChannel;
 let resourceDir: string;
 let helperExePath: string;
@@ -567,7 +570,7 @@ class File extends vscode.TreeItem {
         // work around bad typescript bindings
         const stats = (<ssh2Streams.Stats> fileInfo.attrs);
         this.path = directory + fileInfo.filename;
-        this.isExecutable = stats.isFile() && !!(stats.mode & fs.constants.S_IXUSR);
+        this.isExecutable = stats.isFile() && !!(stats.mode & S_IXUSR);
         this.isDirectory = stats.isDirectory();
         if (this.isDirectory) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
