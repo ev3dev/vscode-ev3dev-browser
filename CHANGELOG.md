@@ -3,6 +3,10 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+### Fixed
+- Current working directory is not the same as when running programs with Brickman
+
 ## 0.7.0 - 2017-10-24
 ### Added
 - Mulit-root workspace support

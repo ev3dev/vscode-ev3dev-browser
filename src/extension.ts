@@ -109,7 +109,8 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
 
         // run the program
         try {
-            const command = `brickrun ${args.program}`;
+            const dirname = path.posix.dirname(args.program);
+            const command = `brickrun --directory=${dirname} ${args.program}`;
             output.show(true);
             output.clear();
             output.appendLine(`Starting: ${command}`);
