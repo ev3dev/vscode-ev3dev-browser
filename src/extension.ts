@@ -20,6 +20,7 @@ import {
 // fs.constants.S_IXUSR is undefined on win32!
 const S_IXUSR = 0o0100;
 
+let config: WorkspaceConfig;
 let output: vscode.OutputChannel;
 let resourceDir: string;
 let helperExePath: string;
@@ -28,6 +29,7 @@ let ev3devBrowserProvider: Ev3devBrowserProvider;
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext): void {
+    config = new WorkspaceConfig(context.workspaceState);
     output = vscode.window.createOutputChannel('ev3dev');
     resourceDir = context.asAbsolutePath('resources');
     helperExePath = context.asAbsolutePath(path.join('native', process.platform, 'helper'));
@@ -735,8 +737,9 @@ class File extends vscode.TreeItem {
     }
 
     public async upload(): Promise<void> {
+        const basename = path.posix.basename(this.path);
         const result = await vscode.window.showSaveDialog({
-            defaultUri: vscode.Uri.file(path.join(os.homedir(), path.posix.basename(this.path)))
+            defaultUri: vscode.Uri.file(path.join(config.uploadDir, basename))
         });
 
         if (!result) {
@@ -751,6 +754,7 @@ class File extends vscode.TreeItem {
                 progress.report({message: `${this.path} - ${percentage}%`});
             });
         });
+        config.uploadDir = path.dirname(result.fsPath);
     }
 }
 
@@ -816,5 +820,24 @@ class DeviceStatusTreeItem extends CommandTreeItem {
             vscode.window.showWarningMessage('Failed to get brickd connection. No status will be available.');
             return;
         };
+    }
+}
+
+/**
+ * Wrapper around vscode.ExtensionContext.workspaceState
+ */
+class WorkspaceConfig {
+    constructor(private state: vscode.Memento) {
+    }
+
+    /**
+     * Gets or sets the upload directory for the current workspace.
+     */
+    get uploadDir(): string {
+        return this.state.get('uploadDir', os.homedir());
+    }
+
+    set uploadDir(value: string) {
+        this.state.update('uploadDir', value);
     }
 }
