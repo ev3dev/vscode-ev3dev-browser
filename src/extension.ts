@@ -571,6 +571,7 @@ class DeviceTreeItem extends vscode.TreeItem {
 enum FileState {
     None = 'ev3devBrowser.file',
     Folder = 'ev3devBrowser.file.folder',
+    RootFolder = 'ev3devBrowser.file.folder.root',
     Executable = 'ev3devBrowser.file.executable'
 }
 
@@ -590,7 +591,12 @@ class File extends vscode.TreeItem {
         this.isDirectory = stats.isDirectory();
         if (this.isDirectory) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
-            this.contextValue = FileState.Folder;
+            if (this.parent) {
+                this.contextValue = FileState.Folder;
+            }
+            else {
+                this.contextValue = FileState.RootFolder;
+            }
         }
         else if (this.isExecutable) {
             this.contextValue = FileState.Executable;

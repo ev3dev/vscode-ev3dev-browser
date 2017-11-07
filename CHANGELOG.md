@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## Unreleased
 ### Fixed
 - Current working directory is not the same as when running programs with Brickman
+- Context menu shown on root folder in remote file browser
 ### Changed
 - Upload command remembers selected directory for each workspace
 
