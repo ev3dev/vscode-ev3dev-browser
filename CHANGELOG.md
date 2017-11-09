@@ -3,7 +3,7 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## 0.7.0 - 2017-11-09
+## 0.8.0 - 2017-11-09
 ### Fixed
 - Current working directory is not the same as when running programs with Brickman
 - Context menu shown on root folder in remote file browser
