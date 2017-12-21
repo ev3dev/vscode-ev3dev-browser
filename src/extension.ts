@@ -112,7 +112,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
         // run the program
         try {
             const dirname = path.posix.dirname(args.program);
-            const command = `brickrun --directory=${dirname} ${args.program}`;
+            const command = `brickrun --directory="${dirname}" "${args.program}"`;
             output.show(true);
             output.clear();
             output.appendLine(`Starting: ${command}`);
@@ -725,13 +725,13 @@ class File extends vscode.TreeItem {
         output.appendLine('Getting file info...');
         output.appendLine('');
         try {
-            let [stdout, stderr] = await this.device.createExecObservable(`/bin/ls -lh ${this.path}`);
+            let [stdout, stderr] = await this.device.createExecObservable(`/bin/ls -lh "${this.path}"`);
             await Promise.all([
                 stdout.forEach(line => output.appendLine(line)),
                 stderr.forEach(line => output.appendLine(line))
             ]);
             output.appendLine('');
-            [stdout, stderr] = await this.device.createExecObservable(`/usr/bin/file ${this.path}`);
+            [stdout, stderr] = await this.device.createExecObservable(`/usr/bin/file "${this.path}"`);
             await Promise.all([
                 stdout.forEach(line => output.appendLine(line)),
                 stderr.forEach(line => output.appendLine(line))
