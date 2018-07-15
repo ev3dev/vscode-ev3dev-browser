@@ -3,6 +3,10 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.8.1 - 2018-07-14
+### Fixed
+- Error when trying to use file paths containing spaces (@WasabiFan)
+
 ## 0.8.0 - 2017-11-09
 ### Fixed
 - Current working directory is not the same as when running programs with Brickman
