@@ -394,7 +394,7 @@
         "@types/zen-observable": "^0.5.3",
         "mocha": "^2.3.3",
         "typescript": "^2.4.2",
-        "vscode": "^1.0.0"
+        "vscode": "^1.1.18"
     },
     "dependencies": {
         "avahi-dbus": "^0.1.0",
