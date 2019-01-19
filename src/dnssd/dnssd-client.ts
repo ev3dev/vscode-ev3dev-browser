@@ -914,7 +914,7 @@ export type QueryRecordReply = (service: Service, flags: ServiceFlags, iface: nu
  * should be created using the static methods.
  */
 export class Service {
-    private op?: RequestOp;
+    private op = RequestOp.None;
     private processReply?: (header: IpcMsgHeader, data: Buffer) => void;
     private appCallback?: BrowseReply | ResolveReply | GetAddrInfoReply | QueryRecordReply;
 
