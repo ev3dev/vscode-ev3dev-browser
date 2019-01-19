@@ -12,7 +12,18 @@
 // - stdin, stdout and stderr from the remote shell() are connected to the same
 //   in the shell.ts node process.
 
-import * as dnode from 'dnode';
+import { dnode } from 'dnode';
+import * as ssh2 from 'ssh2';
+
+export interface Shell {
+    shell(
+        ttyOptions: ssh2.PseudoTtyOptions,
+        dataOut: (data: string) => void,
+        dataErr: (data: string) => void,
+        ready: (resize: (rows: number, cols: number) => void, dataIn: (data: string) => void) => void,
+        exit: () => void
+    ): void;
+}
 
 /**
  * Run the shell helper.
@@ -21,7 +32,7 @@ import * as dnode from 'dnode';
 export function run(port: number): void {
 
     const d = dnode({}, { weak: false }).connect(port);
-    d.on('remote', remote => {
+    d.on<Shell>('remote', remote => {
         remote.shell({
             // ttyOptions
             rows: process.stdout.rows,
@@ -36,19 +47,23 @@ export function run(port: number): void {
         }, (resize, dataIn) => {
             // ready callback
             process.stdout.on('resize', () => {
-                resize(process.stdout.rows, process.stdout.columns);
+                resize(process.stdout.rows || 0, process.stdout.columns || 0);
             });
             // terminal selection with mouse and scrolling don't work unless we
             // call resize() here for some reason.
-            resize(process.stdout.rows, process.stdout.columns);
-            process.stdin.setRawMode(true);
+            resize(process.stdout.rows || 0, process.stdout.columns || 0);
+            if (process.stdin.setRawMode) {
+                process.stdin.setRawMode(true);
+            }
             process.stdin.on('data', data => {
                 dataIn(data.toString('base64'));
             });
         }, () => {
             // exit callback
             d.end();
-            process.stdin.setRawMode(false);
+            if (process.stdin.setRawMode) {
+                process.stdin.setRawMode(false);
+            }
             process.exit();
         });
     });

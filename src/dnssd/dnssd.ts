@@ -60,8 +60,8 @@ class DnssdClient implements dnssd.Client {
 }
 
 class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
-    private running: boolean;
-    private service: dns.Service;
+    private running = false;
+    private service: dns.Service | undefined;
     private destroyOp: () => void;
     readonly services: DnssdService[] = new Array<DnssdService>();
 

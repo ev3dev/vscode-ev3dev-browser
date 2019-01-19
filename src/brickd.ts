@@ -1,6 +1,5 @@
-import * as compareVersions from 'compare-versions';
+import compareVersions = require('compare-versions');
 import * as events from "events";
-import { Socket } from 'net';
 import * as readline from 'readline';
 import * as ssh2 from 'ssh2';
 import * as Observable from 'zen-observable';
@@ -31,7 +30,7 @@ export class Brickd extends events.EventEmitter {
         return this._serialNumber;
     }
 
-    public constructor(private readonly channel: ssh2.ClientChannel) {
+    public constructor(readonly channel: ssh2.ClientChannel) {
         super();
         const reader = readline.createInterface(channel);
         const observable = new Observable<string>(observer => {

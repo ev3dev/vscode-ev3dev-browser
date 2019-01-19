@@ -89,13 +89,16 @@ async function pickDevice(): Promise<void> {
 }
 
 async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Promise<void> {
-    let device: Device;
+    let device: Device | undefined;
     switch (event.event) {
     case 'ev3devBrowser.debugger.launch':
         const args = <LaunchRequestArguments> event.body;
         device = await ev3devBrowserProvider.getDevice();
         if (device && !device.isConnected) {
-            await  ev3devBrowserProvider.getDeviceTreeItem().connect();
+            const item = ev3devBrowserProvider.getDeviceTreeItem();
+            if (item) {
+                await item.connect();
+            }
         }
         if (!device || !device.isConnected) {
             await event.session.customRequest('ev3devBrowser.debugger.terminate');
@@ -181,8 +184,9 @@ async function download(): Promise<boolean> {
 
     for (const localFolder of vscode.workspace.workspaceFolders) {
         const config = vscode.workspace.getConfiguration('ev3devBrowser.download', localFolder.uri);
-        const includeFiles = new vscode.RelativePattern(localFolder, config.get<string>('include'));
-        const excludeFiles = new vscode.RelativePattern(localFolder, config.get<string>('exclude'));
+
+        const includeFiles = new vscode.RelativePattern(localFolder, config.get<string>('include', ''));
+        const excludeFiles = new vscode.RelativePattern(localFolder, config.get<string>('exclude', ''));
         const projectDir = config.get<string>('directory') || path.basename(localFolder.uri.fsPath);
         const remoteBaseDir = path.posix.join(device.homeDirectoryPath, projectDir);
 
@@ -253,6 +257,9 @@ async function download(): Promise<boolean> {
                     }
 
                     // make sure the directory exists
+                    if (!device) {
+                        throw new Error("Lost connection");
+                    }
                     await device.mkdir_p(remoteDir);
                     // then we can copy the file
                     await device.put(f.fsPath, remotePath, mode,
@@ -293,22 +300,22 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
     private _onDidChangeTreeData: vscode.EventEmitter<DeviceTreeItem | File | CommandTreeItem> =
         new vscode.EventEmitter<DeviceTreeItem | File | CommandTreeItem>();
     readonly onDidChangeTreeData: vscode.Event<DeviceTreeItem | File | CommandTreeItem> = this._onDidChangeTreeData.event;
-    private device: DeviceTreeItem;
+    private device: DeviceTreeItem | undefined;
     private readonly noDeviceTreeItem = new CommandTreeItem('Click here to connect to a device', 'ev3devBrowser.action.pickDevice');
 
     constructor() {
         super(() => {
-            this.setDevice(null);
+            this.setDevice(undefined);
         });
     }
 
-    public setDevice(device: Device): void {
+    public setDevice(device: Device | undefined): void {
         if ((this.device && this.device.device) == device) {
             return;
         }
         if (this.device) {
             this.device.device.disconnect();
-            this.device = null;
+            this.device = undefined;
         }
         if (device) {
             this.device = new DeviceTreeItem(device);
@@ -321,7 +328,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
      *
      * Will prompt the user to select a device if there is not one already connected
      */
-    public async getDevice(): Promise<Device> {
+    public async getDevice(): Promise<Device | undefined> {
         if (!this.device) {
             const connectNow = 'Connect Now';
             const result = await vscode.window.showErrorMessage('No ev3dev device is connected.', connectNow);
@@ -333,13 +340,13 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
     }
 
     /**
-     * Gets the current device or null if no device is connected.
+     * Gets the current device or undefined if no device is connected.
      */
-    public getDeviceSync(): Device {
+    public getDeviceSync(): Device | undefined {
         return this.device && this.device.device;
     }
 
-    public getDeviceTreeItem(): DeviceTreeItem {
+    public getDeviceTreeItem(): DeviceTreeItem | undefined {
         return this.device;
     }
 
@@ -347,12 +354,13 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
         return element;
     }
 
-    public getChildren(element?: DeviceTreeItem | File | CommandTreeItem): vscode.ProviderResult<DeviceTreeItem[] | File[] | CommandTreeItem[]> {
+    public getChildren(element?: DeviceTreeItem | File | CommandTreeItem): vscode.ProviderResult<(DeviceTreeItem | File | CommandTreeItem)[]> {
         if (!element) {
             return [this.device || this.noDeviceTreeItem];
         }
         if (element instanceof DeviceTreeItem) {
-            if (element.device.isConnected) {
+            // should always have element.rootDirectory - included in if statement just for type checking
+            if (element.device.isConnected && element.rootDirectory) {
                 return [element.statusItem, element.rootDirectory];
             }
             return [];
@@ -372,7 +380,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
         this._onDidChangeTreeData.fire();
     }
 
-    public fireFileChanged(file: File): void {
+    public fireFileChanged(file: File | undefined): void {
         this._onDidChangeTreeData.fire(file);
     }
 
@@ -393,7 +401,7 @@ enum DeviceState {
 }
 
 class DeviceTreeItem extends vscode.TreeItem {
-    public rootDirectory : File;
+    public rootDirectory : File | undefined;
     public statusItem: DeviceStatusTreeItem;
 
     constructor(public readonly device: Device) {
@@ -418,8 +426,9 @@ class DeviceTreeItem extends vscode.TreeItem {
         this.contextValue = state;
         setContext('ev3devBrowser.context.connected', false);
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
-        this.rootDirectory = null;
-        let icon: string;
+        this.rootDirectory = undefined;
+        let icon: string | undefined;
+
         switch(state) {
         case DeviceState.Connecting:
             icon = 'yellow-circle.svg';
@@ -427,7 +436,7 @@ class DeviceTreeItem extends vscode.TreeItem {
         case DeviceState.Connected:
             setContext('ev3devBrowser.context.connected', true);
             this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
-            this.rootDirectory = new File(this.device, null, '', {
+            this.rootDirectory = new File(this.device, undefined, '', {
                 filename: this.device.homeDirectoryPath,
                 longname: '',
                 attrs: this.device.homeDirectoryAttr
@@ -440,8 +449,17 @@ class DeviceTreeItem extends vscode.TreeItem {
             icon = 'red-circle.svg';
             break;
         }
-        this.iconPath.dark = path.join(resourceDir, 'icons', 'dark', icon);
-        this.iconPath.light = path.join(resourceDir, 'icons', 'light', icon);
+
+        if (icon) {
+            this.iconPath = {
+                dark: path.join(resourceDir, 'icons', 'dark', icon),
+                light: path.join(resourceDir, 'icons', 'light', icon),
+            };
+        }
+        else {
+            this.iconPath = undefined;
+        }
+
         ev3devBrowserProvider.fireDeviceChanged();
     }
 
@@ -471,7 +489,7 @@ class DeviceTreeItem extends vscode.TreeItem {
             title: "Capturing screenshot..."
         }, progress => {
             return new Promise(async (resolve, reject) => {
-                const handleCaptureError = e => {
+                const handleCaptureError = function(e: any) {
                     vscode.window.showErrorMessage("Error capturing screenshot: " + (e.message || e));
                     reject();
                 }
@@ -522,7 +540,7 @@ class DeviceTreeItem extends vscode.TreeItem {
             output.clear();
             output.show();
             output.appendLine('========== ev3dev-sysinfo ==========');
-            const sysinfo = await vscode.window.withProgress({
+            await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Window,
                 title: 'Grabbing ev3dev system info...'
             }, async progress => {
@@ -539,11 +557,6 @@ class DeviceTreeItem extends vscode.TreeItem {
             vscode.window.showErrorMessage('An error occurred while getting system info: ' + (err.message || err));
         }
     }
-
-    iconPath = {
-        dark: null,
-        light: null
-    };
 
     public async connect(): Promise<void> {
         try {
@@ -581,7 +594,7 @@ class File extends vscode.TreeItem {
     readonly isExecutable: boolean;
     readonly isDirectory: boolean;
 
-    constructor(public device: Device, public parent: File, directory: string,
+    constructor(public device: Device, public parent: File | undefined, directory: string,
                 private fileInfo: ssh2Streams.FileEntry) {
         super(fileInfo.filename);
         // work around bad typescript bindings
@@ -768,12 +781,14 @@ class File extends vscode.TreeItem {
  * A tree view item that runs a command when clicked.
  */
 class CommandTreeItem extends vscode.TreeItem {
-    constructor(label: string, command: string) {
+    constructor(label: string, command: string | undefined) {
         super(label);
-        this.command = {
-            command: command,
-            title: ''
-        };
+        if (command) {
+            this.command = {
+                command: command,
+                title: ''
+            };
+        }
     }
 }
 
@@ -781,7 +796,7 @@ class DeviceStatusTreeItem extends CommandTreeItem {
     private readonly defaultBatteryLabel = "Battery: N/A";
     public children = new Array<CommandTreeItem>();
     private batteryItem = new CommandTreeItem(this.defaultBatteryLabel, undefined);
-    private brickd: Brickd;
+    private brickd: Brickd | undefined;
 
     public constructor(private device: Device) {
         super("Status", undefined);
@@ -792,7 +807,7 @@ class DeviceStatusTreeItem extends CommandTreeItem {
     public async connectBrickd() {
         if (this.brickd) {
             this.brickd.removeAllListeners();
-            this.brickd = null;
+            this.brickd = undefined;
             this.batteryItem.label = this.defaultBatteryLabel;
         }
         try {
@@ -818,14 +833,17 @@ class DeviceStatusTreeItem extends CommandTreeItem {
                 vscode.window.showErrorMessage(`${this.device.name}: ${err.message}`);
             });
             this.brickd.on('ready', () => {
+                if (!this.brickd) {
+                    return;
+                }
                 // serialNumber is used elsewhere, so tack it on to the device object
-                this.device['serialNumber'] = this.brickd.serialNumber;
+                (<any>this.device)['serialNumber'] = this.brickd.serialNumber;
             });
         }
         catch (err)  {
             vscode.window.showWarningMessage('Failed to get brickd connection. No status will be available.');
             return;
-        };
+        }
     }
 }
 

@@ -1,24 +1,26 @@
-import * as dnode from 'dnode';
+import { dnode } from 'dnode';
 import * as net from 'net';
 import * as path from 'path';
 import * as os from 'os';
 import * as readline from 'readline';
 import * as ssh2 from 'ssh2';
 import * as ssh2Streams from 'ssh2-streams';
+import * as stream from 'stream';
 import * as vscode from 'vscode';
 import * as Observable from 'zen-observable';
 
 import { Brickd } from './brickd';
 import * as dnssd from './dnssd';
+import { Shell } from './native-helper/shell';
 
 /**
  * Object that represents a remote ev3dev device.
  */
 export class Device extends vscode.Disposable {
     private readonly client: ssh2.Client;
-    private sftp: ssh2.SFTPWrapper;
-    private shellServer: net.Server;
-    private _homeDirectoryAttr: ssh2Streams.Attributes;
+    private sftp?: ssh2.SFTPWrapper;
+    private shellServer?: net.Server;
+    private _homeDirectoryAttr?: ssh2Streams.Attributes;
     private _isConnecting = false;
     private _isConnected = false;
 
@@ -57,7 +59,7 @@ export class Device extends vscode.Disposable {
             this._onDidDisconnect.dispose();
             this.client.destroy();
         });
-        this.username = service.txt['ev3dev.robot.user']
+        this.username = service.txt['ev3dev.robot.user'];
         this.client = new ssh2.Client();
         this.client.on('end', () => {
 
@@ -73,7 +75,8 @@ export class Device extends vscode.Disposable {
                     password: !p.echo,
                     prompt:  p.prompt
                 });
-                answers.push(choice);
+                // FIXME: how to cancel properly?
+                answers.push(choice || '');
             }
             finish(answers);
         });
@@ -115,7 +118,7 @@ export class Device extends vscode.Disposable {
                 }
                 else {
                     // everyone else uses the interface name
-                    address += `%${this.service['ifaceName']}`;
+                    address += `%${(<any>this.service)['ifaceName']}`;
                 }
             }
             this.client.connect({
@@ -152,16 +155,16 @@ export class Device extends vscode.Disposable {
     private createServer(): Promise<net.Server> {
         return new Promise((resolve, reject) => {
             const server = net.createServer(socket => {
-                const d = dnode({
+                const d = dnode<Shell>({
                     shell: (ttySettings, dataOut, dataErr, ready, exit) => {
                         this.shell(ttySettings).then(ch => {
-                            ch.stdout.on('data', data => {
+                            (<stream.Readable>ch.stdout).on('data', data => {
                                 dataOut(data.toString('base64'));
                             });
                             ch.stderr.on('data', data => {
                                 dataErr((<Buffer> data).toString('base64'));
                             });
-                            ch.on('error', err => {
+                            ch.on('error', (err: any) => {
                                 vscode.window.showErrorMessage(`SSH connection error: ${err.message}`);
                                 exit();
                                 ch.destroy();
@@ -205,11 +208,11 @@ export class Device extends vscode.Disposable {
         this._isConnected = false;
         if (this.shellServer) {
             this.shellServer.close();
-            this.shellServer = null;
+            this.shellServer = undefined;
         }
         if (this.sftp) {
             this.sftp.end();
-            this.sftp = null;
+            this.sftp = undefined;
         }
         this.client.end();
         this._onDidDisconnect.fire();
@@ -240,6 +243,9 @@ export class Device extends vscode.Disposable {
      * Get the file attributes of the home directory.
      */
     public get homeDirectoryAttr(): ssh2Streams.Attributes {
+        if (!this._homeDirectoryAttr) {
+            throw new Error('Not connected');
+        }
         return this._homeDirectoryAttr;
     }
 
@@ -254,6 +260,9 @@ export class Device extends vscode.Disposable {
      * Gets the TCP port where the shell server is listening.
      */
     public get shellPort(): number {
+        if (!this.shellServer) {
+            throw new Error('Not connected');
+        }
         return this.shellServer.address().port;
     }
 
@@ -264,6 +273,10 @@ export class Device extends vscode.Disposable {
      */
     public chmod(path: string, mode: string | number): Promise<void> {
         return new Promise((resolve, reject) => {
+            if (!this.sftp) {
+                reject(new Error('Not connected'));
+                return;
+            }
             this.sftp.chmod(path, mode, err => {
                 if (err) {
                     reject(err);
@@ -332,7 +345,7 @@ export class Device extends vscode.Disposable {
      * Starts a new shell on the remote device.
      * @param window Optional pty settings or false to not allocate a pty.
      */
-    public shell(window?: false | ssh2.PseudoTtyOptions): Promise<ssh2.ClientChannel> {
+    public shell(window: false | ssh2.PseudoTtyOptions): Promise<ssh2.ClientChannel> {
         return new Promise((resolve, reject) => {
             const options = <ssh2.ShellOptions> {
                 env: vscode.workspace.getConfiguration('ev3devBrowser').get('env')
@@ -354,6 +367,10 @@ export class Device extends vscode.Disposable {
      */
     public mkdir(path: string): Promise<void> {
         return new Promise((resolve, reject) => {
+            if (!this.sftp) {
+                reject(new Error('Not connected'));
+                return;
+            }
             this.sftp.mkdir(path, err => {
                 if (err) {
                     reject(err);
@@ -406,7 +423,11 @@ export class Device extends vscode.Disposable {
      */
     public get(remote: string, local: string, reportPercentage?: (percentage: number) => void): Promise<void> {
         return new Promise((resolve, reject) => {
-            this.sftp.fastGet(remote, local, <any> {
+            if (!this.sftp) {
+                reject(new Error('Not connected'));
+                return;
+            }
+            this.sftp.fastGet(remote, local, {
                 concurrency: 1,
                 step: (transferred, chunk, total) => {
                     if (reportPercentage) {
@@ -420,7 +441,7 @@ export class Device extends vscode.Disposable {
                 else {
                     resolve();
                 }
-            })
+            });
         });
     }
 
@@ -433,7 +454,11 @@ export class Device extends vscode.Disposable {
      */
     public put(local: string, remote: string, mode?: string, reportPercentage?: (percentage: number) => void): Promise<void> {
         return new Promise((resolve, reject) => {
-            this.sftp.fastPut(local, remote, <any> {
+            if (!this.sftp) {
+                reject(new Error('Not connected'));
+                return;
+            }
+            this.sftp.fastPut(local, remote, {
                 concurrency: 1,
                 step: (transferred, chunk, total) => {
                     if (reportPercentage) {
@@ -458,6 +483,10 @@ export class Device extends vscode.Disposable {
      */
     public ls(path: string): Promise<ssh2Streams.FileEntry[]> {
         return new Promise((resolve, reject) => {
+            if (!this.sftp) {
+                reject(new Error('Not connected'));
+                return;
+            }
             this.sftp.readdir(path, (err, list) => {
                 if (err) {
                     reject(err);
@@ -475,6 +504,10 @@ export class Device extends vscode.Disposable {
      */
     public stat(path: string): Promise<ssh2Streams.Stats> {
         return new Promise((resolve, reject) => {
+            if (!this.sftp) {
+                reject(new Error('Not connected'));
+                return;
+            }
             this.sftp.stat(path, (err, stats) => {
                 if (err) {
                     reject(err);
@@ -492,6 +525,10 @@ export class Device extends vscode.Disposable {
      */
     public rm(path: string): Promise<void> {
         return new Promise((resolve, reject) => {
+            if (!this.sftp) {
+                reject(new Error('Not connected'));
+                return;
+            }
             this.sftp.unlink(path, err => {
                 if (err) {
                     reject(err);
@@ -518,6 +555,10 @@ export class Device extends vscode.Disposable {
 
     public rmdir(path: string): Promise<void> {
         return new Promise((resolve, reject) => {
+            if (!this.sftp) {
+                reject(new Error('Not connected'));
+                return;
+            }
             this.sftp.rmdir(path, err => {
                 if (err) {
                     reject(err);
@@ -538,7 +579,7 @@ export class Device extends vscode.Disposable {
     }
 
     private static additionalDeviceToDnssdService(device: AdditionalDevice): dnssd.Service {
-        const txt = {};
+        const txt: dnssd.TxtRecords = {};
         txt['ev3dev.robot.user'] = device.username || 'robot';
         txt['ev3dev.robot.home'] = device.homeDirectory || `/home/${txt['ev3dev.robot.user']}`;
         return <dnssd.Service> {
@@ -557,8 +598,8 @@ export class Device extends vscode.Disposable {
      * ServiceItems
      */
     private static getServicesFromConfig(): ServiceItem[] {
-        const devices = vscode.workspace.getConfiguration('ev3devBrowser').get<AdditionalDevice[]>('additionalDevices');
         const services = new Array<ServiceItem>();
+        const devices = vscode.workspace.getConfiguration('ev3devBrowser').get<AdditionalDevice[]>('additionalDevices', []);
         for (const device of devices) {
             services.push(<ServiceItem> {
                 label: device.name,
@@ -570,9 +611,9 @@ export class Device extends vscode.Disposable {
 
     /**
      * Use a quick-pick to browse discovered devices and select one.
-     * @returns A new Device or null if the user canceled the request
+     * @returns A new Device or undefined if the user canceled the request
      */
-    public static async pickDevice(): Promise<Device> {
+    public static async pickDevice(): Promise<Device | undefined> {
         const configItems = this.getServicesFromConfig();
         const manualEntry = <ServiceItem> {
             label: "I don't see my device..."
@@ -596,8 +637,8 @@ export class Device extends vscode.Disposable {
                     // this looks like an ev3dev device
                     const ifaces = os.networkInterfaces();
                     for (const ifaceName in ifaces) {
-                        if (ifaces[ifaceName].find(v => v['scopeid'] == service.iface)) {
-                            service['ifaceName'] = ifaceName;
+                        if (ifaces[ifaceName].find(v => (<os.NetworkInterfaceInfoIPv6>v).scopeid === service.iface)) {
+                            (<any>service)['ifaceName'] = ifaceName;
                             break;
                         }
                     }
@@ -629,7 +670,7 @@ export class Device extends vscode.Disposable {
                 // bar to show if there are no items.
                 const list = new Array<ServiceItem>();
                 if (items) {
-                    list.push(...items)
+                    list.push(...items);
                 }
                 if (configItems) {
                     list.push(...configItems);
@@ -649,7 +690,7 @@ export class Device extends vscode.Disposable {
         });
         if (!selectedItem) {
             // cancelled
-            return null;
+            return undefined;
         }
 
         if (selectedItem == manualEntry) {
@@ -660,17 +701,22 @@ export class Device extends vscode.Disposable {
             });
             if (!name) {
                 // cancelled
-                return null;
+                return undefined;
             }
             const ipAddress = await vscode.window.showInputBox({
                 ignoreFocusOut: true,
                 prompt: "Enter the IP address of the device",
                 placeHolder: 'Example: "192.168.137.3"',
-                validateInput: (v) => !/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(v) && 'Not a valid IP address'
+                validateInput: function(v) {
+                    if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(v)) {
+                        return 'Not a valid IP address';
+                    }
+                    return undefined;
+                }
             });
             if (!ipAddress) {
                 // cancelled
-                return null;
+                return undefined;
             }
 
             const device = <AdditionalDevice> {
@@ -679,7 +725,7 @@ export class Device extends vscode.Disposable {
             };
 
             const config = vscode.workspace.getConfiguration('ev3devBrowser');
-            const existing = config.get<AdditionalDevice[]>('additionalDevices');
+            const existing = config.get<AdditionalDevice[]>('additionalDevices', []);
             existing.push(device);
             config.update('additionalDevices', existing, vscode.ConfigurationTarget.Global);
 
@@ -718,11 +764,11 @@ export class Device extends vscode.Disposable {
  */
 class ServiceItem implements vscode.QuickPickItem {
     public readonly label: string;
-    public readonly description: string;
+    public readonly description: string | undefined;
 
     constructor (public service: dnssd.Service) {
         this.label = service.name;
-        this.description = service['ifaceName'];
+        this.description = (<any>service)['ifaceName'];
     }
 }
 

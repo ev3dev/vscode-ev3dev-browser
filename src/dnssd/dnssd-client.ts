@@ -30,7 +30,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import * as buffer from 'buffer';
 import * as fs from 'fs';
 import * as net from 'net';
 import * as process from 'process';
@@ -43,7 +42,7 @@ const CTL_PATH_PREFIX: string = '/tmp/dnssd_clippath.';
 const USE_TCP_LOOPBACK: boolean = !fs.existsSync(MDNS_UDS_SERVERPATH);
 const SIZEOF_HEADER: number = 28;
 
-const IPC_FLAGS_NOREPLY: number = 1;
+//const IPC_FLAGS_NOREPLY: number = 1;
 const IPC_FLAGS_REUSE_SOCKET: number = 2;
 
 enum RequestOp {
@@ -768,7 +767,7 @@ export enum ServiceClass {
      * Internet
      */
     IN       = 1
-};
+}
 
 /**
  * Possible protocol values.
@@ -886,7 +885,7 @@ export type ResolveReply = (service: Service, flags: ServiceFlags, iface: number
  *                  get another callback telling them otherwise.
  */
 export type GetAddrInfoReply = (service: Service, flags: ServiceFlags, iface: number,
-    errCode: ServiceErrorType, hostname: string, address: string | undefined, ttl: number) => void;
+    errCode: ServiceErrorType, hostname: string, address: string, ttl: number) => void;
 
 /**
  * Callback for Service.queryRecord().
@@ -915,9 +914,9 @@ export type QueryRecordReply = (service: Service, flags: ServiceFlags, iface: nu
  * should be created using the static methods.
  */
 export class Service {
-    private op: RequestOp;
-    private processReply: (header: IpcMsgHeader, data: Buffer) => void;
-    private appCallback: BrowseReply | ResolveReply | GetAddrInfoReply | QueryRecordReply;
+    private op?: RequestOp;
+    private processReply?: (header: IpcMsgHeader, data: Buffer) => void;
+    private appCallback?: BrowseReply | ResolveReply | GetAddrInfoReply | QueryRecordReply;
 
     private constructor(private socket: net.Socket) {
     }
@@ -935,8 +934,8 @@ export class Service {
     }
 
     private async deliverRequest(msg: Buffer, reuseSd: boolean): Promise<void> {
-        let listenServer: net.Server;
-        let errSocket: net.Socket;
+        let listenServer: net.Server | undefined;
+        let errSocket: net.Socket | undefined;
         if (!reuseSd) {
             listenServer = net.createServer(socket =>  {
                 errSocket = socket;
@@ -961,8 +960,10 @@ export class Service {
             }
         }
         finally {
-            if (!reuseSd) {
+            if (listenServer) {
                 listenServer.close();
+            }
+            if (errSocket) {
                 errSocket.destroy();
             }
         }
@@ -989,7 +990,9 @@ export class Service {
             throw new ServiceError(ServiceErrorType.Incompatible, 'Incompatible version');
         }
         const data = await this.read(header.dataLen);
-        this.processReply(header, data);
+        if (this.processReply) {
+            this.processReply(header, data);
+        }
     }
 
     /**
@@ -1015,20 +1018,20 @@ export class Service {
                 const data = this.socket.read(size);
                 resolve(data);
             });
-        })
+        });
     }
 
     private write(msg: Buffer): Promise<void> {
         if (this.socket.write(msg)) {
             return Promise.resolve();
-        };
+        }
         return new Promise((resolve, reject) => {
             this.socket.once('drain', () => resolve());
         });
     }
 
     private static createHeader(op: RequestOp, length: number, reuseSocket: boolean): [Buffer, number] {
-        let ctrlPathOrPort: Buffer;
+        let ctrlPathOrPort: Buffer | undefined;
         let ctrlPathOrPortSize: number = 0;
         if (!reuseSocket) {
             if (USE_TCP_LOOPBACK) {
@@ -1056,10 +1059,10 @@ export class Service {
         offset = msg.writeUInt32BE(0, offset); // context[0]
         offset = msg.writeUInt32BE(0, offset); // context[1]
         offset = msg.writeUInt32BE(0, offset); // reg_index
-        if (!reuseSocket) {
+        if (!reuseSocket && ctrlPathOrPort) {
             offset += ctrlPathOrPort.copy(msg, offset);
         }
-        return [msg, offset]
+        return [msg, offset];
     }
 
     /**
@@ -1086,7 +1089,7 @@ export class Service {
         const domainBuf = Buffer.from(domain + '\0');
 
         let length = 4; // size of flags
-        length += 4 // size of interfaceIndex
+        length += 4; // size of interfaceIndex
         length += regTypeBuf.length;
         length += domainBuf.length;
 
@@ -1111,7 +1114,7 @@ export class Service {
         let errCode = <ServiceErrorType> data.readInt32BE(8);
         let offset = 12;
         let strError = false;
-        let replyName, replyType, replyDomain: string;
+        let replyName, replyType, replyDomain: string | undefined;
 
         let nullTermIndex = data.indexOf(0, offset);
         if (nullTermIndex < 0) {
@@ -1144,7 +1147,7 @@ export class Service {
             errCode = ServiceErrorType.Unknown;
         }
 
-        (<BrowseReply> this.appCallback)(this, flags, ifaceIndex, errCode, replyName, replyType, replyDomain);
+        (<BrowseReply> this.appCallback)(this, flags, ifaceIndex, errCode, replyName || '', replyType || '', replyDomain || '');
     }
 
     /**
@@ -1221,7 +1224,7 @@ export class Service {
 
         let offset = 12;
         let strError = false;
-        let fullName, target: string;
+        let fullName, target: string | undefined;
 
         let nullTermIndex = data.indexOf(0, offset);
         if (nullTermIndex < 0) {
@@ -1257,7 +1260,7 @@ export class Service {
             errCode = ServiceErrorType.Unknown;
         }
 
-        (<ResolveReply> this.appCallback)(this, flags, iface, errCode, fullName, target, port, txt);
+        (<ResolveReply> this.appCallback)(this, flags, iface, errCode, fullName || '', target || '', port, txt);
     }
 
     /**
@@ -1310,7 +1313,7 @@ export class Service {
 
         let offset = 12;
         let strError = false;
-        let hostname: string;
+        let hostname: string | undefined;
 
         let nullTermIndex = data.indexOf(0, offset);
         if (nullTermIndex < 0) {
@@ -1329,8 +1332,8 @@ export class Service {
         data.copy(rData, 0, offset, offset + rdLen);
         offset += rdLen;
         let ttl = data.readUInt32BE(offset);
-        
-        let address: string;
+
+        let address: string | undefined;
         switch (rrType) {
         case ServiceType.A: // IPv4
             address = `${rData[0]}.${rData[1]}.${rData[2]}.${rData[3]}`;
@@ -1353,7 +1356,7 @@ export class Service {
             ttl = 0;
         }
 
-        (<GetAddrInfoReply> this.appCallback)(this, flags, iface, errCode, hostname, address, ttl);
+        (<GetAddrInfoReply> this.appCallback)(this, flags, iface, errCode, hostname || '', address || '', ttl);
     }
 
     /**
@@ -1407,7 +1410,7 @@ export class Service {
 
         let offset = 12;
         let strError = false;
-        let fullName: string;
+        let fullName: string | undefined;
 
         let nullTermIndex = data.indexOf(0, offset);
         if (nullTermIndex < 0) {
@@ -1426,6 +1429,6 @@ export class Service {
         data.copy(rData, 0, offset, offset + rdLen);
         offset += rdLen;
         const ttl = data.readUInt32BE(offset);
-        (<QueryRecordReply> this.appCallback)(this, flags, iface, errCode, fullName, rrType, rrClass, rData, ttl);
+        (<QueryRecordReply> this.appCallback)(this, flags, iface, errCode, fullName || '', rrType, rrClass, rData, ttl);
     }
 }

@@ -1,6 +1,4 @@
 
-import * as events from 'events';
-
 import * as avahi from './dnssd/avahi';
 import * as dnssd from './dnssd/dnssd';
 import * as bonjour from './dnssd/bonjour';
@@ -45,7 +43,7 @@ export interface BrowseOptions {
 export interface Browser {
     on(event: 'added' | 'removed', listener: (service: Service) => void): this;
     on(event: 'error', listener: (err: Error) => void): this;
-    destroy();
+    destroy(): void;
 }
 
 /**
@@ -82,7 +80,7 @@ export interface Service {
     /**
      * The network interface index
      */
-    readonly iface: number
+    readonly iface: number;
 
     /**
      * The IP protocol version.

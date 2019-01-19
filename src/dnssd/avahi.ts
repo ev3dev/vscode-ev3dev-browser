@@ -8,9 +8,9 @@ import * as events from 'events';
 import * as dnssd from '../dnssd';
 
 
-let _daemon;
+let _daemon: avahi.Daemon;
 
-async function getDaemon(): Promise<any> {
+async function getDaemon(): Promise<avahi.Daemon> {
     if (_daemon) {
         return Promise.resolve(_daemon);
     }
@@ -36,7 +36,7 @@ export async function getInstance(): Promise<dnssd.Client> {
 class AvahiClient implements dnssd.Client {
     private destroyOps = new Array<()=>void>();
 
-    constructor(readonly daemon: any) {
+    constructor(readonly daemon: avahi.Daemon) {
     }
 
     public browse(options: dnssd.BrowseOptions): Promise<dnssd.Browser> {
@@ -82,10 +82,10 @@ class AvahiClient implements dnssd.Client {
 }
 
 class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
-    private browser: any;
+    private browser: avahi.ServiceBrowser | undefined;
     private readonly services: AvahiService[] = new Array<AvahiService>();
 
-    constructor(private client: AvahiClient, private options: dnssd.BrowseOptions) {
+    constructor(client: AvahiClient, private options: dnssd.BrowseOptions) {
         super();
         const proto = this.options.ipv == 'IPv6' ? avahi.PROTO_INET6 : avahi.PROTO_INET;
         const type = `_${this.options.service}._${this.options.transport || 'tcp'}`;
@@ -125,11 +125,11 @@ class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
     destroy(): void {
         this.removeAllListeners();
         if (this.browser) {
-            this.browser.Free();
+            this.browser.Free(err => console.log(err));
             this.browser = undefined;
         }
     }
-    
+
 }
 
 class AvahiService implements dnssd.Service {

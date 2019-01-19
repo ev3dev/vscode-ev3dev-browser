@@ -43,7 +43,7 @@ export function openAndRead(path: string, offset: number, length: number, positi
 
             const buffer = new Buffer(length);
             fs.read(fd, buffer, offset, length, position, (err, bytesRead, buffer) => {
-                fs.close(fd);
+                fs.close(fd, err => console.log(err));
                 if (err) {
                     reject(err);
                     return;
@@ -54,7 +54,7 @@ export function openAndRead(path: string, offset: number, length: number, positi
     })
 }
 
-export async function verifyFileHeader(filePath: string, expectedHeader: Buffer | number[], offset?: number): Promise<boolean> {
+export async function verifyFileHeader(filePath: string, expectedHeader: Buffer | number[], offset: number = 0): Promise<boolean> {
     const bufferExpectedHeader = isArray(expectedHeader) ? new Buffer(<number[]>expectedHeader) : <Buffer>expectedHeader;
     const header = await openAndRead(filePath, 0, bufferExpectedHeader.length, offset);
     return header.compare(bufferExpectedHeader) == 0;

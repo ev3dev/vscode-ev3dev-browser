@@ -8,7 +8,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 	/** An absolute path to the program to debug. */
     program: string;
     /** Download files before running. Default is true. */
-    download?: boolean
+    download?: boolean;
 }
 
 
@@ -16,7 +16,9 @@ class Ev3devBrowserDebugSession extends DebugSession {
     protected initializeRequest(response: DebugProtocol.InitializeResponse,
         args: DebugProtocol.InitializeRequestArguments): void
     {
-        response.body.supportTerminateDebuggee = true;
+        if (response.body) {
+            response.body.supportTerminateDebuggee = true;
+        }
         this.sendResponse(response);
     }
 
@@ -33,7 +35,7 @@ class Ev3devBrowserDebugSession extends DebugSession {
             break;
         }
     }
-    
+
     protected disconnectRequest(response: DebugProtocol.DisconnectResponse,
         args: DebugProtocol.DisconnectArguments): void
     {

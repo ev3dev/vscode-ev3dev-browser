@@ -14,7 +14,7 @@
         "url": "https://github.com/ev3dev/vscode-ev3dev-browser/issues"
     },
     "engines": {
-        "vscode": "^1.17.0"
+        "vscode": "^1.30.0"
     },
     "categories": [
         "Other"
@@ -379,22 +379,24 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "tsc -p ./",
-        "compile": "tsc -watch -p ./",
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
         "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "node ./node_modules/vscode/bin/test"
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
+        "@types/compare-versions": "^3.0.0",
         "@types/bonjour": "^3.5.4",
-        "@types/mocha": "^2.2.32",
-        "@types/node": "^6.0.85",
+        "@types/mocha": "^2.2.42",
+        "@types/node": "^8.10.25",
         "@types/ssh2": "~0.5.35",
         "@types/ssh2-streams": "~0.1.2",
         "@types/temp": "^0.8.3",
         "@types/zen-observable": "^0.5.3",
-        "mocha": "^2.3.3",
-        "typescript": "^2.4.2",
-        "vscode": "^1.1.18"
+        "typescript": "^3.1.4",
+        "vscode": "^1.1.25",
+        "tslint": "^5.8.0"
     },
     "dependencies": {
         "avahi-dbus": "^0.1.0",

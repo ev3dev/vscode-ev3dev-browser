@@ -44,7 +44,7 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
         for (let i in ifaces) {
             // only supporting IPv6 for now
             const addresses = ifaces[i].filter(v => v.family == 'IPv6').map(v =>
-                `${v.address}%${process.platform == 'win32' ? v['scopeid'] : i}`);
+                `${v.address}%${process.platform === 'win32' ? (<os.NetworkInterfaceInfoIPv6>v).scopeid : i}`);
             newAddresses.push(...addresses);
         }
         const added = newAddresses.filter(a => this.ifaceAddresses.indexOf(a) == -1);
@@ -76,9 +76,9 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
                 ip: 'ff02::fb',
                 interface: ifaceAddress
             });
-            bClient['iface'] = ifaceAddress.split('%')[1];
+            (<any>bClient)['iface'] = ifaceAddress.split('%')[1];
             (<any> bClient)._server.mdns.on('ready', () => resolve(bClient));
-            (<any> bClient)._server.mdns.on('error', err => reject(err));
+            (<any> bClient)._server.mdns.on('error', (err: any) => reject(err));
         }).then(bClient => {
             if (this.ifaceAddresses.indexOf(ifaceAddress) < 0) {
                 // iface was removed while we were waiting for promise
@@ -120,7 +120,7 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
         browser: bonjour.Browser,
         services: BonjourService[]
     }>();
-    private updateInterval: NodeJS.Timer;
+    private updateInterval: NodeJS.Timer | undefined;
 
     constructor(private readonly client: BonjourClient, private readonly opts: dnssd.BrowseOptions) {
         super();
@@ -142,7 +142,7 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
         });
         const services = new Array<BonjourService>();
         browser.on('up', s => {
-            s['iface'] = bClient['iface'];
+            (<any>s)['iface'] = (<any>bClient)['iface'];
             const service = new BonjourService(s);
             services.push(service);
             this.emit('added', service, false);
@@ -161,7 +161,10 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
     }
 
     private removeBrowser(bClient: bonjour.Bonjour): void {
-        clearInterval(this.updateInterval);
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+            this.updateInterval = undefined;
+        }
         const i = this.browsers.findIndex(v => v.bClient == bClient);
         const [removed] = this.browsers.splice(i, 1);
         removed.browser.stop();
@@ -187,7 +190,7 @@ class BonjourService implements dnssd.Service {
         this.name = bService.name;
         this.service = bService.type;
         this.transport = <'tcp' | 'udp'> bService.protocol;
-        this.iface = bService['iface'];
+        this.iface = (<any>bService)['iface'];
         this.host = bService.host;
         this.domain = (<any> bService).domain;
         this.ipv = 'IPv6';
