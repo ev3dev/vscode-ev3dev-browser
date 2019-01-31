@@ -3,6 +3,11 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+### Changed
+- Download progress is shown in notification instead of status bar.
+- Minimum VS Code version updated to 1.30
+
 ## 0.8.1 - 2018-07-14
 ### Fixed
 - Error when trying to use file paths containing spaces (@WasabiFan)
