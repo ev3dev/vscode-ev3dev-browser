@@ -161,7 +161,7 @@
             },
             {
                 "command": "ev3devBrowser.action.download",
-                "title": "Send project to device",
+                "title": "Send workspace to device",
                 "icon": {
                     "dark": "resources/icons/dark/download.svg",
                     "light": "resources/icons/light/download.svg"

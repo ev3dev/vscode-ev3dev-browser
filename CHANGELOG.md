@@ -4,6 +4,9 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Unreleased
+### Fixed
+- When using "Download and run", only current project is downloaded instead of
+  entire workspace.
 ### Changed
 - Download progress is shown in notification instead of status bar.
 - Minimum VS Code version updated to 1.30

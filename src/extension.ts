@@ -54,7 +54,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.upload', f => f.upload()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.select', f => f.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.action.pickDevice', () => pickDevice()),
-        vscode.commands.registerCommand('ev3devBrowser.action.download', () => download()),
+        vscode.commands.registerCommand('ev3devBrowser.action.download', () => downloadAll()),
         vscode.commands.registerCommand('ev3devBrowser.action.refresh', () => refresh()),
         vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e))
     );
@@ -106,7 +106,8 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
         }
 
         // optionally download before running
-        if (args.download !== false && !await download()) {
+        const folder = event.session.workspaceFolder;
+        if (args.download !== false && folder && !await download(folder, device)) {
             // download() shows error messages, so don't show additional message here.
             await event.session.customRequest('ev3devBrowser.debugger.terminate');
             break;
@@ -159,11 +160,11 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
 }
 
 /**
- * Download the current workspace folders to the device.
+ * Download all workspace folders to the device.
  *
  * @return Promise of true on success, otherwise false.
  */
-async function download(): Promise<boolean> {
+async function downloadAll(): Promise<boolean> {
     let device = await ev3devBrowserProvider.getDevice();
     if (!device) {
         // get device will have shown an error message, so we don't need another here
@@ -180,102 +181,111 @@ async function download(): Promise<boolean> {
     }
     await vscode.workspace.saveAll();
 
-    let success = false;
-
     for (const localFolder of vscode.workspace.workspaceFolders) {
-        const config = vscode.workspace.getConfiguration('ev3devBrowser.download', localFolder.uri);
-
-        const includeFiles = new vscode.RelativePattern(localFolder, config.get<string>('include', ''));
-        const excludeFiles = new vscode.RelativePattern(localFolder, config.get<string>('exclude', ''));
-        const projectDir = config.get<string>('directory') || path.basename(localFolder.uri.fsPath);
-        const remoteBaseDir = path.posix.join(device.homeDirectoryPath, projectDir);
-        const deviceName = device.name;
-
-        await vscode.window.withProgress({
-            location: vscode.ProgressLocation.Notification,
-            title: 'Sending',
-            cancellable: true,
-        }, async (progress, token) => {
-            try {
-                const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
-                const increment = 100 / files.length;
-                let fileIndex = 1;
-                const reportProgress = (message: string) => progress.report({ message: message });
-
-                for (const f of files) {
-                    if (token.isCancellationRequested) {
-                        ev3devBrowserProvider.fireDeviceChanged();
-                        return;
-                    }
-
-                    const relativePath = vscode.workspace.asRelativePath(f, false);
-                    const baseProgressMessage = `(${fileIndex}/${files.length}) ${relativePath}`;
-                    reportProgress(baseProgressMessage);
-
-                    const basename = path.basename(f.fsPath);
-                    let relativeDir = path.dirname(relativePath);
-                    if (path == path.win32) {
-                        relativeDir = relativeDir.replace(path.win32.sep, path.posix.sep);
-                    }
-                    const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
-                    const remotePath = path.posix.resolve(remoteDir, basename);
-
-                    // File permission handling:
-                    // - If the file starts with a shebang, then assume it should be
-                    //   executable.
-                    // - Otherwise use the existing file permissions. On Windows
-                    //   we also check for ELF file format to know if a file
-                    //   should be executable since Windows doesn't know about
-                    //   POSIX file permissions.
-                    let mode: string;
-                    if (await verifyFileHeader(f.fsPath, new Buffer('#!/'))) {
-                        mode = '755';
-                    }
-                    else {
-                        const stat = fs.statSync(f.fsPath);
-                        if (process.platform == 'win32') {
-                            // fs.stat() on win32 return something like '100666'
-                            // See https://github.com/joyent/libuv/blob/master/src/win/fs.c
-                            // and search for `st_mode`
-
-                            // So, we check to see the file uses ELF format, if
-                            // so, make it executable.
-                            if (await verifyFileHeader(f.fsPath, new Buffer('\x7fELF'))) {
-                                stat.mode |= S_IXUSR;
-                            }
-                        }
-                        mode = stat.mode.toString(8);
-                    }
-
-                    // make sure the directory exists
-                    if (!device) {
-                        throw new Error("Lost connection");
-                    }
-                    await device.mkdir_p(remoteDir);
-                    // then we can copy the file
-                    await device.put(f.fsPath, remotePath, mode,
-                        percentage => reportProgress(`${baseProgressMessage} - ${percentage}%`));
-
-                    fileIndex++;
-                    progress.report({increment: increment});
-                }
-                // make sure any new files show up in the browser
-                ev3devBrowserProvider.fireDeviceChanged();
-                success = true;
-
-                vscode.window.showInformationMessage(`Download to ${deviceName} complete`);
-            }
-            catch (err) {
-                vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
-            }
-        });
-
-        if (!success) {
-            break;
+        if (!await download(localFolder, device)) {
+            return false;
         }
     }
 
-    return success;
+    return true;
+}
+
+/**
+ * Download workspace folder to the device.
+ *
+ * @param folder The folder.
+ * @param device The device.
+ * @return Promise of true on success, otherwise false.
+ */
+async function download(folder: vscode.WorkspaceFolder, device: Device): Promise<boolean> {
+    const config = vscode.workspace.getConfiguration('ev3devBrowser.download', folder.uri);
+
+    const includeFiles = new vscode.RelativePattern(folder, config.get<string>('include', ''));
+    const excludeFiles = new vscode.RelativePattern(folder, config.get<string>('exclude', ''));
+    const projectDir = config.get<string>('directory') || path.basename(folder.uri.fsPath);
+    const remoteBaseDir = path.posix.join(device.homeDirectoryPath, projectDir);
+    const deviceName = device.name;
+
+    return vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: 'Sending',
+        cancellable: true,
+    }, async (progress, token) => {
+        try {
+            const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
+            const increment = 100 / files.length;
+            let fileIndex = 1;
+            const reportProgress = (message: string) => progress.report({ message: message });
+
+            for (const f of files) {
+                if (token.isCancellationRequested) {
+                    ev3devBrowserProvider.fireDeviceChanged();
+                    return false;
+                }
+
+                const relativePath = vscode.workspace.asRelativePath(f, false);
+                const baseProgressMessage = `(${fileIndex}/${files.length}) ${relativePath}`;
+                reportProgress(baseProgressMessage);
+
+                const basename = path.basename(f.fsPath);
+                let relativeDir = path.dirname(relativePath);
+                if (path == path.win32) {
+                    relativeDir = relativeDir.replace(path.win32.sep, path.posix.sep);
+                }
+                const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
+                const remotePath = path.posix.resolve(remoteDir, basename);
+
+                // File permission handling:
+                // - If the file starts with a shebang, then assume it should be
+                //   executable.
+                // - Otherwise use the existing file permissions. On Windows
+                //   we also check for ELF file format to know if a file
+                //   should be executable since Windows doesn't know about
+                //   POSIX file permissions.
+                let mode: string;
+                if (await verifyFileHeader(f.fsPath, new Buffer('#!/'))) {
+                    mode = '755';
+                }
+                else {
+                    const stat = fs.statSync(f.fsPath);
+                    if (process.platform == 'win32') {
+                        // fs.stat() on win32 return something like '100666'
+                        // See https://github.com/joyent/libuv/blob/master/src/win/fs.c
+                        // and search for `st_mode`
+
+                        // So, we check to see the file uses ELF format, if
+                        // so, make it executable.
+                        if (await verifyFileHeader(f.fsPath, new Buffer('\x7fELF'))) {
+                            stat.mode |= S_IXUSR;
+                        }
+                    }
+                    mode = stat.mode.toString(8);
+                }
+
+                // make sure the directory exists
+                if (!device) {
+                    throw new Error("Lost connection");
+                }
+                await device.mkdir_p(remoteDir);
+                // then we can copy the file
+                await device.put(f.fsPath, remotePath, mode,
+                    percentage => reportProgress(`${baseProgressMessage} - ${percentage}%`));
+
+                fileIndex++;
+                progress.report({increment: increment});
+            }
+            // make sure any new files show up in the browser
+            ev3devBrowserProvider.fireDeviceChanged();
+
+            vscode.window.showInformationMessage(`Download to ${deviceName} complete`);
+        }
+        catch (err) {
+            vscode.window.showErrorMessage(`Error sending file: ${err.message}`);
+            return false;
+        }
+
+        return true;
+    });
 }
 
 function refresh(): void {
