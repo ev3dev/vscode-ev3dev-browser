@@ -34,7 +34,7 @@ export function activate(context: vscode.ExtensionContext): void {
     resourceDir = context.asAbsolutePath('resources');
     helperExePath = context.asAbsolutePath(path.join('native', process.platform, 'helper'));
     if (process.platform == 'win32') {
-        helperExePath += '.exe'
+        helperExePath += '.exe';
     }
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
@@ -403,7 +403,7 @@ class DeviceTreeItem extends vscode.TreeItem {
             this.handleConnectionState(DeviceState.Connected);
         }
         else {
-            this.handleConnectionState(DeviceState.Disconnected)
+            this.handleConnectionState(DeviceState.Disconnected);
         }
         this.statusItem = new DeviceStatusTreeItem(device);
     }
@@ -478,7 +478,7 @@ class DeviceTreeItem extends vscode.TreeItem {
                 const handleCaptureError = function(e: any) {
                     vscode.window.showErrorMessage("Error capturing screenshot: " + (e.message || e));
                     reject();
-                }
+                };
 
                 try {
                     const screenshotDirectory = await getSharedTempDir('ev3dev-screenshots');

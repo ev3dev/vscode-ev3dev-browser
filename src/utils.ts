@@ -29,7 +29,7 @@ export function getSharedTempDir(sharedKey: string): Promise<string> {
                 tempDirs[sharedKey] = dirPath;
                 resolve(dirPath);
             }
-        })
+        });
     });
 }
 
@@ -51,7 +51,7 @@ export function openAndRead(path: string, offset: number, length: number, positi
                 resolve(buffer);
             });
         });
-    })
+    });
 }
 
 export async function verifyFileHeader(filePath: string, expectedHeader: Buffer | number[], offset: number = 0): Promise<boolean> {
