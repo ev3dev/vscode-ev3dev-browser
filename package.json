@@ -22,7 +22,7 @@
     "activationEvents": [
         "onView:ev3devBrowser"
     ],
-    "main": "./out/src/extension",
+    "main": "./out/extension.js",
     "contributes": {
         "configuration": {
             "title": "ev3dev browser configuration",
