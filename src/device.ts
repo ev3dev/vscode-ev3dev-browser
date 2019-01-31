@@ -458,7 +458,7 @@ export class Device extends vscode.Disposable {
                 reject(new Error('Not connected'));
                 return;
             }
-            this.sftp.fastPut(local, remote, <PutTransferOptions>{
+            this.sftp.fastPut(local, remote, {
                 concurrency: 1,
                 step: (transferred, chunk, total) => {
                     if (reportPercentage) {
@@ -777,15 +777,4 @@ interface AdditionalDevice {
     ipAddress: string;
     username: string;
     homeDirectory: string;
-}
-
-/**
- * Hack to add mode option to ssh2Streams.TransferOptions since it is missing
- * in `@types/ssh2-streams`.
- */
-interface PutTransferOptions extends ssh2Streams.TransferOptions {
-    /**
-     *  Integer or string representing the file mode to set for the uploaded file.
-     */
-    mode?: number | string;
 }
