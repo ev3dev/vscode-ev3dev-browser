@@ -4,7 +4,7 @@
     "description": "Browse for ev3dev devices",
     "icon": "resources/icons/ev3dev-logo.png",
     "version": "0.8.1",
-    "publisher": "dlech",
+    "publisher": "ev3dev",
     "license": "MIT",
     "repository": {
         "type": "git",
