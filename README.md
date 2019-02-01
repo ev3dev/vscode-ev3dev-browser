@@ -8,13 +8,11 @@ Learn more about ev3dev at <http://www.ev3dev.org>.
 
 ## Requirements
 
-This extension is only compatible with devices running **ev3dev-stretch**
-[snapshot images] starting with `2017-10-24`. It will not work with other
-versions of ev3dev.
+This extension is only compatible with devices running **ev3dev-stretch**.
+It will not work with earlier versions of ev3dev.
 
 Additional information can be found on the [wiki].
 
-[snapshot images]: https://oss.jfrog.org/list/oss-snapshot-local/org/ev3dev/brickstrap/
 [wiki]: https://github.com/ev3dev/vscode-ev3dev-browser/wiki
 
 
