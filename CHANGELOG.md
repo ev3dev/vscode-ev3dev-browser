@@ -3,6 +3,10 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.9.0 - 2018-01-31
+### Changed
+- Extension is replaced by "ev3dev.ev3dev-browser".
+
 ## 0.8.1 - 2018-07-14
 ### Fixed
 - Error when trying to use file paths containing spaces (@WasabiFan)

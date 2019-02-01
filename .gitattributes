@@ -1,3 +1,0 @@
-native/linux/helper filter=lfs diff=lfs merge=lfs -text
-native/darwin/helper filter=lfs diff=lfs merge=lfs -text
-native/win32/helper.exe filter=lfs diff=lfs merge=lfs -text

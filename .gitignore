@@ -1,6 +1,2 @@
-out
-node_modules
-.nexe
-
 # built extension packages
 *.vsix
