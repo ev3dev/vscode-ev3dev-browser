@@ -109,10 +109,10 @@ export class Device extends vscode.Disposable {
             this.client.once('ready', resolve);
             this.client.once('error', reject);
             let address = this.service.address;
-            if (this.service.ipv == 'IPv6' && address.startsWith('fe80::')) {
+            if (this.service.ipv === 'IPv6' && address.startsWith('fe80::')) {
                 // this is IPv6 link local address, so we need to add the network
                 // interface to the end
-                if (process.platform == 'win32') {
+                if (process.platform === 'win32') {
                     // Windows uses the interface index
                     address += `%${this.service.iface}`;
                 }
@@ -407,7 +407,7 @@ export class Device extends vscode.Disposable {
                 }
             }
             catch (err) {
-                if (err.code != ssh2.SFTP_STATUS_CODE.NO_SUCH_FILE) {
+                if (err.code !== ssh2.SFTP_STATUS_CODE.NO_SUCH_FILE) {
                     throw err;
                 }
                 await this.mkdir(part);
@@ -648,7 +648,7 @@ export class Device extends vscode.Disposable {
                 }
             });
             browser.on('removed', (service) => {
-                const index = items.findIndex(si => si.service == service);
+                const index = items.findIndex(si => si.service === service);
                 if (index > -1) {
                     items.splice(index, 1);
                     cancelSource.cancel();
@@ -693,7 +693,7 @@ export class Device extends vscode.Disposable {
             return undefined;
         }
 
-        if (selectedItem == manualEntry) {
+        if (selectedItem === manualEntry) {
             const name = await vscode.window.showInputBox({
                 ignoreFocusOut: true,
                 prompt: "Enter a name for the device",

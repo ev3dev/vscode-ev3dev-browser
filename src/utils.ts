@@ -57,7 +57,7 @@ export function openAndRead(path: string, offset: number, length: number, positi
 export async function verifyFileHeader(filePath: string, expectedHeader: Buffer | number[], offset: number = 0): Promise<boolean> {
     const bufferExpectedHeader = isArray(expectedHeader) ? new Buffer(<number[]>expectedHeader) : <Buffer>expectedHeader;
     const header = await openAndRead(filePath, 0, bufferExpectedHeader.length, offset);
-    return header.compare(bufferExpectedHeader) == 0;
+    return header.compare(bufferExpectedHeader) === 0;
 }
 
 export function toastStatusBarMessage(message: string): void {

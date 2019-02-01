@@ -33,7 +33,7 @@ export function activate(context: vscode.ExtensionContext): void {
     output = vscode.window.createOutputChannel('ev3dev');
     resourceDir = context.asAbsolutePath('resources');
     helperExePath = context.asAbsolutePath(path.join('native', process.platform, 'helper'));
-    if (process.platform == 'win32') {
+    if (process.platform === 'win32') {
         helperExePath += '.exe';
     }
 
@@ -229,7 +229,7 @@ async function download(folder: vscode.WorkspaceFolder, device: Device): Promise
 
                 const basename = path.basename(f.fsPath);
                 let relativeDir = path.dirname(relativePath);
-                if (path == path.win32) {
+                if (path === path.win32) {
                     relativeDir = relativeDir.replace(path.win32.sep, path.posix.sep);
                 }
                 const remoteDir = path.posix.join(remoteBaseDir, relativeDir);
@@ -248,7 +248,7 @@ async function download(folder: vscode.WorkspaceFolder, device: Device): Promise
                 }
                 else {
                     const stat = fs.statSync(f.fsPath);
-                    if (process.platform == 'win32') {
+                    if (process.platform === 'win32') {
                         // fs.stat() on win32 return something like '100666'
                         // See https://github.com/joyent/libuv/blob/master/src/win/fs.c
                         // and search for `st_mode`
@@ -306,7 +306,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
     }
 
     public setDevice(device: Device | undefined): void {
-        if ((this.device && this.device.device) == device) {
+        if ((this.device && this.device.device) === device) {
             return;
         }
         if (this.device) {
@@ -328,7 +328,7 @@ class Ev3devBrowserProvider extends vscode.Disposable implements vscode.TreeData
         if (!this.device) {
             const connectNow = 'Connect Now';
             const result = await vscode.window.showErrorMessage('No ev3dev device is connected.', connectNow);
-            if (result == connectNow) {
+            if (result === connectNow) {
                 await pickDevice();
             }
         }
@@ -618,7 +618,7 @@ class File extends vscode.TreeItem {
 
     private createOrUpdate(device: Device, directory: string, fileInfo: any): File {
         const path = directory + fileInfo.filename;
-        const match = this.fileCache.find(f => f.path == path);
+        const match = this.fileCache.find(f => f.path === path);
         if (match) {
             match.fileInfo = fileInfo;
             return match;
@@ -648,7 +648,7 @@ class File extends vscode.TreeItem {
                 if (list) {
                     list.forEach(element => {
                         // skip hidden files
-                        if (element.filename[0] != '.') {
+                        if (element.filename[0] !== '.') {
                             const file = this.createOrUpdate(this.device, this.path + "/", element);
                             files.push(file);
                         }
@@ -666,7 +666,7 @@ class File extends vscode.TreeItem {
 
     public handleClick(): void {
         // keep track of state so that it is preserved during refresh
-        if (this.collapsibleState == vscode.TreeItemCollapsibleState.Expanded) {
+        if (this.collapsibleState === vscode.TreeItemCollapsibleState.Expanded) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             // This causes us to refresh the files each time the directory is collapsed
             this.fileCache.length = 0;
@@ -680,7 +680,7 @@ class File extends vscode.TreeItem {
                 description: this.path
             };
             vscode.window.showQuickPick([runItem]).then(value => {
-                if (value == runItem) {
+                if (value === runItem) {
                     this.run();
                 }
             });
@@ -714,7 +714,7 @@ class File extends vscode.TreeItem {
                     if (!result) {
                         return;
                     }
-                    else if (result == dontShowAgainItem) {
+                    else if (result === dontShowAgainItem) {
                         config.update('confirmDelete', false, vscode.ConfigurationTarget.Global);
                     }
                 }

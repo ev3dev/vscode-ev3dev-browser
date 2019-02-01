@@ -52,7 +52,7 @@ class DnssdClient implements dnssd.Client {
      * @param op the operation to remove
      */
     popDestroyOp(op: () => void): void {
-        let i = this.destroyOps.findIndex(v => v == op);
+        let i = this.destroyOps.findIndex(v => v === op);
         if (i >= 0) {
             this.destroyOps.splice(i, 1);
         }
@@ -89,7 +89,7 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
                                 this.emit('error', new dns.ServiceError(e, 'Querying service failed.'));
                                 return;
                             }
-                            if (this.services.findIndex(v => v.iface == i && v.name == n && v.type == t && v.domain == d.replace(/\.$/, '')) != -1) {
+                            if (this.services.findIndex(v => v.iface === i && v.name === n && v.type === t && v.domain === d.replace(/\.$/, '')) !== -1) {
                                 // ignore duplicates
                                 return;
                             }
@@ -163,7 +163,7 @@ class DnssdService extends events.EventEmitter implements dnssd.Service {
     }
 
     match(iface: number, name: string, type: string, domain: string): boolean {
-        return this.iface == iface && this.name == name && this.type == type && this.domain == domain;
+        return this.iface === iface && this.name === name && this.type === type && this.domain === domain;
     }
 
     private static parseText(txt: string[]): dnssd.TxtRecords {

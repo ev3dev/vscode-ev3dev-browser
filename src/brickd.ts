@@ -46,7 +46,7 @@ export class Brickd extends events.EventEmitter {
             const [m1, ...m2] = line.split(' ');
 
             // emit messages
-            if (m1 == "MSG") {
+            if (m1 === "MSG") {
                 this.emit('message', m2.join(' '));
                 return;
             }
@@ -54,7 +54,7 @@ export class Brickd extends events.EventEmitter {
             // everything else is handled from state machine
             switch (state) {
             case BrickdConnectionState.start:
-                if (m1 == "BRICKD") {
+                if (m1 === "BRICKD") {
                     const version = m2[1];
                     if (compareVersions(version, minBrickdVersion) < 0) {
                         state = BrickdConnectionState.bad;
@@ -75,17 +75,17 @@ export class Brickd extends events.EventEmitter {
                 }
                 break;
             case BrickdConnectionState.handshake:
-                if (m1 == "OK") {
+                if (m1 === "OK") {
                     state = BrickdConnectionState.watchPower;
                     channel.write("WATCH POWER\n");
                 }
-                else if (m1 == "BAD") {
+                else if (m1 === "BAD") {
                     state = BrickdConnectionState.bad;
                     this.emit('error', new Error("Brickd handshake failed."));
                 }
                 break;
             case BrickdConnectionState.watchPower:
-                if (m1 == "OK") {
+                if (m1 === "OK") {
                     state = BrickdConnectionState.getBatteryVoltage;
                     channel.write("GET system.battery.voltage\n");
                 }
@@ -95,7 +95,7 @@ export class Brickd extends events.EventEmitter {
                 }
                 break;
             case BrickdConnectionState.getBatteryVoltage:
-                if (m1 == "OK") {
+                if (m1 === "OK") {
                     this.emit('message', `PROPERTY system.battery.voltage ${m2.join(' ')}`);
                     state = BrickdConnectionState.getSerialNum;
                     channel.write("GET system.info.serial\n");
@@ -106,7 +106,7 @@ export class Brickd extends events.EventEmitter {
                 }
                 break;
             case BrickdConnectionState.getSerialNum:
-                if (m1 == "OK") {
+                if (m1 === "OK") {
                     this._serialNumber = m2.join(' ');
                     state = BrickdConnectionState.ok;
                     this.emit('ready');

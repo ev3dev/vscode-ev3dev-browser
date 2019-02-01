@@ -43,12 +43,12 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
         const ifaces = os.networkInterfaces();
         for (let i in ifaces) {
             // only supporting IPv6 for now
-            const addresses = ifaces[i].filter(v => v.family == 'IPv6').map(v =>
+            const addresses = ifaces[i].filter(v => v.family === 'IPv6').map(v =>
                 `${v.address}%${process.platform === 'win32' ? (<os.NetworkInterfaceInfoIPv6>v).scopeid : i}`);
             newAddresses.push(...addresses);
         }
-        const added = newAddresses.filter(a => this.ifaceAddresses.indexOf(a) == -1);
-        const removed = this.ifaceAddresses.filter(a => newAddresses.indexOf(a) == -1);
+        const added = newAddresses.filter(a => this.ifaceAddresses.indexOf(a) === -1);
+        const removed = this.ifaceAddresses.filter(a => newAddresses.indexOf(a) === -1);
         if (added.length) {
             for (const a of added) {
                 this.ifaceAddresses.push(a);
@@ -88,7 +88,7 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
             this.bClients[ifaceAddress] = bClient;
             this.emit('clientAdded', bClient);
         }).catch(err => {
-            if (err.code == 'EADDRNOTAVAIL') {
+            if (err.code === 'EADDRNOTAVAIL') {
                 // when a new network interface first comes up, we can get this
                 // error when we try to bind to the socket, so keep trying until
                 // we are bound or the interface goes away.
@@ -148,7 +148,7 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
             this.emit('added', service, false);
         });
         browser.on('down', s => {
-            const index = services.findIndex(v => v.bService == s);
+            const index = services.findIndex(v => v.bService === s);
             const [service] = services.splice(index, 1);
             this.emit('removed', service, false);
         });
@@ -165,7 +165,7 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
             clearInterval(this.updateInterval);
             this.updateInterval = undefined;
         }
-        const i = this.browsers.findIndex(v => v.bClient == bClient);
+        const i = this.browsers.findIndex(v => v.bClient === bClient);
         const [removed] = this.browsers.splice(i, 1);
         removed.browser.stop();
         for (const s of removed.services) {

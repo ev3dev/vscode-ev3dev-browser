@@ -955,7 +955,7 @@ export class Service {
             // FIXME: check errSocket instead if !reuseSd
             const data = await this.read(4);
             const err = data.readUInt32BE(0);
-            if (err != 0) {
+            if (err !== 0) {
                 throw new ServiceError(err, 'Request error');
             }
         }
@@ -986,7 +986,7 @@ export class Service {
             context1: headerBuf.readUInt32BE(20),
             regIndex: headerBuf.readUInt32BE(24),
         };
-        if (header.version != VERSION) {
+        if (header.version !== VERSION) {
             throw new ServiceError(ServiceErrorType.Incompatible, 'Incompatible version');
         }
         const data = await this.read(header.dataLen);

@@ -74,7 +74,7 @@ class AvahiClient implements dnssd.Client {
      * @param op the operation to remove
      */
     popDestroyOp(op: ()=>void): void {
-        let i = this.destroyOps.findIndex(v => v == op);
+        let i = this.destroyOps.findIndex(v => v === op);
         if (i >= 0) {
             this.destroyOps.splice(i, 1);
         }
@@ -87,7 +87,7 @@ class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
 
     constructor(client: AvahiClient, private options: dnssd.BrowseOptions) {
         super();
-        const proto = this.options.ipv == 'IPv6' ? avahi.PROTO_INET6 : avahi.PROTO_INET;
+        const proto = this.options.ipv === 'IPv6' ? avahi.PROTO_INET6 : avahi.PROTO_INET;
         const type = `_${this.options.service}._${this.options.transport || 'tcp'}`;
         client.daemon.ServiceBrowserNew(avahi.IF_UNSPEC, proto, type, '', 0, (err, browser) => {
             if (err) {
@@ -155,13 +155,13 @@ class AvahiService implements dnssd.Service {
         // remove leading '_'
         this.service = service.slice(1);
         this.transport = <'tcp' | 'udp'> transport.slice(1);
-        this.ipv = protocol == avahi.PROTO_INET6 ? 'IPv6' : 'IPv4';
+        this.ipv = protocol === avahi.PROTO_INET6 ? 'IPv6' : 'IPv4';
         this.txt = AvahiService.parseText(txt);
     }
 
     match(iface: number, protocol: number, name: string, type: string, domain: string): boolean {
-        return this.iface == iface && this.protocol == protocol &&
-            this.name == name && this.type == type && this.domain == domain;
+        return this.iface === iface && this.protocol === protocol &&
+            this.name === name && this.type === type && this.domain === domain;
     }
 
     private static parseText(txt?: Uint8Array[]): dnssd.TxtRecords {
