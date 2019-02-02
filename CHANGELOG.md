@@ -5,6 +5,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 ### Fixed
+- Duplicate listed devices in quick-pick on Windows
 - SSH terminal not working
 
 ## 1.0.0 - 2019-01-31

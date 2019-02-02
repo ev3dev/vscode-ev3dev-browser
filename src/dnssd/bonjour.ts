@@ -39,20 +39,29 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
     // interface (actually, each address of each interface, which could be
     // more than one).
     private updateInterfaces() {
-        const newAddresses = new Array<string>();
+        type Address = { iface: number, address: string };
+        const newAddresses = new Array<Address>();
         const ifaces = os.networkInterfaces();
         for (let i in ifaces) {
+            // on Windows, only the local link address has a scopeid that matches
+            // the index of the network interface.
+            const localLinkAddr = ifaces[i].find(v => v.address.startsWith('fe80:'));
+            if (!localLinkAddr) {
+                continue;
+            }
+            const ifaceIndex = (<os.NetworkInterfaceInfoIPv6>localLinkAddr).scopeid;
+
             // only supporting IPv6 for now
-            const addresses = ifaces[i].filter(v => v.family === 'IPv6').map(v =>
+            const addresses = ifaces[i].filter(v => v.internal === false && v.family === 'IPv6').map(v =>
                 `${v.address}%${process.platform === 'win32' ? (<os.NetworkInterfaceInfoIPv6>v).scopeid : i}`);
-            newAddresses.push(...addresses);
+            newAddresses.push(...addresses.map(v => <Address>{ iface: ifaceIndex, address: v }));
         }
-        const added = newAddresses.filter(a => this.ifaceAddresses.indexOf(a) === -1);
-        const removed = this.ifaceAddresses.filter(a => newAddresses.indexOf(a) === -1);
+        const added = newAddresses.filter(a => this.ifaceAddresses.indexOf(a.address) === -1);
+        const removed = this.ifaceAddresses.filter(a => newAddresses.findIndex(v => v.address === a) === -1);
         if (added.length) {
             for (const a of added) {
-                this.ifaceAddresses.push(a);
-                this.createClient(a);
+                this.ifaceAddresses.push(a.address);
+                this.createClient(a.iface, a.address);
             }
         }
         if (removed.length) {
@@ -66,9 +75,10 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
 
     /**
      * Asyncronusly create an new bonjour.Bonjour client object
+     * @param ifaceIndex the index of the network interface
      * @param ifaceAddress the IP address
      */
-    private createClient(ifaceAddress: string): void {
+    private createClient(ifaceIndex: number, ifaceAddress: string): void {
         // work around bonjour issue where error is not handled
         new Promise<bonjour.Bonjour>((resolve, reject) => {
             const bClient = bonjour(<any> {
@@ -76,7 +86,7 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
                 ip: 'ff02::fb',
                 interface: ifaceAddress
             });
-            (<any>bClient)['iface'] = ifaceAddress.split('%')[1];
+            (<any>bClient)['iface'] = ifaceIndex;
             (<any> bClient)._server.mdns.on('ready', () => resolve(bClient));
             (<any> bClient)._server.mdns.on('error', (err: any) => reject(err));
         }).then(bClient => {
@@ -94,7 +104,7 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
                 // we are bound or the interface goes away.
                 setTimeout(() => {
                     if (this.ifaceAddresses.indexOf(ifaceAddress) >= 0) {
-                        this.createClient(ifaceAddress);
+                        this.createClient(ifaceIndex, ifaceAddress);
                     }
                 }, 500);
             }
@@ -143,6 +153,15 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
         const services = new Array<BonjourService>();
         browser.on('up', s => {
             (<any>s)['iface'] = (<any>bClient)['iface'];
+            for (const b of this.browsers) {
+                for (const bs of b.services) {
+                    const bss = bs.bService;
+                    if ((<any>s)['iface'] === (<any>bss)['iface'] && s.name === bs.name && s.type === bss.type && s.fqdn === bss.fqdn.replace(/\.$/, '')) {
+                        // ignore duplicates
+                        return;
+                    }
+                }
+            }
             const service = new BonjourService(s);
             services.push(service);
             this.emit('added', service, false);
