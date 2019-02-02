@@ -2,20 +2,21 @@
 // Project: https://github.com/substack/dnode
 // Definitions by: David Lechner <david@lechnology.com>
 
-declare module 'dnode' {
-    import * as net from 'net';
+/// <reference types="node" />
 
-    export type ConsFunc<T> = () => T;
+declare function dnode<T>(cons: dnode.ConsFunc<T> | T, opt?: {}): dnode.DNode;
+export = dnode;
+declare namespace dnode {
 
-    export function dnode<T>(cons: ConsFunc<T> | T, opt?: {}): DNode;
+    type ConsFunc<T> = () => T;
 
-    export interface DNode extends NodeJS.WritableStream {
+    interface DNode extends NodeJS.WritableStream {
         connect(port: number): D;
-        pipe(socket: net.Socket): void;
+        pipe(socket: NodeJS.Socket): void;
         destroy(): void;
     }
 
-    export class D {
+    class D {
         on<T>(event: 'remote', listener: (remote: T) => void): void;
         end(): void;
     }

@@ -12,7 +12,7 @@
 // - stdin, stdout and stderr from the remote shell() are connected to the same
 //   in the shell.ts node process.
 
-import { dnode } from 'dnode';
+import * as dnode from 'dnode';
 import * as ssh2 from 'ssh2';
 
 export interface Shell {
