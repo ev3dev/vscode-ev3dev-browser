@@ -3,7 +3,7 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## Unreleased
+## 1.0.1 - 2019-02-02
 ### Fixed
 - Duplicate listed devices in quick-pick on Windows
 - SSH terminal not working
