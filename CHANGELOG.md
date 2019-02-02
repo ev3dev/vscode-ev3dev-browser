@@ -3,6 +3,10 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+### Fixed
+- SSH terminal not working
+
 ## 1.0.0 - 2019-01-31
 ### Fixed
 - When using "Download and run", only current project is downloaded instead of
