@@ -3,15 +3,11 @@
 // use this extension. Since nexe creates a rather large executable for a simple
 // program, we combine all of our helper programs into one executable.
 
-import { run as runDebugServer } from './debugServer';
 import { run as runShell } from './shell';
 
 const command = process.argv[1];
 
 switch(command) {
-case 'debugServer':
-    runDebugServer();
-    break;
 case 'shell':
     const port = parseInt(process.argv[2]);
     runShell(port);

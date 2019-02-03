@@ -40,10 +40,10 @@ export function run(port: number): void {
             term: process.env['TERM'] || 'xterm-256color'
         }, dataOut => {
             // dataOut callback
-            process.stdout.write(new Buffer(dataOut, 'base64'));
+            process.stdout.write(Buffer.from(dataOut, 'base64'));
         }, dataErr => {
             // dataErr callback
-            process.stderr.write(new Buffer(dataErr, 'base64'));
+            process.stderr.write(Buffer.from(dataErr, 'base64'));
         }, (resize, dataIn) => {
             // ready callback
             process.stdout.on('resize', () => {

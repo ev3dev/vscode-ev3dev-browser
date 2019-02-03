@@ -4,6 +4,8 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Unreleased
+### Changed
+- SSH shell no longer uses native executable on Linux and Mac.
 ### Fixed
 - Fix debugger hanging when ev3dev Device Browser view is collapsed
 

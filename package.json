@@ -183,18 +183,8 @@
             {
                 "type": "ev3devBrowser",
                 "label": "ev3dev",
-                "linux": {
-                    "program": "./native/linux/helper"
-                },
-                "osx": {
-                    "program": "./native/darwin/helper"
-                },
-                "windows": {
-                    "program": "./native/win32/helper.exe"
-                },
-                "args": [
-                    "debugServer"
-                ],
+                "program": "./out/native-helper/debugServer.js",
+                "runtime": "node",
                 "configurationAttributes": {
                     "launch": {
                         "required": [

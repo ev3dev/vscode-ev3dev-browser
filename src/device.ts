@@ -180,7 +180,7 @@ export class Device extends vscode.Disposable {
                                 ch.setWindow(rows, cols, 0, 0);
                             }, data => {
                                 // dataIn callback
-                                ch.stdin.write(new Buffer(data, 'base64'));
+                                ch.stdin.write(Buffer.from(data, 'base64'));
                             });
                         });
                     }
