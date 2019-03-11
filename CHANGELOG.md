@@ -3,7 +3,7 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## Unreleased
+## 1.0.2 - 2019-03-11
 ### Fixed
 - Files are not downloaded when using global launch configuration
 - No indication when zero files are downloaded
