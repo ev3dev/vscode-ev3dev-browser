@@ -3,7 +3,7 @@
     "displayName": "ev3dev-browser",
     "description": "Browse for ev3dev devices",
     "icon": "resources/icons/ev3dev-logo.png",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "publisher": "ev3dev",
     "license": "MIT",
     "repository": {
