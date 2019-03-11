@@ -105,9 +105,11 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
             break;
         }
 
-        // optionally download before running
+        // optionally download before running - workspaceFolder can be undefined
+        // if the request did not come from a specific project, in which case we
+        // download all projects
         const folder = event.session.workspaceFolder;
-        if (args.download !== false && folder && !await download(folder, device)) {
+        if (args.download !== false && !(folder ? await download(folder, device) : await downloadAll())) {
             // download() shows error messages, so don't show additional message here.
             await event.session.customRequest('ev3devBrowser.debugger.terminate');
             break;
