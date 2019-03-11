@@ -215,6 +215,24 @@ async function download(folder: vscode.WorkspaceFolder, device: Device): Promise
     }, async (progress, token) => {
         try {
             const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
+
+            // If there are no files matching the given include and exclude patterns,
+            // let the user know about it.
+            if (!files.length) {
+                const msg = 'No files selected for download. Please check the ev3devBrowser.download.include and ev3devBrowser.download.exclude settings.';
+                // try to make it easy for the user to fix the problem by offering to
+                // open the settings editor
+                const openSettings = 'Open Settings';
+                vscode.window.showErrorMessage(msg, openSettings).then(result => {
+                    if (result === openSettings) {
+                        vscode.commands.executeCommand('workbench.action.openSettings2');
+                    }
+                });
+
+                // "cancel" the download
+                return false;
+            }
+
             const increment = 100 / files.length;
             let fileIndex = 1;
             const reportProgress = (message: string) => progress.report({ message: message });

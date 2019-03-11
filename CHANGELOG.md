@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## Unreleased
 ### Fixed
 - Files are not downloaded when using global launch configuration
+- No indication when zero files are downloaded
 
 ## 1.0.1 - 2019-02-02
 ### Fixed
