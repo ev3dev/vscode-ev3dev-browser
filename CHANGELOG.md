@@ -39,7 +39,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## 0.7.0 - 2017-10-24
 ### Added
-- Mulit-root workspace support
+- Multi-root workspace support
 - Upload command
 ### Fixed
 - Backslashes in directory names when downloading (Windows only)
