@@ -20,7 +20,8 @@
         "Other"
     ],
     "activationEvents": [
-        "onView:ev3devBrowser"
+        "onView:ev3devBrowser",
+        "onDebugResolve:ev3devBrowser"
     ],
     "main": "./out/extension.js",
     "contributes": {
