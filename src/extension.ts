@@ -499,7 +499,7 @@ class DeviceTreeItem extends vscode.TreeItem {
         const port = this.device.shellPort.toString();
         const term = vscode.window.createTerminal(`SSH: ${this.label}`,
             isWin32 ? helperExePath : '/usr/bin/env',
-            isWin32 ? ['shell', port] : ['ELECTRON_RUN_AS_NODE=1', process.execPath, shellPath, 'shell', port]);
+            isWin32 ? ['shell', port] : ['ELECTRON_RUN_AS_NODE=1', process.execPath, shellPath, port]);
         term.show();
     }
 
