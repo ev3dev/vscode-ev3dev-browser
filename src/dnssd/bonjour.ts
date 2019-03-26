@@ -74,7 +74,7 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
     }
 
     /**
-     * Asyncronusly create an new bonjour.Bonjour client object
+     * Asynchronously create an new bonjour.Bonjour client object
      * @param ifaceIndex the index of the network interface
      * @param ifaceAddress the IP address
      */
