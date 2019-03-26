@@ -24,6 +24,7 @@ let config: WorkspaceConfig;
 let output: vscode.OutputChannel;
 let resourceDir: string;
 let helperExePath: string;
+let shellPath: string;
 let ev3devBrowserProvider: Ev3devBrowserProvider;
 
 // this method is called when your extension is activated
@@ -36,6 +37,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (process.platform === 'win32') {
         helperExePath += '.exe';
     }
+    shellPath = context.asAbsolutePath(path.join('out', 'native-helper', 'shell.js'));
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
     context.subscriptions.push(
@@ -493,9 +495,11 @@ class DeviceTreeItem extends vscode.TreeItem {
     }
 
     public openSshTerminal(): void {
+        const isWin32 = os.platform() === 'win32';
+        const port = this.device.shellPort.toString();
         const term = vscode.window.createTerminal(`SSH: ${this.label}`,
-            helperExePath,
-            ['shell', this.device.shellPort.toString()]);
+            isWin32 ? helperExePath : '/usr/bin/env',
+            isWin32 ? ['shell', port] : ['ELECTRON_RUN_AS_NODE=1', process.execPath, shellPath, 'shell', port]);
         term.show();
     }
 

@@ -5,6 +5,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 ### Changed
+- `ev3devBrowser` debugger type no longer uses native executable.
 - SSH shell no longer uses native executable on Linux and Mac.
 ### Fixed
 - Fix debugger hanging when ev3dev Device Browser view is collapsed
