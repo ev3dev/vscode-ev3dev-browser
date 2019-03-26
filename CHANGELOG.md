@@ -3,7 +3,7 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## Unreleased
+## 1.0.3 - 2019-03-25
 ### Changed
 - `ev3devBrowser` debugger type no longer uses native executable.
 - SSH shell no longer uses native executable on Linux and Mac.
