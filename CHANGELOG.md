@@ -3,6 +3,10 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+### Fixed
+- Fix "Timed out while waiting for handshake" error
+
 ## 1.0.3 - 2019-03-25
 ### Changed
 - `ev3devBrowser` debugger type no longer uses native executable.
