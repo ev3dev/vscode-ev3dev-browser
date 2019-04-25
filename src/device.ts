@@ -128,7 +128,7 @@ export class Device extends vscode.Disposable {
                 tryKeyboard: true,
                 keepaliveCountMax: 5,
                 keepaliveInterval: 1000,
-                readyTimeout: 10000
+                readyTimeout: 20000
             });
         });
     }
