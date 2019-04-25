@@ -3,7 +3,7 @@
     "displayName": "ev3dev-browser",
     "description": "Browse for ev3dev devices",
     "icon": "resources/icons/ev3dev-logo.png",
-    "version": "1.0.3",
+    "version": "1.0.4-beta1",
     "publisher": "ev3dev",
     "license": "MIT",
     "repository": {
@@ -377,17 +377,17 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "@types/compare-versions": "^3.0.0",
         "@types/bonjour": "^3.5.4",
+        "@types/compare-versions": "^3.0.0",
         "@types/mocha": "^2.2.42",
         "@types/node": "^8.10.25",
         "@types/ssh2": "~0.5.35",
         "@types/ssh2-streams": "~0.1.5",
         "@types/temp": "^0.8.3",
         "@types/zen-observable": "^0.5.3",
+        "tslint": "^5.8.0",
         "typescript": "^3.1.4",
-        "vscode": "^1.1.25",
-        "tslint": "^5.8.0"
+        "vscode": "^1.1.33"
     },
     "dependencies": {
         "avahi-dbus": "^0.1.0",
