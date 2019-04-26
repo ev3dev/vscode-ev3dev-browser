@@ -3,7 +3,7 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## Unreleased
+## 1.0.4 - 2019-04-26
 ### Fixed
 - Fix "Timed out while waiting for handshake" error
 - Fix not working on Linux without Avahi installed
