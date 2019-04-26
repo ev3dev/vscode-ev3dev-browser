@@ -8,19 +8,25 @@ import * as events from 'events';
 import * as dnssd from '../dnssd';
 
 
-let _daemon: avahi.Daemon;
+let cachedDaemon: avahi.Daemon;
 
 async function getDaemon(): Promise<avahi.Daemon> {
-    if (_daemon) {
-        return Promise.resolve(_daemon);
+    if (cachedDaemon) {
+        return Promise.resolve(cachedDaemon);
     }
 
     return new Promise((resolve, reject) => {
         const bus = dbus.systemBus();
         bus.connection.on('connect', () => {
-            _daemon = new avahi.Daemon(bus);
-            resolve(_daemon);
-
+            const daemon = new avahi.Daemon(bus);
+            daemon.GetAPIVersion((err, _version) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(cachedDaemon = daemon);
+                }
+            });
         });
         bus.connection.on('error', err => {
             reject(err);
