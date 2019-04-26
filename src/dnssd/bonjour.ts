@@ -79,12 +79,17 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
      * @param ifaceAddress the IP address
      */
     private createClient(ifaceIndex: number, ifaceAddress: string): void {
+        // On Windows, we need the full IP address as part of the multicast socket
+        // interface or things don't work right. On Linux, we have to strip the
+        // IP address or things don't work right.
+        const iface = (os.platform() === 'win32') ? ifaceAddress : ifaceAddress.replace(/.*%/,'::%');
+
         // work around bonjour issue where error is not handled
         new Promise<bonjour.Bonjour>((resolve, reject) => {
             const bClient = bonjour(<any> {
                 type: 'udp6',
                 ip: 'ff02::fb',
-                interface: ifaceAddress
+                interface: iface,
             });
             (<any>bClient)['iface'] = ifaceIndex;
             (<any> bClient)._server.mdns.on('ready', () => resolve(bClient));

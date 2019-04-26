@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## Unreleased
 ### Fixed
 - Fix "Timed out while waiting for handshake" error
+- Fix not working on Linux without Avahi installed
 
 ## 1.0.3 - 2019-03-25
 ### Changed
