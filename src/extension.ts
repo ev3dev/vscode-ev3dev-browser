@@ -6,7 +6,7 @@ import * as temp from 'temp';
 
 import * as vscode from 'vscode';
 
-import { LaunchRequestArguments } from './native-helper/debugServer';
+import { LaunchRequestArguments } from './debugServer';
 import { Brickd } from './brickd';
 import { Device } from './device';
 import {
