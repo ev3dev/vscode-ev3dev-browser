@@ -3,6 +3,10 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+### Changed
+- SSH shell no longer requires native executable on Windows
+
 ## 1.0.4 - 2019-04-26
 ### Fixed
 - Fix "Timed out while waiting for handshake" error

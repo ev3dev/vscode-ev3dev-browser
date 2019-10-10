@@ -14,7 +14,7 @@
         "url": "https://github.com/ev3dev/vscode-ev3dev-browser/issues"
     },
     "engines": {
-        "vscode": "^1.30.0"
+        "vscode": "^1.39.0"
     },
     "categories": [
         "Other"
@@ -394,7 +394,6 @@
         "bonjour": "^3.5.0",
         "compare-versions": "^3.0.1",
         "dbus-native": "^0.2.2",
-        "dnode": "^1.2.2",
         "ssh2": "~0.5.5",
         "ssh2-streams": "~0.1.19",
         "temp": "^0.8.3",

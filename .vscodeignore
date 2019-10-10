@@ -1,12 +1,10 @@
 .README/
-.nexe/**
 .vscode/**
 .vscode-test/**
 out/test/**
 src/**
 .gitattributes
 .gitignore
-build-native.*
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/tslint.json

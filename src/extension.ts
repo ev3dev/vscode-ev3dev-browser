@@ -14,7 +14,8 @@ import {
     sanitizedDateString,
     setContext,
     toastStatusBarMessage,
-    verifyFileHeader
+    verifyFileHeader,
+    getPlatform,
 } from './utils';
 
 // fs.constants.S_IXUSR is undefined on win32!
@@ -23,8 +24,6 @@ const S_IXUSR = 0o0100;
 let config: WorkspaceConfig;
 let output: vscode.OutputChannel;
 let resourceDir: string;
-let helperExePath: string;
-let shellPath: string;
 let ev3devBrowserProvider: Ev3devBrowserProvider;
 
 // this method is called when your extension is activated
@@ -33,11 +32,6 @@ export function activate(context: vscode.ExtensionContext): void {
     config = new WorkspaceConfig(context.workspaceState);
     output = vscode.window.createOutputChannel('ev3dev');
     resourceDir = context.asAbsolutePath('resources');
-    helperExePath = context.asAbsolutePath(path.join('native', process.platform, 'helper'));
-    if (process.platform === 'win32') {
-        helperExePath += '.exe';
-    }
-    shellPath = context.asAbsolutePath(path.join('out', 'native-helper', 'shell.js'));
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
     context.subscriptions.push(
@@ -495,12 +489,45 @@ class DeviceTreeItem extends vscode.TreeItem {
     }
 
     public openSshTerminal(): void {
-        const isWin32 = os.platform() === 'win32';
-        const port = this.device.shellPort.toString();
-        const term = vscode.window.createTerminal(`SSH: ${this.label}`,
-            isWin32 ? helperExePath : '/usr/bin/env',
-            isWin32 ? ['shell', port] : ['ELECTRON_RUN_AS_NODE=1', process.execPath, shellPath, port]);
-        term.show();
+        const config = vscode.workspace.getConfiguration(`terminal.integrated.env.${getPlatform()}`);
+        const termEnv = config.get<string>('TERM');
+        this.device.shell({term: termEnv || process.env['TERM'] || 'xterm-256color'}).then(ch => {
+            const writeEmitter = new vscode.EventEmitter<string>();
+            ch.stdout.on('data', (data: string | Buffer) => writeEmitter.fire(String(data)));
+            ch.stderr.on('data', (data: string | Buffer) => writeEmitter.fire(String(data)));
+            const term = vscode.window.createTerminal({
+                name: `SSH: ${this.label}`,
+                pty: {
+                    onDidWrite: writeEmitter.event,
+                    open: (dim: vscode.TerminalDimensions | undefined) => {
+                        if (dim !== undefined) {
+                            ch.setWindow(dim.rows, dim.columns, 0, 0);
+                        }
+                    },
+                    close: () => {
+                        ch.close();
+                    },
+                    handleInput: (data: string) => {
+                        ch.stdin.write(data);
+                    },
+                    setDimensions: (dim: vscode.TerminalDimensions) => {
+                        ch.setWindow(dim.rows, dim.columns, 0, 0);
+                    },
+                },
+            });
+            ch.on('close', () => {
+                term.dispose();
+                ch.destroy();
+            });
+            ch.on('error', (err: any) => {
+                vscode.window.showErrorMessage(`SSH connection error: ${err || err.message}`);
+                term.dispose();
+                ch.destroy();
+            });
+            term.show();
+        }).catch(err => {
+            vscode.window.showErrorMessage(`Failed to create SSH terminal: ${err || err.message}`);
+        });
     }
 
     public async captureScreenshot(): Promise<void> {

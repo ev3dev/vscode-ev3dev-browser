@@ -1,17 +1,13 @@
-import * as dnode from 'dnode';
-import * as net from 'net';
 import * as path from 'path';
 import * as os from 'os';
 import * as readline from 'readline';
 import * as ssh2 from 'ssh2';
 import * as ssh2Streams from 'ssh2-streams';
-import * as stream from 'stream';
 import * as vscode from 'vscode';
 import * as Observable from 'zen-observable';
 
 import { Brickd } from './brickd';
 import * as dnssd from './dnssd';
-import { Shell } from './native-helper/shell';
 
 /**
  * Object that represents a remote ev3dev device.
@@ -19,7 +15,6 @@ import { Shell } from './native-helper/shell';
 export class Device extends vscode.Disposable {
     private readonly client: ssh2.Client;
     private sftp?: ssh2.SFTPWrapper;
-    private shellServer?: net.Server;
     private _homeDirectoryAttr?: ssh2Streams.Attributes;
     private _isConnecting = false;
     private _isConnected = false;
@@ -92,7 +87,6 @@ export class Device extends vscode.Disposable {
         try {
             this.sftp = await this.getSftp();
             this._homeDirectoryAttr = await this.stat(this.homeDirectoryPath);
-            this.shellServer = await this.createServer();
             this._isConnecting = false;
             this._isConnected = true;
             this._onDidConnect.fire();
@@ -152,64 +146,11 @@ export class Device extends vscode.Disposable {
         });
     }
 
-    private createServer(): Promise<net.Server> {
-        return new Promise((resolve, reject) => {
-            const server = net.createServer(socket => {
-                const d = dnode<Shell>({
-                    shell: (ttySettings, dataOut, dataErr, ready, exit) => {
-                        this.shell(ttySettings).then(ch => {
-                            (<stream.Readable>ch.stdout).on('data', data => {
-                                dataOut(data.toString('base64'));
-                            });
-                            ch.stderr.on('data', data => {
-                                dataErr((<Buffer> data).toString('base64'));
-                            });
-                            ch.on('error', (err: any) => {
-                                vscode.window.showErrorMessage(`SSH connection error: ${err.message}`);
-                                exit();
-                                ch.destroy();
-                                d.destroy();
-                            });
-                            ch.on('close', () => {
-                                exit();
-                                ch.destroy();
-                                d.destroy();
-                            });
-                            ready((rows, cols) => {
-                                // resize callback
-                                ch.setWindow(rows, cols, 0, 0);
-                            }, data => {
-                                // dataIn callback
-                                ch.stdin.write(Buffer.from(data, 'base64'));
-                            });
-                        });
-                    }
-                }, {
-                    // weak requires native module, which we can't use in vscode
-                    weak: false
-                });
-                socket.on('error', err => {
-                    // TODO: not sure what to do here.
-                    // The default dnode implementation only ignores EPIPE.
-                    // On Windows, we can also get ECONNRESET when a client disconnects.
-                });
-                socket.pipe(d).pipe(socket);
-            });
-            server.listen(0, '127.0.0.1');
-            server.once('listening', () => resolve(server));
-            server.once('error', reject);
-        });
-    }
-
     /**
      * Disconnect from the device.
      */
     public disconnect(): void {
         this._isConnected = false;
-        if (this.shellServer) {
-            this.shellServer.close();
-            this.shellServer = undefined;
-        }
         if (this.sftp) {
             this.sftp.end();
             this.sftp = undefined;
@@ -254,16 +195,6 @@ export class Device extends vscode.Disposable {
      */
     public get homeDirectoryPath(): string {
         return this.service.txt['ev3dev.robot.home'] || `/home/${this.username}`;
-    }
-
-    /**
-     * Gets the TCP port where the shell server is listening.
-     */
-    public get shellPort(): number {
-        if (!this.shellServer) {
-            throw new Error('Not connected');
-        }
-        return this.shellServer.address().port;
     }
 
     /**
