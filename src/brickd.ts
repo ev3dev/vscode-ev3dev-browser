@@ -53,69 +53,69 @@ export class Brickd extends events.EventEmitter {
 
             // everything else is handled from state machine
             switch (state) {
-            case BrickdConnectionState.start:
-                if (m1 === "BRICKD") {
-                    const version = m2[1];
-                    if (compareVersions(version, minBrickdVersion) < 0) {
-                        state = BrickdConnectionState.bad;
-                        this.emit('error', new Error(`Brickd is too old. Please upgrade to version >= ${minBrickdVersion}`));
-                        break;
+                case BrickdConnectionState.start:
+                    if (m1 === "BRICKD") {
+                        const version = m2[1];
+                        if (compareVersions(version, minBrickdVersion) < 0) {
+                            state = BrickdConnectionState.bad;
+                            this.emit('error', new Error(`Brickd is too old. Please upgrade to version >= ${minBrickdVersion}`));
+                            break;
+                        }
+                        if (compareVersions(version, maxBrickdVersion) >= 0) {
+                            state = BrickdConnectionState.bad;
+                            this.emit('error', new Error('Brickd version is too new.'));
+                            break;
+                        }
+                        state = BrickdConnectionState.handshake;
+                        channel.write('YOU ARE A ROBOT\n');
                     }
-                    if (compareVersions(version, maxBrickdVersion) >= 0) {
+                    else {
                         state = BrickdConnectionState.bad;
-                        this.emit('error', new Error('Brickd version is too new.'));
-                        break;
+                        this.emit('error', new Error('Brickd server did not send expected welcome message.'));
                     }
-                    state = BrickdConnectionState.handshake;
-                    channel.write('YOU ARE A ROBOT\n');
-                }
-                else {
-                    state = BrickdConnectionState.bad;
-                    this.emit('error', new Error('Brickd server did not send expected welcome message.'));
-                }
-                break;
-            case BrickdConnectionState.handshake:
-                if (m1 === "OK") {
-                    state = BrickdConnectionState.watchPower;
-                    channel.write("WATCH POWER\n");
-                }
-                else if (m1 === "BAD") {
-                    state = BrickdConnectionState.bad;
-                    this.emit('error', new Error("Brickd handshake failed."));
-                }
-                break;
-            case BrickdConnectionState.watchPower:
-                if (m1 === "OK") {
-                    state = BrickdConnectionState.getBatteryVoltage;
-                    channel.write("GET system.battery.voltage\n");
-                }
-                else {
-                    state = BrickdConnectionState.bad;
-                    this.emit('error', new Error("Brickd failed to register for power events."));
-                }
-                break;
-            case BrickdConnectionState.getBatteryVoltage:
-                if (m1 === "OK") {
-                    this.emit('message', `PROPERTY system.battery.voltage ${m2.join(' ')}`);
-                    state = BrickdConnectionState.getSerialNum;
-                    channel.write("GET system.info.serial\n");
-                }
-                else {
-                    state = BrickdConnectionState.bad;
-                    this.emit('error', new Error("Brickd failed to get battery voltage"));
-                }
-                break;
-            case BrickdConnectionState.getSerialNum:
-                if (m1 === "OK") {
-                    this._serialNumber = m2.join(' ');
-                    state = BrickdConnectionState.ok;
-                    this.emit('ready');
-                }
-                else {
-                    state = BrickdConnectionState.bad;
-                    this.emit('error', new Error("Brickd failed to get serial number"));
-                }
-                break;
+                    break;
+                case BrickdConnectionState.handshake:
+                    if (m1 === "OK") {
+                        state = BrickdConnectionState.watchPower;
+                        channel.write("WATCH POWER\n");
+                    }
+                    else if (m1 === "BAD") {
+                        state = BrickdConnectionState.bad;
+                        this.emit('error', new Error("Brickd handshake failed."));
+                    }
+                    break;
+                case BrickdConnectionState.watchPower:
+                    if (m1 === "OK") {
+                        state = BrickdConnectionState.getBatteryVoltage;
+                        channel.write("GET system.battery.voltage\n");
+                    }
+                    else {
+                        state = BrickdConnectionState.bad;
+                        this.emit('error', new Error("Brickd failed to register for power events."));
+                    }
+                    break;
+                case BrickdConnectionState.getBatteryVoltage:
+                    if (m1 === "OK") {
+                        this.emit('message', `PROPERTY system.battery.voltage ${m2.join(' ')}`);
+                        state = BrickdConnectionState.getSerialNum;
+                        channel.write("GET system.info.serial\n");
+                    }
+                    else {
+                        state = BrickdConnectionState.bad;
+                        this.emit('error', new Error("Brickd failed to get battery voltage"));
+                    }
+                    break;
+                case BrickdConnectionState.getSerialNum:
+                    if (m1 === "OK") {
+                        this._serialNumber = m2.join(' ');
+                        state = BrickdConnectionState.ok;
+                        this.emit('ready');
+                    }
+                    else {
+                        state = BrickdConnectionState.bad;
+                        this.emit('error', new Error("Brickd failed to get serial number"));
+                    }
+                    break;
             }
         });
     }

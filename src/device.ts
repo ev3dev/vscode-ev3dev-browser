@@ -68,7 +68,7 @@ export class Device extends vscode.Disposable {
                 const choice = await vscode.window.showInputBox({
                     ignoreFocusOut: true,
                     password: !p.echo,
-                    prompt:  p.prompt
+                    prompt: p.prompt
                 });
                 // FIXME: how to cancel properly?
                 answers.push(choice || '');
@@ -133,7 +133,7 @@ export class Device extends vscode.Disposable {
             // it is enough for the keepalive timeout to expire. So, we ignore
             // the keepalive during this operation.
             const timer = setInterval(() => {
-                (<any> this.client)._resetKA();
+                (<any>this.client)._resetKA();
             }, 1000);
             this.client.sftp((err, sftp) => {
                 clearInterval(timer);
@@ -257,7 +257,7 @@ export class Device extends vscode.Disposable {
                 });
                 const stderr = new Observable<string>(observer => {
                     readline.createInterface({
-                        input: <NodeJS.ReadableStream> conn.stderr
+                        input: <NodeJS.ReadableStream>conn.stderr
                     }).on('line', line => {
                         observer.next(line);
                     }).on('close', () => {
@@ -278,7 +278,7 @@ export class Device extends vscode.Disposable {
      */
     public shell(window: false | ssh2.PseudoTtyOptions): Promise<ssh2.ClientChannel> {
         return new Promise((resolve, reject) => {
-            const options = <ssh2.ShellOptions> {
+            const options = <ssh2.ShellOptions>{
                 env: vscode.workspace.getConfiguration('ev3devBrowser').get('env')
             };
             this.client.shell(window, options, (err, stream) => {
@@ -513,7 +513,7 @@ export class Device extends vscode.Disposable {
         const txt: dnssd.TxtRecords = {};
         txt['ev3dev.robot.user'] = device.username || 'robot';
         txt['ev3dev.robot.home'] = device.homeDirectory || `/home/${txt['ev3dev.robot.user']}`;
-        return <dnssd.Service> {
+        return <dnssd.Service>{
             name: device.name,
             address: device.ipAddress,
             ipv: 'IPv4',
@@ -532,7 +532,7 @@ export class Device extends vscode.Disposable {
         const services = new Array<ServiceItem>();
         const devices = vscode.workspace.getConfiguration('ev3devBrowser').get<AdditionalDevice[]>('additionalDevices', []);
         for (const device of devices) {
-            services.push(<ServiceItem> {
+            services.push(<ServiceItem>{
                 label: device.name,
                 service: this.additionalDeviceToDnssdService(device)
             });
@@ -546,7 +546,7 @@ export class Device extends vscode.Disposable {
      */
     public static async pickDevice(): Promise<Device | undefined> {
         const configItems = this.getServicesFromConfig();
-        const manualEntry = <ServiceItem> {
+        const manualEntry = <ServiceItem>{
             label: "I don't see my device..."
         };
 
@@ -638,7 +638,7 @@ export class Device extends vscode.Disposable {
                 ignoreFocusOut: true,
                 prompt: "Enter the IP address of the device",
                 placeHolder: 'Example: "192.168.137.3"',
-                validateInput: function(v) {
+                validateInput: (v) => {
                     if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(v)) {
                         return 'Not a valid IP address';
                     }
@@ -650,7 +650,7 @@ export class Device extends vscode.Disposable {
                 return undefined;
             }
 
-            const device = <AdditionalDevice> {
+            const device = <AdditionalDevice>{
                 name: name,
                 ipAddress: ipAddress
             };
@@ -697,7 +697,7 @@ class ServiceItem implements vscode.QuickPickItem {
     public readonly label: string;
     public readonly description: string | undefined;
 
-    constructor (public service: dnssd.Service) {
+    constructor(public service: dnssd.Service) {
         this.label = service.name;
         this.description = (<any>service)['ifaceName'];
     }

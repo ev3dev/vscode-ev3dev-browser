@@ -82,18 +82,18 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
         // On Windows, we need the full IP address as part of the multicast socket
         // interface or things don't work right. On Linux, we have to strip the
         // IP address or things don't work right.
-        const iface = (os.platform() === 'win32') ? ifaceAddress : ifaceAddress.replace(/.*%/,'::%');
+        const iface = (os.platform() === 'win32') ? ifaceAddress : ifaceAddress.replace(/.*%/, '::%');
 
         // work around bonjour issue where error is not handled
         new Promise<bonjour.Bonjour>((resolve, reject) => {
-            const bClient = bonjour(<any> {
+            const bClient = bonjour(<any>{
                 type: 'udp6',
                 ip: 'ff02::fb',
                 interface: iface,
             });
             (<any>bClient)['iface'] = ifaceIndex;
-            (<any> bClient)._server.mdns.on('ready', () => resolve(bClient));
-            (<any> bClient)._server.mdns.on('error', (err: any) => reject(err));
+            (<any>bClient)._server.mdns.on('ready', () => resolve(bClient));
+            (<any>bClient)._server.mdns.on('error', (err: any) => reject(err));
         }).then(bClient => {
             if (this.ifaceAddresses.indexOf(ifaceAddress) < 0) {
                 // iface was removed while we were waiting for promise
@@ -176,7 +176,7 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
             const [service] = services.splice(index, 1);
             this.emit('removed', service, false);
         });
-        this.browsers.push({bClient: bClient, browser: browser, services: services});
+        this.browsers.push({ bClient: bClient, browser: browser, services: services });
         browser.start();
         this.updateInterval = setInterval(() => {
             // poll again every 1 second
@@ -213,13 +213,13 @@ class BonjourService implements dnssd.Service {
     constructor(public readonly bService: bonjour.Service) {
         this.name = bService.name;
         this.service = bService.type;
-        this.transport = <'tcp' | 'udp'> bService.protocol;
+        this.transport = <'tcp' | 'udp'>bService.protocol;
         this.iface = (<any>bService)['iface'];
         this.host = bService.host;
-        this.domain = (<any> bService).domain;
+        this.domain = (<any>bService).domain;
         this.ipv = 'IPv6';
-        this.address = (<any> bService).addresses[0]; // FIXME
+        this.address = (<any>bService).addresses[0]; // FIXME
         this.port = bService.port;
-        this.txt = <dnssd.TxtRecords> bService.txt;
+        this.txt = <dnssd.TxtRecords>bService.txt;
     }
 }

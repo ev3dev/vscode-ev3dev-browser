@@ -87,73 +87,73 @@ async function pickDevice(): Promise<void> {
 async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Promise<void> {
     let device: Device | undefined;
     switch (event.event) {
-    case 'ev3devBrowser.debugger.launch':
-        const args = <LaunchRequestArguments> event.body;
-        device = await ev3devBrowserProvider.getDevice();
-        if (device && !device.isConnected) {
-            const item = ev3devBrowserProvider.getDeviceTreeItem();
-            if (item) {
-                await item.connect();
+        case 'ev3devBrowser.debugger.launch':
+            const args = <LaunchRequestArguments>event.body;
+            device = await ev3devBrowserProvider.getDevice();
+            if (device && !device.isConnected) {
+                const item = ev3devBrowserProvider.getDeviceTreeItem();
+                if (item) {
+                    await item.connect();
+                }
             }
-        }
-        if (!device || !device.isConnected) {
-            await event.session.customRequest('ev3devBrowser.debugger.terminate');
-            break;
-        }
+            if (!device || !device.isConnected) {
+                await event.session.customRequest('ev3devBrowser.debugger.terminate');
+                break;
+            }
 
-        // optionally download before running - workspaceFolder can be undefined
-        // if the request did not come from a specific project, in which case we
-        // download all projects
-        const folder = event.session.workspaceFolder;
-        if (args.download !== false && !(folder ? await download(folder, device) : await downloadAll())) {
-            // download() shows error messages, so don't show additional message here.
-            await event.session.customRequest('ev3devBrowser.debugger.terminate');
-            break;
-        }
+            // optionally download before running - workspaceFolder can be undefined
+            // if the request did not come from a specific project, in which case we
+            // download all projects
+            const folder = event.session.workspaceFolder;
+            if (args.download !== false && !(folder ? await download(folder, device) : await downloadAll())) {
+                // download() shows error messages, so don't show additional message here.
+                await event.session.customRequest('ev3devBrowser.debugger.terminate');
+                break;
+            }
 
-        // run the program
-        try {
-            const dirname = path.posix.dirname(args.program);
-            const command = `brickrun --directory="${dirname}" "${args.program}"`;
-            output.show(true);
-            output.clear();
-            output.appendLine(`Starting: ${command}`);
-            const channel = await device.exec(command);
-            channel.on('close', () => {
-                event.session.customRequest('ev3devBrowser.debugger.terminate');
-            });
-            channel.on('exit', (code, signal, coreDump, desc) => {
+            // run the program
+            try {
+                const dirname = path.posix.dirname(args.program);
+                const command = `brickrun --directory="${dirname}" "${args.program}"`;
+                output.show(true);
+                output.clear();
+                output.appendLine(`Starting: ${command}`);
+                const channel = await device.exec(command);
+                channel.on('close', () => {
+                    event.session.customRequest('ev3devBrowser.debugger.terminate');
+                });
+                channel.on('exit', (code, signal, coreDump, desc) => {
+                    output.appendLine('----------');
+                    if (code === 0) {
+                        output.appendLine('Completed successfully.');
+                    }
+                    else if (code) {
+                        output.appendLine(`Exited with error code ${code}.`);
+                    }
+                    else {
+                        output.appendLine(`Exited with signal ${signal}.`);
+                    }
+                });
+                channel.on('data', (chunk) => {
+                    output.append(chunk.toString());
+                });
+                channel.stderr.on('data', (chunk) => {
+                    output.append(chunk.toString());
+                });
+                output.appendLine('Started.');
                 output.appendLine('----------');
-                if (code === 0) {
-                    output.appendLine('Completed successfully.');
-                }
-                else if (code) {
-                    output.appendLine(`Exited with error code ${code}.`);
-                }
-                else {
-                    output.appendLine(`Exited with signal ${signal}.`);
-                }
-            });
-            channel.on('data', (chunk) => {
-                output.append(chunk.toString());
-            });
-            channel.stderr.on('data', (chunk) => {
-                output.append(chunk.toString());
-            });
-            output.appendLine('Started.');
-            output.appendLine('----------');
-        }
-        catch (err) {
-            await event.session.customRequest('ev3devBrowser.debugger.terminate');
-            vscode.window.showErrorMessage(`Failed to run file: ${err.message}`);
-        }
-        break;
-    case 'ev3devBrowser.debugger.stop':
-        device = ev3devBrowserProvider.getDeviceSync();
-        if (device && device.isConnected) {
-            device.exec('conrun-kill --signal=SIGKILL');
-        }
-        break;
+            }
+            catch (err) {
+                await event.session.customRequest('ev3devBrowser.debugger.terminate');
+                vscode.window.showErrorMessage(`Failed to run file: ${err.message}`);
+            }
+            break;
+        case 'ev3devBrowser.debugger.stop':
+            device = ev3devBrowserProvider.getDeviceSync();
+            if (device && device.isConnected) {
+                device.exec('conrun-kill --signal=SIGKILL');
+            }
+            break;
     }
 }
 
@@ -288,7 +288,7 @@ async function download(folder: vscode.WorkspaceFolder, device: Device): Promise
                     percentage => reportProgress(`${baseProgressMessage} - ${percentage}%`));
 
                 fileIndex++;
-                progress.report({increment: increment});
+                progress.report({ increment: increment });
             }
             // make sure any new files show up in the browser
             ev3devBrowserProvider.fireDeviceChanged();
@@ -413,7 +413,7 @@ enum DeviceState {
 }
 
 class DeviceTreeItem extends vscode.TreeItem {
-    public rootDirectory : File | undefined;
+    public rootDirectory: File | undefined;
     public statusItem: DeviceStatusTreeItem;
 
     constructor(public readonly device: Device) {
@@ -441,25 +441,25 @@ class DeviceTreeItem extends vscode.TreeItem {
         this.rootDirectory = undefined;
         let icon: string | undefined;
 
-        switch(state) {
-        case DeviceState.Connecting:
-            icon = 'yellow-circle.svg';
-            break;
-        case DeviceState.Connected:
-            setContext('ev3devBrowser.context.connected', true);
-            this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
-            this.rootDirectory = new File(this.device, undefined, '', {
-                filename: this.device.homeDirectoryPath,
-                longname: '',
-                attrs: this.device.homeDirectoryAttr
-            });
-            this.rootDirectory.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
-            icon = 'green-circle.svg';
-            this.statusItem.connectBrickd();
-            break;
-        case DeviceState.Disconnected:
-            icon = 'red-circle.svg';
-            break;
+        switch (state) {
+            case DeviceState.Connecting:
+                icon = 'yellow-circle.svg';
+                break;
+            case DeviceState.Connected:
+                setContext('ev3devBrowser.context.connected', true);
+                this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+                this.rootDirectory = new File(this.device, undefined, '', {
+                    filename: this.device.homeDirectoryPath,
+                    longname: '',
+                    attrs: this.device.homeDirectoryAttr
+                });
+                this.rootDirectory.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+                icon = 'green-circle.svg';
+                this.statusItem.connectBrickd();
+                break;
+            case DeviceState.Disconnected:
+                icon = 'red-circle.svg';
+                break;
         }
 
         if (icon) {
@@ -478,20 +478,20 @@ class DeviceTreeItem extends vscode.TreeItem {
     public handleClick(): void {
         // Attempt to keep he collapsible state correct. If we don't do this,
         // strange things happen on a refresh.
-        switch(this.collapsibleState) {
-        case vscode.TreeItemCollapsibleState.Collapsed:
-            this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
-            break;
-        case vscode.TreeItemCollapsibleState.Expanded:
-            this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
-            break;
+        switch (this.collapsibleState) {
+            case vscode.TreeItemCollapsibleState.Collapsed:
+                this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+                break;
+            case vscode.TreeItemCollapsibleState.Expanded:
+                this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+                break;
         }
     }
 
     public openSshTerminal(): void {
         const config = vscode.workspace.getConfiguration(`terminal.integrated.env.${getPlatform()}`);
         const termEnv = config.get<string>('TERM');
-        this.device.shell({term: termEnv || process.env['TERM'] || 'xterm-256color'}).then(ch => {
+        this.device.shell({ term: termEnv || process.env['TERM'] || 'xterm-256color' }).then(ch => {
             const writeEmitter = new vscode.EventEmitter<string>();
             ch.stdout.on('data', (data: string | Buffer) => writeEmitter.fire(String(data)));
             ch.stderr.on('data', (data: string | Buffer) => writeEmitter.fire(String(data)));
@@ -536,7 +536,7 @@ class DeviceTreeItem extends vscode.TreeItem {
             title: "Capturing screenshot..."
         }, progress => {
             return new Promise(async (resolve, reject) => {
-                const handleCaptureError = function(e: any) {
+                const handleCaptureError = (e: any) => {
                     vscode.window.showErrorMessage("Error capturing screenshot: " + (e.message || e));
                     reject();
                 };
@@ -564,7 +564,7 @@ class DeviceTreeItem extends vscode.TreeItem {
                     });
 
                     writeStream.on('finish', async () => {
-                        const pngHeader = [ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A ];
+                        const pngHeader = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
                         if (await verifyFileHeader(screenshotFile, pngHeader)) {
                             toastStatusBarMessage("Screenshot captured");
                             resolve();
@@ -600,7 +600,7 @@ class DeviceTreeItem extends vscode.TreeItem {
 
             toastStatusBarMessage('System info retrieved');
         }
-        catch(err) {
+        catch (err) {
             vscode.window.showErrorMessage('An error occurred while getting system info: ' + (err.message || err));
         }
     }
@@ -642,10 +642,10 @@ class File extends vscode.TreeItem {
     readonly isDirectory: boolean;
 
     constructor(public device: Device, public parent: File | undefined, directory: string,
-                private fileInfo: ssh2Streams.FileEntry) {
+        private fileInfo: ssh2Streams.FileEntry) {
         super(fileInfo.filename);
         // work around bad typescript bindings
-        const stats = (<ssh2Streams.Stats> fileInfo.attrs);
+        const stats = (<ssh2Streams.Stats>fileInfo.attrs);
         this.path = directory + fileInfo.filename;
         this.isExecutable = stats.isFile() && !!(stats.mode & S_IXUSR);
         this.isDirectory = stats.isDirectory();
@@ -726,7 +726,7 @@ class File extends vscode.TreeItem {
 
         // Show a quick-pick to allow users to run an executable program.
         if (this.isExecutable) {
-            const runItem = <vscode.QuickPickItem> {
+            const runItem = <vscode.QuickPickItem>{
                 label: 'Run',
                 description: this.path
             };
@@ -739,7 +739,7 @@ class File extends vscode.TreeItem {
     }
 
     public run(): void {
-        vscode.debug.startDebugging(undefined, <vscode.DebugConfiguration> {
+        vscode.debug.startDebugging(undefined, <vscode.DebugConfiguration>{
             type: 'ev3devBrowser',
             name: 'Run',
             request: 'launch',
@@ -817,7 +817,7 @@ class File extends vscode.TreeItem {
             title: 'Uploading'
         }, async progress => {
             await this.device.get(this.path, result.fsPath, percentage => {
-                progress.report({message: `${this.path} - ${percentage}%`});
+                progress.report({ message: `${this.path} - ${percentage}%` });
             });
         });
         config.uploadDir = path.dirname(result.fsPath);
@@ -862,18 +862,18 @@ class DeviceStatusTreeItem extends CommandTreeItem {
             this.brickd.on('message', message => {
                 const [m1, ...m2] = message.split(' ');
                 switch (m1) {
-                case 'WARN':
-                case 'CRITICAL':
-                    vscode.window.showWarningMessage(`${this.device.name}: ${m2.join(' ')}`);
-                    break;
-                case 'PROPERTY':
-                    switch (m2[0]) {
-                    case "system.battery.voltage":
-                        const voltage = Number(m2[1]) / 1000;
-                        this.batteryItem.label = `Battery: ${voltage.toFixed(2)}V`;
-                        ev3devBrowserProvider.fireStatusChanged(this);
-                    }
-                    break;
+                    case 'WARN':
+                    case 'CRITICAL':
+                        vscode.window.showWarningMessage(`${this.device.name}: ${m2.join(' ')}`);
+                        break;
+                    case 'PROPERTY':
+                        switch (m2[0]) {
+                            case "system.battery.voltage":
+                                const voltage = Number(m2[1]) / 1000;
+                                this.batteryItem.label = `Battery: ${voltage.toFixed(2)}V`;
+                                ev3devBrowserProvider.fireStatusChanged(this);
+                        }
+                        break;
                 }
             });
             this.brickd.on('error', err => {
@@ -887,7 +887,7 @@ class DeviceStatusTreeItem extends CommandTreeItem {
                 (<any>this.device)['serialNumber'] = this.brickd.serialNumber;
             });
         }
-        catch (err)  {
+        catch (err) {
             vscode.window.showWarningMessage('Failed to get brickd connection. No status will be available.');
             return;
         }

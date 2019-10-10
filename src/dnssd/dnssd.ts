@@ -148,13 +148,12 @@ class DnssdService extends events.EventEmitter implements dnssd.Service {
         host: string,
         public readonly address: string,
         public readonly port: number,
-        txt: string[])
-    {
+        txt: string[]) {
         super();
         const [service, transport] = type.split('.');
         // remove leading '_'
         this.service = service.slice(1);
-        this.transport = <'tcp' | 'udp'> transport.slice(1);
+        this.transport = <'tcp' | 'udp'>transport.slice(1);
         // strip trailing '.'
         this.host = host.replace(/\.$/, '');
         this.domain = domain.replace(/\.$/, '');
@@ -167,7 +166,7 @@ class DnssdService extends events.EventEmitter implements dnssd.Service {
     }
 
     private static parseText(txt: string[]): dnssd.TxtRecords {
-        const result = <dnssd.TxtRecords> new Object();
+        const result = <dnssd.TxtRecords>new Object();
         if (!txt) {
             return result;
         }

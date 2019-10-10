@@ -40,7 +40,7 @@ export async function getInstance(): Promise<dnssd.Client> {
 }
 
 class AvahiClient implements dnssd.Client {
-    private destroyOps = new Array<()=>void>();
+    private destroyOps = new Array<() => void>();
 
     constructor(readonly daemon: avahi.Daemon) {
     }
@@ -70,7 +70,7 @@ class AvahiClient implements dnssd.Client {
      * @param op operation to add
      * @return the op argument
      */
-    pushDestroyOp(op: ()=>void): ()=>void {
+    pushDestroyOp(op: () => void): () => void {
         this.destroyOps.push(op);
         return op;
     }
@@ -79,7 +79,7 @@ class AvahiClient implements dnssd.Client {
      * Removes an operation that was added with pushDestroyOp()
      * @param op the operation to remove
      */
-    popDestroyOp(op: ()=>void): void {
+    popDestroyOp(op: () => void): void {
         let i = this.destroyOps.findIndex(v => v === op);
         if (i >= 0) {
             this.destroyOps.splice(i, 1);
@@ -155,12 +155,11 @@ class AvahiService implements dnssd.Service {
         public readonly address: string,
         public readonly port: number,
         txt: Uint8Array[],
-        flags: number)
-    {
+        flags: number) {
         const [service, transport] = type.split('.');
         // remove leading '_'
         this.service = service.slice(1);
-        this.transport = <'tcp' | 'udp'> transport.slice(1);
+        this.transport = <'tcp' | 'udp'>transport.slice(1);
         this.ipv = protocol === avahi.PROTO_INET6 ? 'IPv6' : 'IPv4';
         this.txt = AvahiService.parseText(txt);
     }
@@ -171,7 +170,7 @@ class AvahiService implements dnssd.Service {
     }
 
     private static parseText(txt?: Uint8Array[]): dnssd.TxtRecords {
-        const result = <dnssd.TxtRecords> new Object();
+        const result = <dnssd.TxtRecords>new Object();
         if (txt) {
             txt.forEach(v => {
                 const [key, value] = v.toString().split(/=/);

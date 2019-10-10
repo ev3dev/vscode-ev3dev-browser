@@ -85,29 +85,29 @@ enum ReplyOp {
  * Possible error code values.
  */
 export enum ServiceErrorType {
-    NoError             = 0,
-    Unknown             = -65537,
-    NoSuchName          = -65538,
-    NoMemory            = -65539,
-    BadParam            = -65540,
-    BadReference        = -65541,
-    BadState            = -65542,
-    BadFlags            = -65543,
-    Unsupported         = -65544,
-    NotInitialized      = -65545,
-    AlreadyRegistered   = -65547,
-    NameConflict        = -65548,
-    Invalid             = -65549,
-    Firewall            = -65550,
-    Incompatible        = -65551,
-    BadInterfaceIndex   = -65552,
-    Refused             = -65553,
-    NoSuchRecord        = -65554,
-    NoAuth              = -65555,
-    NoSuchKey           = -65556,
-    NATTraversal        = -65557,
-    DoubleNAT           = -65558,
-    BadTime             = -65559
+    NoError = 0,
+    Unknown = -65537,
+    NoSuchName = -65538,
+    NoMemory = -65539,
+    BadParam = -65540,
+    BadReference = -65541,
+    BadState = -65542,
+    BadFlags = -65543,
+    Unsupported = -65544,
+    NotInitialized = -65545,
+    AlreadyRegistered = -65547,
+    NameConflict = -65548,
+    Invalid = -65549,
+    Firewall = -65550,
+    Incompatible = -65551,
+    BadInterfaceIndex = -65552,
+    Refused = -65553,
+    NoSuchRecord = -65554,
+    NoAuth = -65555,
+    NoSuchKey = -65556,
+    NATTraversal = -65557,
+    DoubleNAT = -65558,
+    BadTime = -65559
 }
 
 /**
@@ -142,21 +142,21 @@ export enum ServiceFlags {
      * available right now at this instant. If more answers become available
      * in the future they will be delivered as usual.
      */
-    MoreComing          = 0x1,
+    MoreComing = 0x1,
 
     /**
      * Flag for domain enumeration and browse/query reply callbacks.
      * An enumeration callback with the "Add" flag NOT set indicates a "Remove",
      * i.e. the domain is no longer valid.
      */
-    Add                 = 0x2,
+    Add = 0x2,
 
     /**
      * Flag for domain enumeration and browse/query reply callbacks.
      * "Default" applies only to enumeration and is only valid in
      * conjunction with "Add".
      */
-    Default             = 0x4,
+    Default = 0x4,
 
     /**
      * Flag for specifying renaming behavior on name conflict when registering
@@ -166,27 +166,27 @@ export enum ServiceFlags {
      * is only valid if a name is explicitly specified when registering a service
      * (i.e. the default name is not used.)
      */
-    NoAutoRename        = 0x8,
+    NoAutoRename = 0x8,
 
     /**
      * Flag for registering individual records on a connected Service.
      * Shared indicates that there may be multiple records with this name on
      * the network (e.g. PTR records).
      */
-    Shared              = 0x10,
+    Shared = 0x10,
 
     /**
      * Flag for registering individual records on a connected Service.
      * Unique indicates that the record's name is to be unique on the network
      * (e.g. SRV records).
      */
-    Unique              = 0x20,
+    Unique = 0x20,
 
     /**
      * Flag for specifying domain enumeration type in Service.enumerateDomains().
      * Enumerates domains recommended for browsing.
      */
-    BrowseDomains       = 0x40,
+    BrowseDomains = 0x40,
 
     /**
      * Flag for specifying domain enumeration type in Service.enumerateDomains().
@@ -197,28 +197,28 @@ export enum ServiceFlags {
     /**
      * Flag for creating a long-lived unicast query for the Service.queryRecord call.
      */
-    LongLivedQuery      = 0x100,
+    LongLivedQuery = 0x100,
 
     /**
      * Flag for creating a record for which we will answer remote queries
      * (queries from hosts more than one hop away; hosts not directly connected
      * to the local link).
      */
-    AllowRemoteQuery    = 0x200,
+    AllowRemoteQuery = 0x200,
 
     /**
      * Flag for signifying that a query or registration should be performed
      * exclusively via multicast DNS, even for a name in a domain (e.g.
      * foo.apple.com.) that would normally imply unicast DNS.
      */
-    ForceMulticast      = 0x400,
+    ForceMulticast = 0x400,
 
     /**
      * Client guarantees that record names are unique, so we can skip sending out initial
      * probe messages.  Standard name conflict resolution is still done if a conflict is discovered.
      * Currently only valid for a DNSServiceRegister call.
      */
-    KnownUnique         = 0x800,
+    KnownUnique = 0x800,
 
     /**
      * Flag for returning intermediate results.
@@ -243,7 +243,7 @@ export enum ServiceFlags {
      * Using the NonBrowsable flag creates SRV+TXT without the cost of also advertising
      * an associated PTR record.
      */
-    NonBrowsable        = 0x2000,
+    NonBrowsable = 0x2000,
 
     /**
      * For efficiency, clients that perform many concurrent operations may want to use a
@@ -333,7 +333,7 @@ export enum ServiceFlags {
      * To state this more explicitly, mDNSResponder does not queue DNSServiceRefDeallocate so
      * that it occurs discretely before or after an event is handled.
      */
-    ShareConnection     = 0x4000,
+    ShareConnection = 0x4000,
 
     /*
      * This flag is meaningful only in DNSServiceQueryRecord which suppresses unusable queries on the
@@ -343,7 +343,7 @@ export enum ServiceFlags {
      * if this host has no routable IPv4 address, the call will not try to look up IPv4 addresses for
      * "hostname".
      */
-    SuppressUnusable    = 0x8000,
+    SuppressUnusable = 0x8000,
 
     /**
      * When kDNServiceFlagsTimeout is passed to DNSServiceQueryRecord or DNSServiceGetAddrInfo, the query is
@@ -353,30 +353,30 @@ export enum ServiceFlags {
      * with an error code of kDNSServiceErr_Timeout and a NULL sockaddr will be returned for DNSServiceGetAddrInfo
      * and zero length rdata will be returned for DNSServiceQueryRecord.
      */
-    Timeout            = 0x10000,
+    Timeout = 0x10000,
 
     /**
      * Include P2P interfaces when kDNSServiceInterfaceIndexAny is specified.
      * By default, specifying kDNSServiceInterfaceIndexAny does not include P2P interfaces.
      */
-    IncludeP2P          = 0x20000,
+    IncludeP2P = 0x20000,
 
     /**
      * This flag is meaningful only in DNSServiceResolve. When set, it tries to send a magic packet
      * to wake up the client.
      */
-    WakeOnResolve      = 0x40000,
+    WakeOnResolve = 0x40000,
 
     /**
      * This flag is meaningful for Unicast DNS queries. When set, it uses the background traffic
      * class for packets that service the request.
      */
-    BackgroundTrafficClass  = 0x80000,
+    BackgroundTrafficClass = 0x80000,
 
     /**
      * Include AWDL interface when kDNSServiceInterfaceIndexAny is specified.
      */
-    IncludeAWDL      = 0x100000,
+    IncludeAWDL = 0x100000,
 
     /**
      * This flag is meaningful in DNSServiceGetAddrInfo and DNSServiceQueryRecord. This is the ONLY flag to be valid
@@ -400,34 +400,34 @@ export enum ServiceFlags {
      * When any of the four flags is set, Validate will also be set. To check the validation status, the
      * other applicable output flags should be masked. See kDNSServiceOutputFlags below.
      */
-    Validate               = 0x200000,
+    Validate = 0x200000,
 
     /**
      * The response has been validated by verifying all the signatures in the response and was able to
      * build a successful authentication chain starting from a known trust anchor.
      */
-    Secure                 = 0x200010,
+    Secure = 0x200010,
 
     /**
      * A chain of trust cannot be built starting from a known trust anchor to the response.
      */
-    Insecure               = 0x200020,
+    Insecure = 0x200020,
 
     /**
      * If the response cannot be verified to be secure due to expired signatures, missing signatures etc.,
      * then the results are considered to be bogus.
      */
-    Bogus                  = 0x200040,
+    Bogus = 0x200040,
 
     /**
      * There is no valid trust anchor that can be used to determine whether a response is secure or not.
      */
-    Indeterminate          = 0x200080,
+    Indeterminate = 0x200080,
 
     /**
      * Request unicast response to query.
      */
-    UnicastResponse        = 0x400000,
+    UnicastResponse = 0x400000,
 
     /**
      * This flag is identical to Validate except for the case where the response
@@ -443,13 +443,13 @@ export enum ServiceFlags {
      * period where the different nodes participating in the DNS resolution may not understand DNSSEC or
      * managed properly (e.g. missing DS record) but still want to be able to resolve DNS successfully.
      */
-    ValidateOptional       = 0x800000,
+    ValidateOptional = 0x800000,
 
     /**
      * This flag is meaningful only in DNSServiceRegister. When set, the service will not be registered
      * with sleep proxy server during sleep.
      */
-    WakeOnlyService        = 0x1000000,
+    WakeOnlyService = 0x1000000,
 
     /**
      * ThresholdOne is meaningful only in DNSServiceBrowse. When set,
@@ -459,7 +459,7 @@ export enum ServiceFlags {
      * This flag is for Apple internal use only. Third party developers
      * should not rely on this behavior being supported in any given software release.
      */
-    ThresholdOne           = 0x2000000,
+    ThresholdOne = 0x2000000,
 
     /**
      * ThresholdFinder is meaningful only in DNSServiceBrowse. When set,
@@ -470,7 +470,7 @@ export enum ServiceFlags {
      * This flag is for Apple internal use only. Third party developers
      * should not rely on this behavior being supported in any given software release.
      */
-    ThresholdFinder        = 0x4000000,
+    ThresholdFinder = 0x4000000,
 
     /**
      * When ThresholdReached is set in the client callback add or remove event,
@@ -486,32 +486,32 @@ export enum ServiceFlags {
      * is only set in the callbacks and ThresholdOne is only set on
      * input to a DNSServiceBrowse call.
      */
-    ThresholdReached       = ThresholdOne,
+    ThresholdReached = ThresholdOne,
 
     /**
      * This flag is meaningful only for Unicast DNS queries. When set, the kernel will restrict
      * DNS resolutions on the cellular interface for that request.
      */
-    DenyCellular           = 0x8000000,
+    DenyCellular = 0x8000000,
 
     /**
      * This flag is meaningful only for DNSServiceGetAddrInfo() for Unicast DNS queries.
      * When set, DNSServiceGetAddrInfo() will interpret the "interfaceIndex" argument of the call
      * as the "serviceIndex".
      */
-    ServiceIndex           = 0x10000000,
+    ServiceIndex = 0x10000000,
 
     /**
      * This flag is meaningful only for Unicast DNS queries. When set, the kernel will restrict
      * DNS resolutions on interfaces defined as expensive for that request.
      */
-    DenyExpensive          = 0x20000000,
+    DenyExpensive = 0x20000000,
 
     /**
      * This flag is meaningful for only Unicast DNS queries.
      * When set, it indicates that Network PathEvaluation has already been performed.
      */
-    PathEvaluationDone     = 0x40000000
+    PathEvaluationDone = 0x40000000
 }
 
 /**
@@ -521,242 +521,242 @@ export enum ServiceType {
     /**
      * Host address.
      */
-    A         = 1,
+    A = 1,
 
     /**
      * Authoritative server.
      */
-    NS        = 2,
+    NS = 2,
 
     /**
      * Mail destination.
      */
-    MD        = 3,
+    MD = 3,
 
     /**
      * Mail forwarder.
      */
-    MF        = 4,
+    MF = 4,
 
     /**
      * Canonical name.
      */
-    CNAME     = 5,
+    CNAME = 5,
 
     /**
      * Start of authority zone.
      */
-    SOA       = 6,
+    SOA = 6,
 
     /**
      * Mailbox domain name.
      */
-    MB        = 7,
+    MB = 7,
 
     /**
      * Mail group member.
      */
-    MG        = 8,
+    MG = 8,
 
     /**
      * Mail rename name.
      */
-    MR        = 9,
+    MR = 9,
 
     /**
      * Null resource record.
      */
-    NULL      = 10,
+    NULL = 10,
 
     /**
      * Well known service.
      */
-    WKS       = 11,
+    WKS = 11,
 
     /**
      * Domain name pointer.
      */
-    PTR       = 12,
+    PTR = 12,
 
     /**
      * Host information.
      */
-    HINFO     = 13,
+    HINFO = 13,
 
     /**
      * Mailbox information.
      */
-    MINFO     = 14,
+    MINFO = 14,
 
     /**
      * Mail routing information.
      */
-    MX        = 15,
+    MX = 15,
 
     /**
      * One or more text strings.
      */
-    TXT       = 16,
+    TXT = 16,
 
     /**
      * Responsible person.
      */
-    RP        = 17,
+    RP = 17,
 
     /**
      * AFS cell database.
      */
-    AFSDB     = 18,
+    AFSDB = 18,
 
     /**
      * X_25 calling address.
      */
-    X25       = 19,
+    X25 = 19,
 
     /**
      * ISDN calling address.
      */
-    ISDN      = 20,
+    ISDN = 20,
 
     /**
      * Router.
      */
-    RT        = 21,
+    RT = 21,
 
     /**
      * NSAP address.
      */
-    NSAP      = 22,
+    NSAP = 22,
 
     /**
      * Reverse NSAP lookup (deprecated).
      */
-    NSAP_PTR  = 23,
+    NSAP_PTR = 23,
 
     /**
      * Security signature.
      */
-    SIG       = 24,
+    SIG = 24,
 
     /**
      * Security key.
      */
-    KEY       = 25,
+    KEY = 25,
 
     /**
      * X.400 mail mapping.
      */
-    PX        = 26,
+    PX = 26,
 
     /**
      * Geographical position (withdrawn).
      */
-    GPOS      = 27,
+    GPOS = 27,
 
     /**
      * Ip6 Address.
      */
-    AAAA      = 28,
+    AAAA = 28,
 
     /**
      * Location Information.
      */
-    LOC       = 29,
+    LOC = 29,
 
     /**
      * Next domain (security).
      */
-    NXT       = 30,
+    NXT = 30,
 
     /**
      * Endpoint identifier.
      */
-    EID       = 31,
+    EID = 31,
 
     /**
      * Nimrod Locator.
      */
-    NIMLOC    = 32,
+    NIMLOC = 32,
 
     /**
      * Server Selection.
      */
-    SRV       = 33,
+    SRV = 33,
 
     /**
      * ATM Address
      */
-    ATMA      = 34,
+    ATMA = 34,
 
     /**
      * Naming Authority PoinTeR
      */
-    NAPTR     = 35,
+    NAPTR = 35,
 
     /**
      * Key Exchange
      */
-    KX        = 36,
+    KX = 36,
 
     /**
      * Certification record
      */
-    CERT      = 37,
+    CERT = 37,
 
     /**
      * IPv6 address (deprecates AAAA)
      */
-    A6        = 38,
+    A6 = 38,
 
     /**
      * Non-terminal DNAME (for IPv6)
      */
-    DNAME     = 39,
+    DNAME = 39,
 
     /**
      * Kitchen sink (experimentatl)
      */
-    SINK      = 40,
+    SINK = 40,
 
     /**
      * EDNS0 option (meta-RR)
      */
-    OPT       = 41,
+    OPT = 41,
 
     /**
      * Transaction key
      */
-    TKEY      = 249,
+    TKEY = 249,
 
     /**
      * Transaction signature.
      */
-    TSIG      = 250,
+    TSIG = 250,
 
     /**
      * Incremental zone transfer.
      */
-    IXFR      = 251,
+    IXFR = 251,
 
     /**
      * Transfer zone of authority.
      */
-    AXFR      = 252,
+    AXFR = 252,
 
     /**
      * Transfer mailbox records.
      */
-    MAILB     = 253,
+    MAILB = 253,
 
     /**
      * Transfer mail agent records.
      */
-    MAILA     = 254,
+    MAILA = 254,
 
     /**
      * Wildcard match.
      */
-    ANY       = 255
+    ANY = 255
 }
 
 /**
@@ -766,7 +766,7 @@ export enum ServiceClass {
     /**
      * Internet
      */
-    IN       = 1
+    IN = 1
 }
 
 /**
@@ -786,12 +786,12 @@ export enum ServiceProtocol {
     /**
      * for Service.natPortMappingCreate()
      */
-    UDP  = 0x10,
+    UDP = 0x10,
 
     /**
      * for Service.natPortMappingCreate()
      */
-    TCP  = 0x20
+    TCP = 0x20
 }
 
 interface IpcMsgHeader {
@@ -937,7 +937,7 @@ export class Service {
         let listenServer: net.Server | undefined;
         let errSocket: net.Socket | undefined;
         if (!reuseSd) {
-            listenServer = net.createServer(socket =>  {
+            listenServer = net.createServer(socket => {
                 errSocket = socket;
             });
             if (USE_TCP_LOOPBACK) {
@@ -977,7 +977,7 @@ export class Service {
      */
     public async processResult(): Promise<void> {
         const headerBuf = await this.read(SIZEOF_HEADER);
-        const header = <IpcMsgHeader> {
+        const header = <IpcMsgHeader>{
             version: headerBuf.readUInt32BE(0),
             dataLen: headerBuf.readUInt32BE(4),
             flags: headerBuf.readUInt32BE(8),
@@ -1109,9 +1109,9 @@ export class Service {
     }
 
     private handleBrowseResponse(header: IpcMsgHeader, data: Buffer): void {
-        const flags = <ServiceFlags> data.readUInt32BE(0);
+        const flags = <ServiceFlags>data.readUInt32BE(0);
         const ifaceIndex = data.readUInt32BE(4);
-        let errCode = <ServiceErrorType> data.readInt32BE(8);
+        let errCode = <ServiceErrorType>data.readInt32BE(8);
         let offset = 12;
         let strError = false;
         let replyName, replyType, replyDomain: string | undefined;
@@ -1147,7 +1147,7 @@ export class Service {
             errCode = ServiceErrorType.Unknown;
         }
 
-        (<BrowseReply> this.appCallback)(this, flags, ifaceIndex, errCode, replyName || '', replyType || '', replyDomain || '');
+        (<BrowseReply>this.appCallback)(this, flags, ifaceIndex, errCode, replyName || '', replyType || '', replyDomain || '');
     }
 
     /**
@@ -1218,9 +1218,9 @@ export class Service {
     }
 
     private handleResolveResponse(header: IpcMsgHeader, data: Buffer): void {
-        const flags = <ServiceFlags> data.readUInt32BE(0);
+        const flags = <ServiceFlags>data.readUInt32BE(0);
         const iface = data.readUInt32BE(4);
-        let errCode = <ServiceErrorType> data.readInt32BE(8);
+        let errCode = <ServiceErrorType>data.readInt32BE(8);
 
         let offset = 12;
         let strError = false;
@@ -1260,7 +1260,7 @@ export class Service {
             errCode = ServiceErrorType.Unknown;
         }
 
-        (<ResolveReply> this.appCallback)(this, flags, iface, errCode, fullName || '', target || '', port, txt);
+        (<ResolveReply>this.appCallback)(this, flags, iface, errCode, fullName || '', target || '', port, txt);
     }
 
     /**
@@ -1281,8 +1281,7 @@ export class Service {
      * @param callback  The function to be called when the query succeeds or fails asynchronously.
      */
     public async getAddrInfo(flags: ServiceFlags, iface: number, protocol: ServiceProtocol,
-        hostname: string, callback: GetAddrInfoReply)
-    {
+        hostname: string, callback: GetAddrInfoReply) {
         const service = await Service.connectToServer();
         service.op = RequestOp.AddrInfo;
         service.processReply = service.handleAddrInfoResponse;
@@ -1307,9 +1306,9 @@ export class Service {
     }
 
     private handleAddrInfoResponse(header: IpcMsgHeader, data: Buffer): void {
-        const flags = <ServiceFlags> data.readUInt32BE(0);
+        const flags = <ServiceFlags>data.readUInt32BE(0);
         const iface = data.readUInt32BE(4);
-        const errCode = <ServiceErrorType> data.readUInt32BE(8);
+        const errCode = <ServiceErrorType>data.readUInt32BE(8);
 
         let offset = 12;
         let strError = false;
@@ -1324,8 +1323,8 @@ export class Service {
             offset = nullTermIndex + 1;
         }
 
-        const rrType = <ServiceType> data.readUInt16BE(offset + 0);
-        const rrClass = <ServiceClass> data.readUInt16BE(offset + 2);
+        const rrType = <ServiceType>data.readUInt16BE(offset + 0);
+        const rrClass = <ServiceClass>data.readUInt16BE(offset + 2);
         const rdLen = data.readUInt16BE(offset + 4);
         offset += 6;
         const rData = Buffer.alloc(rdLen);
@@ -1335,20 +1334,20 @@ export class Service {
 
         let address: string | undefined;
         switch (rrType) {
-        case ServiceType.A: // IPv4
-            address = `${rData[0]}.${rData[1]}.${rData[2]}.${rData[3]}`;
-            break;
-        case ServiceType.AAAA: // IPv6\
-            const g0 = rData.readUInt16BE(0).toString(16);
-            const g1 = rData.readUInt16BE(2).toString(16);
-            const g2 = rData.readUInt16BE(4).toString(16);
-            const g3 = rData.readUInt16BE(6).toString(16);
-            const g4 = rData.readUInt16BE(8).toString(16);
-            const g5 = rData.readUInt16BE(10).toString(16);
-            const g6 = rData.readUInt16BE(12).toString(16);
-            const g7 = rData.readUInt16BE(14).toString(16);
-            address = `${g0}:${g1}:${g2}:${g3}:${g4}:${g5}:${g6}:${g7}`.replace(/(:0)+(?::)/, '::');
-            break;
+            case ServiceType.A: // IPv4
+                address = `${rData[0]}.${rData[1]}.${rData[2]}.${rData[3]}`;
+                break;
+            case ServiceType.AAAA: // IPv6\
+                const g0 = rData.readUInt16BE(0).toString(16);
+                const g1 = rData.readUInt16BE(2).toString(16);
+                const g2 = rData.readUInt16BE(4).toString(16);
+                const g3 = rData.readUInt16BE(6).toString(16);
+                const g4 = rData.readUInt16BE(8).toString(16);
+                const g5 = rData.readUInt16BE(10).toString(16);
+                const g6 = rData.readUInt16BE(12).toString(16);
+                const g7 = rData.readUInt16BE(14).toString(16);
+                address = `${g0}:${g1}:${g2}:${g3}:${g4}:${g5}:${g6}:${g7}`.replace(/(:0)+(?::)/, '::');
+                break;
         }
 
         if (flags & ServiceFlags.Validate) {
@@ -1356,7 +1355,7 @@ export class Service {
             ttl = 0;
         }
 
-        (<GetAddrInfoReply> this.appCallback)(this, flags, iface, errCode, hostname || '', address || '', ttl);
+        (<GetAddrInfoReply>this.appCallback)(this, flags, iface, errCode, hostname || '', address || '', ttl);
     }
 
     /**
@@ -1378,8 +1377,7 @@ export class Service {
      *                  asynchronously fails.
      */
     public async queryRecord(flags: ServiceFlags, iface: number, fullName: string, rrType: ServiceType,
-        rrClass: ServiceClass, callback: QueryRecordReply): Promise<Service>
-    {
+        rrClass: ServiceClass, callback: QueryRecordReply): Promise<Service> {
         const nameBuf = Buffer.from(fullName + '\0');
         let length = 4; // size of flags
         length += 4; // size of iface
@@ -1404,9 +1402,9 @@ export class Service {
     }
 
     private handleQueryResponse(header: IpcMsgHeader, data: Buffer): void {
-        const flags = <ServiceFlags> data.readUInt32BE(0);
+        const flags = <ServiceFlags>data.readUInt32BE(0);
         const iface = data.readUInt32BE(4);
-        const errCode = <ServiceErrorType> data.readUInt32BE(8);
+        const errCode = <ServiceErrorType>data.readUInt32BE(8);
 
         let offset = 12;
         let strError = false;
@@ -1421,14 +1419,14 @@ export class Service {
             offset = nullTermIndex + 1;
         }
 
-        const rrType = <ServiceType> data.readUInt16BE(offset + 0);
-        const rrClass = <ServiceClass> data.readUInt16BE(offset + 2);
+        const rrType = <ServiceType>data.readUInt16BE(offset + 0);
+        const rrClass = <ServiceClass>data.readUInt16BE(offset + 2);
         const rdLen = data.readUInt16BE(offset + 4);
         offset += 6;
         const rData = Buffer.alloc(rdLen);
         data.copy(rData, 0, offset, offset + rdLen);
         offset += rdLen;
         const ttl = data.readUInt32BE(offset);
-        (<QueryRecordReply> this.appCallback)(this, flags, iface, errCode, fullName || '', rrType, rrClass, rData, ttl);
+        (<QueryRecordReply>this.appCallback)(this, flags, iface, errCode, fullName || '', rrType, rrClass, rData, ttl);
     }
 }
