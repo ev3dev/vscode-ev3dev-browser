@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as temp from 'temp';
 import * as fs from 'fs';
+import * as os from 'os';
 import { isArray } from 'util';
 
 const toastDuration = 5000;
@@ -73,4 +74,23 @@ export function toastStatusBarMessage(message: string): void {
  */
 export function setContext(context: string, state: boolean): void {
     vscode.commands.executeCommand('setContext', context, state);
+}
+
+/**
+ * Gets the runtime platform suitable for use in settings lookup.
+ */
+export function getPlatform(): 'windows' | 'osx' | 'linux' | undefined {
+    let platform: 'windows' | 'osx' | 'linux' | undefined;
+    switch (os.platform()) {
+        case 'win32':
+            platform = 'windows';
+            break;
+        case 'darwin':
+            platform = 'osx';
+            break;
+        case 'linux':
+            platform = 'linux';
+            break;
+    }
+    return platform;
 }
