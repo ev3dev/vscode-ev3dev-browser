@@ -183,7 +183,7 @@
             {
                 "type": "ev3devBrowser",
                 "label": "ev3dev",
-                "program": "./out/native-helper/debugServer.js",
+                "program": "./out/debugServer.js",
                 "runtime": "node",
                 "configurationAttributes": {
                     "launch": {
