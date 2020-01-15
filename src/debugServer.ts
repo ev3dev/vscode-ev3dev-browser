@@ -13,8 +13,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
     interactiveTerminal: boolean;
 }
 
-
-class Ev3devBrowserDebugSession extends DebugSession {
+export class Ev3devBrowserDebugSession extends DebugSession {
     protected initializeRequest(response: DebugProtocol.InitializeResponse,
         args: DebugProtocol.InitializeRequestArguments): void {
         if (response.body) {
@@ -44,4 +43,6 @@ class Ev3devBrowserDebugSession extends DebugSession {
     }
 }
 
-DebugSession.run(Ev3devBrowserDebugSession);
+if (require.main === module) {
+    DebugSession.run(Ev3devBrowserDebugSession);
+}

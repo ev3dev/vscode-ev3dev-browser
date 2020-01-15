@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as net from 'net';
 import * as os from 'os';
 import * as path from 'path';
 import * as ssh2Streams from 'ssh2-streams';
@@ -6,7 +7,7 @@ import * as temp from 'temp';
 
 import * as vscode from 'vscode';
 
-import { LaunchRequestArguments } from './debugServer';
+import { Ev3devBrowserDebugSession, LaunchRequestArguments } from './debugServer';
 import { Brickd } from './brickd';
 import { Device } from './device';
 import {
@@ -34,6 +35,7 @@ export function activate(context: vscode.ExtensionContext): void {
     resourceDir = context.asAbsolutePath('resources');
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
+    const factory = new Ev3devDebugAdapterDescriptorFactory();
     context.subscriptions.push(
         output, ev3devBrowserProvider,
         vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider),
@@ -52,8 +54,31 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.action.pickDevice', () => pickDevice()),
         vscode.commands.registerCommand('ev3devBrowser.action.download', () => downloadAll()),
         vscode.commands.registerCommand('ev3devBrowser.action.refresh', () => refresh()),
-        vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e))
+        vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e)),
+        vscode.debug.registerDebugAdapterDescriptorFactory('ev3devBrowser', factory),
     );
+}
+
+class Ev3devDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
+    private server?: net.Server;
+
+    createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
+        if (!this.server) {
+            // start listening on a random port
+            this.server = net.createServer(socket => {
+                const session = new Ev3devBrowserDebugSession();
+                session.setRunAsServer(true);
+                session.start(<NodeJS.ReadableStream>socket, socket);
+            }).listen(0);
+        }
+
+        // make VS Code connect to debug server
+        return new vscode.DebugAdapterServer(this.server.address().port);
+    }
+
+    dispose() {
+        this.server?.close();
+    }
 }
 
 // this method is called when your extension is deactivated
