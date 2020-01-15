@@ -385,7 +385,7 @@
         "@types/bonjour": "^3.5.4",
         "@types/compare-versions": "^3.0.0",
         "@types/mocha": "^2.2.42",
-        "@types/node": "^8.10.25",
+        "@types/node": "^10.0.0",
         "@types/ssh2": "~0.5.35",
         "@types/ssh2-streams": "~0.1.5",
         "@types/temp": "^0.8.3",

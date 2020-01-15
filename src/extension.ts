@@ -73,7 +73,7 @@ class Ev3devDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescript
         }
 
         // make VS Code connect to debug server
-        return new vscode.DebugAdapterServer(this.server.address().port);
+        return new vscode.DebugAdapterServer((<net.AddressInfo>this.server.address()).port);
     }
 
     dispose() {
