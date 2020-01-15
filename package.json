@@ -195,6 +195,11 @@
                                 "type": "string",
                                 "description": "Absolute path to an executable file on the remote device.",
                                 "default": "/home/robot/myproject/myprogram"
+                            },
+                            "interactiveTerminal": {
+                                "type": "boolean",
+                                "description": "When true, program will be run in a new interactive terminal, when false the output pane will be used instead.",
+                                "default": false
                             }
                         }
                     }

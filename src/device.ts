@@ -223,10 +223,11 @@ export class Device extends vscode.Disposable {
      * Executes a command on the remote device.
      * @param command The absolute path of the command.
      */
-    public exec(command: string): Promise<ssh2.Channel> {
+    public exec(command: string, pty?: ssh2.PseudoTtyOptions): Promise<ssh2.ClientChannel> {
         return new Promise((resolve, reject) => {
             const options = {
-                env: vscode.workspace.getConfiguration('ev3devBrowser').get('env')
+                env: vscode.workspace.getConfiguration('ev3devBrowser').get('env'),
+                pty: pty,
             };
             this.client.exec(command, options, (err, channel) => {
                 if (err) {

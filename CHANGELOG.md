@@ -4,6 +4,9 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Unreleased
+### Added
+- New "interactiveTerminal" debugger option to run remote programs in
+  interactive terminal instead of output pane
 ### Changed
 - SSH shell no longer requires native executable on Windows
 

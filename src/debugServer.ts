@@ -2,13 +2,15 @@ import { DebugSession, Event, TerminatedEvent } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
 
 /**
- * This interface should always match the schema found in the mock-debug extension manifest.
+ * This interface should always match the schema found in the extension manifest.
  */
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
     /** An absolute path to the program to debug. */
     program: string;
     /** Download files before running. Default is true. */
     download?: boolean;
+    /** Run in terminal instead of output pane. */
+    interactiveTerminal: boolean;
 }
 
 

@@ -85,6 +85,7 @@ async function pickDevice(): Promise<void> {
 }
 
 const activeDebugSessions = new Set<string>();
+let debugTerminal: vscode.Terminal;
 
 async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Promise<void> {
     let device: Device | undefined;
@@ -116,35 +117,93 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
             // run the program
             try {
                 const dirname = path.posix.dirname(args.program);
-                const command = `brickrun --directory="${dirname}" "${args.program}"`;
-                output.show(true);
-                output.clear();
-                output.appendLine(`Starting: ${command}`);
-                const channel = await device.exec(command);
-                channel.on('close', () => {
-                    event.session.customRequest('ev3devBrowser.debugger.terminate');
-                });
-                channel.on('exit', (code, signal, coreDump, desc) => {
+                const command = `brickrun -r --directory="${dirname}" "${args.program}"`;
+                if (args.interactiveTerminal) {
+                    const config = vscode.workspace.getConfiguration(`terminal.integrated.env.${getPlatform()}`);
+                    const termEnv = config.get<string>('TERM');
+                    const ch = await device.exec(command, { term: termEnv || process.env['TERM'] || 'xterm-256color' });
+                    const writeEmitter = new vscode.EventEmitter<string>();
+                    ch.stdout.on('data', (data: string | Buffer) => writeEmitter.fire(String(data)));
+                    ch.stderr.on('data', (data: string | Buffer) => writeEmitter.fire(String(data)));
+                    if (debugTerminal) {
+                        debugTerminal.dispose();
+                    }
+                    debugTerminal = vscode.window.createTerminal({
+                        name: `SSH: ${device.name}`,
+                        pty: {
+                            onDidWrite: writeEmitter.event,
+                            open: (dim: vscode.TerminalDimensions | undefined) => {
+                                if (dim !== undefined) {
+                                    ch.setWindow(dim.rows, dim.columns, 0, 0);
+                                }
+                                writeEmitter.fire(`Starting: ${command}\r\n`);
+                                writeEmitter.fire('----------\r\n');
+                            },
+                            close: () => {
+                                ch.close();
+                                activeDebugSessions.delete(event.session.id);
+                            },
+                            handleInput: (data: string) => {
+                                ch.stdin.write(data);
+                            },
+                            setDimensions: (dim: vscode.TerminalDimensions) => {
+                                ch.setWindow(dim.rows, dim.columns, 0, 0);
+                            },
+                        },
+                    });
+                    ch.on('close', () => {
+                        event.session.customRequest('ev3devBrowser.debugger.terminate');
+                        ch.destroy();
+                    });
+                    ch.on('exit', (code, signal, coreDump, desc) => {
+                        writeEmitter.fire('----------\r\n');
+                        if (code === 0) {
+                            writeEmitter.fire('Completed successfully.\r\n');
+                        }
+                        else if (code) {
+                            writeEmitter.fire(`Exited with error code ${code}.\r\n`);
+                        }
+                        else {
+                            writeEmitter.fire(`Exited with signal ${signal}.\r\n`);
+                        }
+                        activeDebugSessions.delete(event.session.id);
+                    });
+                    ch.on('error', (err: any) => {
+                        vscode.window.showErrorMessage(`Connection error: ${err || err.message}`);
+                        debugTerminal.dispose();
+                        ch.destroy();
+                    });
+                    debugTerminal.show();
+                }
+                else {
+                    output.show(true);
+                    output.clear();
+                    output.appendLine(`Starting: ${command}`);
+                    const channel = await device.exec(command);
+                    channel.on('close', () => {
+                        event.session.customRequest('ev3devBrowser.debugger.terminate');
+                    });
+                    channel.on('exit', (code, signal, coreDump, desc) => {
+                        output.appendLine('----------');
+                        if (code === 0) {
+                            output.appendLine('Completed successfully.');
+                        }
+                        else if (code) {
+                            output.appendLine(`Exited with error code ${code}.`);
+                        }
+                        else {
+                            output.appendLine(`Exited with signal ${signal}.`);
+                        }
+                        activeDebugSessions.delete(event.session.id);
+                    });
+                    channel.on('data', (chunk: string | Buffer) => {
+                        output.append(chunk.toString());
+                    });
+                    channel.stderr.on('data', (chunk) => {
+                        output.append(chunk.toString());
+                    });
                     output.appendLine('----------');
-                    if (code === 0) {
-                        output.appendLine('Completed successfully.');
-                    }
-                    else if (code) {
-                        output.appendLine(`Exited with error code ${code}.`);
-                    }
-                    else {
-                        output.appendLine(`Exited with signal ${signal}.`);
-                    }
-                    activeDebugSessions.delete(event.session.id);
-                });
-                channel.on('data', (chunk) => {
-                    output.append(chunk.toString());
-                });
-                channel.stderr.on('data', (chunk) => {
-                    output.append(chunk.toString());
-                });
-                output.appendLine('Started.');
-                output.appendLine('----------');
+                }
                 activeDebugSessions.add(event.session.id);
             }
             catch (err) {
