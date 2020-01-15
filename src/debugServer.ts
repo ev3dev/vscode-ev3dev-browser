@@ -24,7 +24,7 @@ export class Ev3devBrowserDebugSession extends DebugSession {
 
     protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
         this.sendEvent(new Event('ev3devBrowser.debugger.launch', args));
-        // We don't send a response so that the pause button does not become enabled.
+        this.sendResponse(response);
     }
 
     protected customRequest(command: string, response: DebugProtocol.Response, args: any): void {
@@ -38,7 +38,7 @@ export class Ev3devBrowserDebugSession extends DebugSession {
 
     protected disconnectRequest(response: DebugProtocol.DisconnectResponse,
         args: DebugProtocol.DisconnectArguments): void {
-        this.sendEvent(new Event('ev3devBrowser.debugger.stop'));
+        this.sendEvent(new Event('ev3devBrowser.debugger.stop', args));
         this.sendResponse(response);
     }
 }

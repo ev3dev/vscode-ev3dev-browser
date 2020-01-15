@@ -7,6 +7,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Added
 - New "interactiveTerminal" debugger option to run remote programs in
   interactive terminal instead of output pane
+### Fixed
+- Fix debugger restart button not working
 ### Changed
 - SSH shell no longer requires native executable on Windows
 
