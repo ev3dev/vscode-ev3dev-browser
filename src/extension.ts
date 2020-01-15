@@ -84,6 +84,8 @@ async function pickDevice(): Promise<void> {
     });
 }
 
+const activeDebugSessions = new Set<string>();
+
 async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Promise<void> {
     let device: Device | undefined;
     switch (event.event) {
@@ -133,6 +135,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                     else {
                         output.appendLine(`Exited with signal ${signal}.`);
                     }
+                    activeDebugSessions.delete(event.session.id);
                 });
                 channel.on('data', (chunk) => {
                     output.append(chunk.toString());
@@ -142,6 +145,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                 });
                 output.appendLine('Started.');
                 output.appendLine('----------');
+                activeDebugSessions.add(event.session.id);
             }
             catch (err) {
                 await event.session.customRequest('ev3devBrowser.debugger.terminate');
@@ -150,7 +154,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
             break;
         case 'ev3devBrowser.debugger.stop':
             device = ev3devBrowserProvider.getDeviceSync();
-            if (device && device.isConnected) {
+            if (activeDebugSessions.has(event.session.id) && device && device.isConnected) {
                 device.exec('conrun-kill --signal=SIGKILL');
             }
             break;
