@@ -180,6 +180,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                     ch.on('close', () => {
                         if (debugRestarting) {
                             activeDebugSessions.add(event.session.id);
+                            event.session.customRequest('ev3devBrowser.debugger.thread', 'started');
                         } else {
                             event.session.customRequest('ev3devBrowser.debugger.terminate');
                         }
@@ -204,6 +205,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                         ch.destroy();
                     });
                     debugTerminal.show();
+                    event.session.customRequest('ev3devBrowser.debugger.thread', 'started');
                 }
                 else {
                     output.show(true);
@@ -216,6 +218,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                             output.clear();
                             output.appendLine(`Restarting: ${command}`);
                             output.appendLine('----------');
+                            event.session.customRequest('ev3devBrowser.debugger.thread', 'started');
                         } else {
                             event.session.customRequest('ev3devBrowser.debugger.terminate');
                         }
@@ -242,6 +245,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                         output.append(chunk.toString());
                     });
                     output.appendLine('----------');
+                    event.session.customRequest('ev3devBrowser.debugger.thread', 'started');
                 }
                 activeDebugSessions.add(event.session.id);
             }
@@ -255,6 +259,12 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
             device = ev3devBrowserProvider.getDeviceSync();
             if (activeDebugSessions.has(event.session.id) && device && device.isConnected) {
                 device.exec('conrun-kill --signal=SIGKILL');
+            }
+            break;
+        case 'ev3devBrowser.debugger.interrupt':
+            device = ev3devBrowserProvider.getDeviceSync();
+            if (activeDebugSessions.has(event.session.id) && device && device.isConnected) {
+                device.exec('conrun-kill --signal=SIGINT');
             }
             break;
     }

@@ -5,6 +5,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 ### Added
+- New "pause" button on debugger that sends SIGINT to remote process
 - New "interactiveTerminal" debugger option to run remote programs in
   interactive terminal instead of output pane
 ### Fixed
