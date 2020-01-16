@@ -402,7 +402,7 @@
         "ssh2": "~0.5.5",
         "ssh2-streams": "~0.1.19",
         "temp": "^0.8.3",
-        "vscode-debugadapter": "^1.22.0",
+        "vscode-debugadapter": "^1.37.1",
         "zen-observable": "^0.5.2"
     }
 }
