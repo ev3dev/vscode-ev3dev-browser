@@ -1,4 +1,4 @@
-import { DebugSession, Event, TerminatedEvent, Thread, ThreadEvent, StoppedEvent, ContinuedEvent } from 'vscode-debugadapter';
+import { DebugSession, Event, TerminatedEvent, Thread, ThreadEvent, StoppedEvent, ContinuedEvent, InitializedEvent } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
 
 /**
@@ -27,6 +27,7 @@ export class Ev3devBrowserDebugSession extends DebugSession {
     protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
         this.sendEvent(new Event('ev3devBrowser.debugger.launch', args));
         this.sendResponse(response);
+        this.sendEvent(new InitializedEvent());
     }
 
     protected customRequest(command: string, response: DebugProtocol.Response, args: any): void {
