@@ -160,7 +160,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                         debugTerminal.dispose();
                     }
                     debugTerminal = vscode.window.createTerminal({
-                        name: `SSH: ${device.name}`,
+                        name: `${path.posix.basename(args.program)} on ${device.name}`,
                         pty: {
                             onDidWrite: writeEmitter.event,
                             open: (dim: vscode.TerminalDimensions | undefined) => {
