@@ -52,6 +52,22 @@
                     "description": "Addition environment variables to use on remote devices.",
                     "uniqueItems": true
                 },
+                "ev3devBrowser.interactiveTerminal.env": {
+                    "scope": "window",
+                    "type": "object",
+                    "patternProperties": {
+                        "[A-Za-z0-9_]{1,}": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "default": {
+                        "PYTHONINSPECT": "TRUE",
+                        "MICROPYINSPECT": "TRUE"
+                    },
+                    "description": "Addition environment variables to use on remote devices only when using the interactive terminal that is started by the debugger.",
+                    "uniqueItems": true
+                },
                 "ev3devBrowser.download.include": {
                     "scope": "resource",
                     "type": "string",

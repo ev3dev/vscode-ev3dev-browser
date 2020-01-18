@@ -90,6 +90,9 @@ This extension contributes the following settings:
 *   `ev3devBrowser.env`: If you need to set environment variables for running
     remote programs, you can set them here. Each variable is defined as a
     key/value pair.
+*   `ev3devBrowser.interactiveTerminal.env`: This is similar to `ev3devBrowser.env`
+    but the environment variables are only applied when running a program in
+    the interactive terminal.
 *   `ev3devBrowser.download.include`: Use this to specify which files to
     included when downloading files to the remote device. Can use glob patterns.
 *   `ev3devBrowser.download.exclude`: Use this to specify which files to

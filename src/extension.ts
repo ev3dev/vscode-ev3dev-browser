@@ -148,7 +148,11 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                 if (args.interactiveTerminal) {
                     const config = vscode.workspace.getConfiguration(`terminal.integrated.env.${getPlatform()}`);
                     const termEnv = config.get<string>('TERM');
-                    const ch = await device.exec(command, { term: termEnv || process.env['TERM'] || 'xterm-256color' });
+                    const env = {
+                        ...vscode.workspace.getConfiguration('ev3devBrowser').get<object>('env'),
+                        ...vscode.workspace.getConfiguration('ev3devBrowser').get<object>('interactiveTerminal.env'),
+                    };
+                    const ch = await device.exec(command, env, { term: termEnv || process.env['TERM'] || 'xterm-256color' });
                     const writeEmitter = new vscode.EventEmitter<string>();
                     ch.stdout.on('data', (data: string | Buffer) => writeEmitter.fire(String(data)));
                     ch.stderr.on('data', (data: string | Buffer) => writeEmitter.fire(String(data)));
@@ -212,7 +216,8 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                     output.show(true);
                     output.clear();
                     output.appendLine(`Starting: ${command}`);
-                    const channel = await device.exec(command);
+                    const env = vscode.workspace.getConfiguration('ev3devBrowser').get('env');
+                    const channel = await device.exec(command, env);
                     channel.on('close', () => {
                         if (debugRestarting) {
                             activeDebugSessions.add(event.session.id);
