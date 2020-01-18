@@ -47,6 +47,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.disconnect', d => d.disconnect()),
         vscode.commands.registerCommand('ev3devBrowser.deviceTreeItem.select', d => d.handleClick()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.run', f => f.run()),
+        vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.runInTerminal', f => f.runInTerminal()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.delete', f => f.delete()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.showInfo', f => f.showInfo()),
         vscode.commands.registerCommand('ev3devBrowser.fileTreeItem.upload', f => f.upload()),
@@ -843,9 +844,18 @@ class File extends vscode.TreeItem {
                 label: 'Run',
                 description: this.path
             };
-            vscode.window.showQuickPick([runItem]).then(value => {
-                if (value === runItem) {
-                    this.run();
+            const runInTerminalItem = <vscode.QuickPickItem>{
+                label: 'Run in interactive terminal',
+                description: this.path
+            };
+            vscode.window.showQuickPick([runItem, runInTerminalItem]).then(value => {
+                switch (value) {
+                    case runItem:
+                        this.run();
+                        break;
+                    case runInTerminalItem:
+                        this.runInTerminal();
+                        break;
                 }
             });
         }
@@ -857,7 +867,19 @@ class File extends vscode.TreeItem {
             name: 'Run',
             request: 'launch',
             program: this.path,
-            download: false
+            download: false,
+            interactiveTerminal: false,
+        });
+    }
+
+    public runInTerminal(): void {
+        vscode.debug.startDebugging(undefined, <vscode.DebugConfiguration>{
+            type: 'ev3devBrowser',
+            name: 'Run in interactive terminal',
+            request: 'launch',
+            program: this.path,
+            download: false,
+            interactiveTerminal: true,
         });
     }
 
