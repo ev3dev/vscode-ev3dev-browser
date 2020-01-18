@@ -41,7 +41,7 @@
                     "scope": "window",
                     "type": "object",
                     "patternProperties": {
-                        "[A-Za-z_]{1,}": {
+                        "[A-Za-z0-9_]{1,}": {
                             "type": "string"
                         }
                     },

@@ -10,6 +10,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   interactive terminal instead of output pane
 ### Fixed
 - Fix debugger restart button not working
+- Fix numbers not allowed in `ev3devBrowser.env` variable names
 ### Changed
 - SSH shell no longer requires native executable on Windows
 
