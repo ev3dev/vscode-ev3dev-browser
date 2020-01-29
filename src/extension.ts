@@ -144,8 +144,8 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
             // run the program
             try {
                 const dirname = path.posix.dirname(args.program);
-                const command = `brickrun -r --directory="${dirname}" "${args.program}"`;
                 if (args.interactiveTerminal) {
+                    const command = `brickrun -r --directory="${dirname}" "${args.program}"`;
                     const config = vscode.workspace.getConfiguration(`terminal.integrated.env.${getPlatform()}`);
                     const termEnv = config.get<string>('TERM');
                     const env = {
@@ -213,6 +213,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                     event.session.customRequest('ev3devBrowser.debugger.thread', 'started');
                 }
                 else {
+                    const command = `brickrun --directory="${dirname}" "${args.program}"`;
                     output.show(true);
                     output.clear();
                     output.appendLine(`Starting: ${command}`);
