@@ -267,12 +267,16 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
             if (activeDebugSessions.has(event.session.id) && device && device.isConnected) {
                 device.exec('conrun-kill --signal=SIGKILL');
             }
+            // update remote file browser in case program created new files
+            refresh();
             break;
         case 'ev3devBrowser.debugger.interrupt':
             device = ev3devBrowserProvider.getDeviceSync();
             if (activeDebugSessions.has(event.session.id) && device && device.isConnected) {
                 device.exec('conrun-kill --signal=SIGINT');
             }
+            // update remote file browser in case program created new files
+            refresh();
             break;
     }
 }
