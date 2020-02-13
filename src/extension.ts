@@ -186,6 +186,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                         if (debugRestarting) {
                             activeDebugSessions.add(event.session.id);
                             event.session.customRequest('ev3devBrowser.debugger.thread', 'started');
+                            debugRestarting = false;
                         } else {
                             event.session.customRequest('ev3devBrowser.debugger.terminate');
                         }
@@ -226,6 +227,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                             output.appendLine(`Restarting: ${command}`);
                             output.appendLine('----------');
                             event.session.customRequest('ev3devBrowser.debugger.thread', 'started');
+                            debugRestarting = false;
                         } else {
                             event.session.customRequest('ev3devBrowser.debugger.terminate');
                         }
