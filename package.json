@@ -90,13 +90,13 @@
                     "description": "The directory on the remote device where the files will be saved. The default is to use the name of the vscode project directory."
                 },
                 "ev3devBrowser.confirmDelete": {
-                    "scope": "window",
+                    "scope": "application",
                     "type": "boolean",
                     "default": true,
                     "description": "Prompt for confirmation before deleting remote files."
                 },
                 "ev3devBrowser.additionalDevices": {
-                    "scope": "window",
+                    "scope": "machine",
                     "type": "array",
                     "items": {
                         "type": "object",
