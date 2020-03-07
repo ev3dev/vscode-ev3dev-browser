@@ -238,7 +238,8 @@
                             "name": "Download and Run",
                             "type": "ev3devBrowser",
                             "request": "launch",
-                            "program": "^\"/home/robot/\\${workspaceRootFolderName}/${1:myprogram}\""
+                            "program": "^\"/home/robot/\\${workspaceRootFolderName}/${1:myprogram}\"",
+                            "interactiveTerminal": false
                         }
                     }
                 ],
@@ -247,7 +248,8 @@
                         "name": "Download and Run",
                         "type": "ev3devBrowser",
                         "request": "launch",
-                        "program": "/home/robot/myprogram (replace this with the actual path)"
+                        "program": "/home/robot/myprogram (replace this with the actual path)",
+                        "interactiveTerminal": false
                     }
                 ]
             }
