@@ -106,5 +106,7 @@ This extension contributes the following settings:
     where there are network problems interfering with device discover.
 *   `ev3devBrowser.confirmDelete`: Setting to `false` will suppress the
     confirmation message when deleting a remote file or directory.
+*   `ev3devBrowser.connectTimeout`: The connection timeout when connecting to a
+    device. Longer times may fix "Timeout while waiting for handshake".
 
 More details and examples on the [wiki](https://github.com/ev3dev/vscode-ev3dev-browser/wiki/Settings).

@@ -115,14 +115,15 @@ export class Device extends vscode.Disposable {
                     address += `%${(<any>this.service)['ifaceName']}`;
                 }
             }
+            const config = vscode.workspace.getConfiguration('ev3devBrowser');
             this.client.connect({
                 host: address,
                 username: this.username,
-                password: vscode.workspace.getConfiguration('ev3devBrowser').get('password'),
+                password: config.get('password'),
                 tryKeyboard: true,
                 keepaliveCountMax: 5,
                 keepaliveInterval: 1000,
-                readyTimeout: 20000
+                readyTimeout: config.get<number>('connectTimeout', 30) * 1000,
             });
         });
     }

@@ -127,6 +127,12 @@
                     "uniqueItems": true,
                     "default": [],
                     "description": "A list of devices to add to the pick list. This is intended to work around troublesome network connections, such as Bluetooth"
+                },
+                "ev3devBrowser.connectTimeout": {
+                    "scope": "application",
+                    "type": "integer",
+                    "default": 30,
+                    "description": "Device connection timeout in seconds."
                 }
             }
         },

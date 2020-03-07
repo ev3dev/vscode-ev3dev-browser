@@ -8,6 +8,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - New "pause" button on debugger that sends SIGINT to remote process
 - New "interactiveTerminal" debugger option to run remote programs in
   interactive terminal instead of output pane
+- New setting for SSH connection timeout
 ### Fixed
 - Fix debugger restart button not working
 - Fix numbers not allowed in `ev3devBrowser.env` variable names
