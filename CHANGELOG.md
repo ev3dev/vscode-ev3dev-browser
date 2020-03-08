@@ -3,17 +3,18 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## Unreleased
+## 1.1.0 - 2020-03-07
 ### Added
 - New "pause" button on debugger that sends SIGINT to remote process
 - New "interactiveTerminal" debugger option to run remote programs in
   interactive terminal instead of output pane
-- New setting for SSH connection timeout
+- New setting for device connection timeout
 ### Fixed
 - Fix debugger restart button not working
 - Fix numbers not allowed in `ev3devBrowser.env` variable names
 ### Changed
 - SSH shell no longer requires native executable on Windows
+- Device connection timeout increased to 30 seconds
 
 ## 1.0.4 - 2019-04-26
 ### Fixed
