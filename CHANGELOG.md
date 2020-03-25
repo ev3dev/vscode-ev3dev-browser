@@ -3,6 +3,10 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+### Added
+- ev3dev remote debugger is now a default debugger for Python files
+
 ## 1.1.0 - 2020-03-07
 ### Added
 - New "pause" button on debugger that sends SIGINT to remote process

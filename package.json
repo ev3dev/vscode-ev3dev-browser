@@ -211,6 +211,9 @@
                 "label": "ev3dev",
                 "program": "./out/debugServer.js",
                 "runtime": "node",
+                "languages": [
+                    "python"
+                ],
                 "configurationAttributes": {
                     "launch": {
                         "required": [
