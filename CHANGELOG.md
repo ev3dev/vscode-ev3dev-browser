@@ -7,7 +7,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Changed
 - Initial debug configuration has new example to run current file
 ### Fixed
-- Activate extension on command pallette command
+- Activate extension on command palette command
 ### Added
 - ev3dev remote debugger is now a default debugger for Python files
 
