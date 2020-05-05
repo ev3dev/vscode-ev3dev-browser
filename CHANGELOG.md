@@ -4,6 +4,8 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 ## Unreleased
+### Fixed
+- Activate extension on command pallette command
 ### Added
 - ev3dev remote debugger is now a default debugger for Python files
 

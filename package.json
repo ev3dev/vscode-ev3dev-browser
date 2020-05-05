@@ -21,7 +21,8 @@
     ],
     "activationEvents": [
         "onView:ev3devBrowser",
-        "onDebugResolve:ev3devBrowser"
+        "onDebugResolve:ev3devBrowser",
+        "onCommand:ev3devBrowser.action.pickDevice"
     ],
     "main": "./out/extension.js",
     "contributes": {
