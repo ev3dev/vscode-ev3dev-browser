@@ -249,11 +249,18 @@
                 ],
                 "initialConfigurations": [
                     {
-                        "name": "Download and Run",
+                        "name": "Download and Run current file",
                         "type": "ev3devBrowser",
                         "request": "launch",
-                        "program": "/home/robot/myprogram (replace this with the actual path)",
-                        "interactiveTerminal": false
+                        "program": "/home/robot/${workspaceFolderBasename}/${relativeFile}",
+                        "interactiveTerminal": true
+                    },
+                    {
+                        "name": "Download and Run my-program",
+                        "type": "ev3devBrowser",
+                        "request": "launch",
+                        "program": "/home/robot/${workspaceFolderBasename}/my-program (replace 'my-program' with the actual path)",
+                        "interactiveTerminal": true
                     }
                 ]
             }
