@@ -36,6 +36,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     ev3devBrowserProvider = new Ev3devBrowserProvider();
     const factory = new Ev3devDebugAdapterDescriptorFactory();
+    const provider = new Ev3devDebugConfigurationProvider();
     context.subscriptions.push(
         output, ev3devBrowserProvider,
         vscode.window.registerTreeDataProvider('ev3devBrowser', ev3devBrowserProvider),
@@ -57,6 +58,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.action.refresh', () => refresh()),
         vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e)),
         vscode.debug.registerDebugAdapterDescriptorFactory('ev3devBrowser', factory),
+        vscode.debug.registerDebugConfigurationProvider('ev3devBrowser', provider),
     );
 }
 
@@ -79,6 +81,45 @@ class Ev3devDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescript
 
     dispose() {
         this.server?.close();
+    }
+}
+
+class Ev3devDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
+    async resolveDebugConfiguration(
+        _folder: vscode.WorkspaceFolder | undefined,
+        debugConfiguration: vscode.DebugConfiguration,
+        token?: vscode.CancellationToken,
+    ): Promise<vscode.DebugConfiguration | undefined> {
+        if (Object.keys(debugConfiguration).length === 0) {
+            type DebugConfigurationQuickPickItem = vscode.QuickPickItem & { interactiveTerminal: boolean };
+            const items: DebugConfigurationQuickPickItem[] = [
+                {
+                    label: "Download and run current file",
+                    description: "in interactive terminal",
+                    interactiveTerminal: true,
+                },
+                {
+                    label: "Download and run current file",
+                    description: "in output pane",
+                    interactiveTerminal: false,
+                },
+            ];
+            const selected = await vscode.window.showQuickPick(items, {
+                matchOnDescription: true,
+                ignoreFocusOut: true,
+                placeHolder: "Debug configuration"
+            }, token);
+            if (selected) {
+                return {
+                    type: "ev3devBrowser",
+                    name: `${selected.label} ${selected.description}`,
+                    request: "launch",
+                    program: "/home/robot/${workspaceFolderBasename}/${relativeFile}",
+                    interactiveTerminal: selected.interactiveTerminal
+                };
+            }
+        }
+        return undefined;
     }
 }
 
