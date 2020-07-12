@@ -308,7 +308,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
             debugRestarting = event.body.restart;
             device = ev3devBrowserProvider.getDeviceSync();
             if (activeDebugSessions.has(event.session.id) && device && device.isConnected) {
-                device.exec('conrun-kill --signal=SIGKILL');
+                device.exec('conrun-kill --signal=SIGKILL --group');
             }
             // update remote file browser in case program created new files
             refresh();
