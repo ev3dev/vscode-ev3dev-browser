@@ -119,7 +119,7 @@ class Ev3devDebugConfigurationProvider implements vscode.DebugConfigurationProvi
                 };
             }
         }
-        return undefined;
+        return debugConfiguration;
     }
 }
 
