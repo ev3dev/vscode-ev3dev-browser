@@ -20,7 +20,7 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
         }
     }
 
-    public browse(opts: dnssd.BrowseOptions): Promise<dnssd.Browser> {
+    public createBrowser(opts: dnssd.BrowseOptions): Promise<dnssd.Browser> {
         const browser = new BonjourBrowser(this, opts);
         return Promise.resolve(browser);
     }
@@ -129,25 +129,50 @@ class BonjourClient extends events.EventEmitter implements dnssd.Client {
     }
 }
 
+/** Per-client browser object. */
+type ClientBrowser = {
+    /** Bonjour client associated with specific network interface and address. */
+    bClient: bonjour.Bonjour,
+    /** Bonjour browser for the Bonjour client. */
+    browser: bonjour.Browser,
+    /** Services discovered by the browser. */
+    services: BonjourService[],
+    /** Update timer - undefined if not started. */
+    updateInterval?: NodeJS.Timer,
+};
+
 class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
-    private readonly browsers = new Array<{
-        bClient: bonjour.Bonjour,
-        browser: bonjour.Browser,
-        services: BonjourService[],
-        updateInterval: NodeJS.Timer,
-    }>();
+    private started = false;
+    private readonly browsers = new Array<ClientBrowser>();
 
     constructor(private readonly client: BonjourClient, private readonly opts: dnssd.BrowseOptions) {
         super();
-        client.on('clientAdded', c => this.addBrowser(c));
-        client.on('clientRemoved', c => this.removeBrowser(c));
+        this.addBrowser = this.addBrowser.bind(this);
+        this.removeBrowser = this.removeBrowser.bind(this);
+        client.on('clientAdded', this.addBrowser);
+        client.on('clientRemoved', this.removeBrowser);
         client.forEachClient(c => this.addBrowser(c));
     }
 
-    public destroy(): void {
+    public async start(): Promise<void> {
         for (const b of this.browsers) {
-            b.browser.stop();
+            this.startClientBrowser(b);
         }
+        this.started = true;
+    }
+
+    public async stop(): Promise<void> {
+        for (const b of this.browsers) {
+            this.stopClientBrowser(b);
+        }
+        this.started = false;
+    }
+
+    public destroy(): void {
+        this.removeAllListeners();
+        this.client.off('clientAdded', this.addBrowser);
+        this.client.off('clientRemoved', this.removeBrowser);
+        this.stop();
     }
 
     private addBrowser(bClient: bonjour.Bonjour) {
@@ -176,22 +201,37 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
             const [service] = services.splice(index, 1);
             this.emit('removed', service, false);
         });
-        this.browsers.push({
-            bClient: bClient, browser: browser, services: services, updateInterval: setInterval(() => {
-                // poll again every 1 second
-                browser.update();
-            }, 1000)
-        });
-        browser.start();
+        const clientBrowser = { bClient: bClient, browser: browser, services: services };
+        this.browsers.push(clientBrowser);
+
+        // If a new client is added after we have already started browsing, we need
+        // to start that browser as well.
+        if (this.started) {
+            this.startClientBrowser(clientBrowser);
+        }
     }
 
     private removeBrowser(bClient: bonjour.Bonjour): void {
         const i = this.browsers.findIndex(v => v.bClient === bClient);
         const [removed] = this.browsers.splice(i, 1);
-        clearInterval(removed.updateInterval);
-        removed.browser.stop();
+        this.stopClientBrowser(removed);
         for (const s of removed.services) {
             this.emit('removed', s);
+        }
+    }
+
+    private startClientBrowser(clientBrowser: ClientBrowser): void {
+        clientBrowser.browser.start();
+        clientBrowser.updateInterval = setInterval(() => {
+            // poll again every 1 second
+            clientBrowser.browser.update();
+        }, 1000);
+    }
+
+    private stopClientBrowser(clientBrowser: ClientBrowser): void {
+        if (clientBrowser.updateInterval) {
+            clearInterval(clientBrowser.updateInterval);
+            clientBrowser.browser.stop();
         }
     }
 }

@@ -8,9 +8,9 @@ import * as bonjour from './dnssd/bonjour';
  */
 export interface Client {
     /**
-     * Start browsing
+     * Create a new browser object.
      */
-    browse(options: BrowseOptions): Promise<Browser>;
+    createBrowser(options: BrowseOptions): Promise<Browser>;
 
     /**
      * Frees resources used by client and destroys any associated browsers, etc.
@@ -40,9 +40,19 @@ export interface BrowseOptions {
     ipv?: 'IPv4' | 'IPv6';
 }
 
+/** Object for monitoring network service discovery events. */
 export interface Browser {
-    on(event: 'added' | 'removed', listener: (service: Service) => void): this;
+    /** Registers callback for service added events. */
+    on(event: 'added', listener: (service: Service) => void): this;
+    /** Registers callback for service removed events. */
+    on(event: 'removed', listener: (service: Service) => void): this;
+    /** Registers callback for error events. */
     on(event: 'error', listener: (err: Error) => void): this;
+    /** Starts browsing. */
+    start(): Promise<void>;
+    /** Stops browsing. */
+    stop(): Promise<void>;
+    /** Frees all resources used by browser. */
     destroy(): void;
 }
 

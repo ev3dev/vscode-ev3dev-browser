@@ -555,7 +555,7 @@ export class Device extends vscode.Disposable {
         const selectedItem = await new Promise<ServiceItem>(async (resolve, reject) => {
             // start browsing for devices
             const dnssdClient = await Device.getDnssdClient();
-            const browser = await dnssdClient.browse({
+            const browser = await dnssdClient.createBrowser({
                 ipv: 'IPv6',
                 service: 'sftp-ssh'
             });
@@ -596,6 +596,8 @@ export class Device extends vscode.Disposable {
                 done = true;
                 reject(err);
             });
+
+            await browser.start();
 
             while (!done) {
                 cancelSource = new vscode.CancellationTokenSource();

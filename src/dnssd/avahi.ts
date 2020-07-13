@@ -73,7 +73,7 @@ class AvahiClient implements dnssd.Client {
     constructor(readonly server: Server) {
     }
 
-    public browse(options: dnssd.BrowseOptions): Promise<dnssd.Browser> {
+    public createBrowser(options: dnssd.BrowseOptions): Promise<dnssd.Browser> {
         return new Promise((resolve, reject) => {
             const browser = new AvahiBrowser(this, options);
             browser.once('ready', () => {
@@ -118,15 +118,14 @@ class AvahiClient implements dnssd.Client {
 class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
     private browser: ServiceBrowser | undefined;
     private readonly services: AvahiService[] = new Array<AvahiService>();
+    private readonly bus: dbus.MessageBus;
 
-    constructor(client: AvahiClient, private options: dnssd.BrowseOptions) {
+    constructor(private readonly client: AvahiClient, private options: dnssd.BrowseOptions) {
         super();
-        const proto = this.options.ipv === 'IPv6' ? PROTO_INET6 : PROTO_INET;
-        const type = `_${this.options.service}._${this.options.transport || 'tcp'}`;
         // @ts-ignore
-        const bus: dbus.MessageBus = client.server.$object.bus;
+        this.bus = client.server.$object.bus;
         // @ts-ignore
-        bus.on('message', (msg: dbus.Message) => {
+        this.bus.on('message', (msg: dbus.Message) => {
             if (msg.type !== dbus.MessageType.SIGNAL) {
                 return;
             }
@@ -168,28 +167,25 @@ class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
             signature: 's',
             body: [`type='signal',sender='org.freedesktop.Avahi',interface='org.freedesktop.Avahi.ServiceBrowser'`]
         });
-        bus.call(addMatchMessage).then(async () => {
-            const objPath = await client.server.ServiceBrowserNew(IF_UNSPEC, proto, type, '', 0);
-            const proxy = await bus.getProxyObject('org.freedesktop.Avahi', objPath);
-            this.browser = proxy.getInterface<ServiceBrowser>('org.freedesktop.Avahi.ServiceBrowser');
-            this.emit('ready');
-            // HACK: the current browser model is racy - starts browsing before
-            // event listeners are added. So we replay the events later so they
-            // aren't missed.
-            setTimeout(() => {
-                for (const s of this.services) {
-                    this.emit('added', s);
-                }
-            }, 500);
-        }).catch((err) => this.emit('error', err));
+        this.bus.call(addMatchMessage).then(() => this.emit('ready')).catch((err) => this.emit('error', err));
+    }
+
+    public async start(): Promise<void> {
+        const proto = this.options.ipv === 'IPv6' ? PROTO_INET6 : PROTO_INET;
+        const type = `_${this.options.service}._${this.options.transport || 'tcp'}`;
+        const objPath = await this.client.server.ServiceBrowserNew(IF_UNSPEC, proto, type, '', 0);
+        const proxy = await this.bus.getProxyObject('org.freedesktop.Avahi', objPath);
+        this.browser = proxy.getInterface<ServiceBrowser>('org.freedesktop.Avahi.ServiceBrowser');
+    }
+
+    public async stop(): Promise<void> {
+        await this.browser?.Free();
+        this.browser = undefined;
     }
 
     destroy(): void {
         this.removeAllListeners();
-        if (this.browser) {
-            this.browser.Free().catch(err => console.error(err));
-            this.browser = undefined;
-        }
+        this.stop();
     }
 
 }

@@ -17,18 +17,9 @@ class DnssdClient implements dnssd.Client {
     private destroyOps = new Array<() => void>();
 
     // interface method implementation
-    public browse(options: dnssd.BrowseOptions): Promise<dnssd.Browser> {
-        return new Promise((resolve, reject) => {
-            const browser = new DnssdBrowser(this, options);
-            browser.once('ready', () => {
-                browser.removeAllListeners('error');
-                resolve(browser);
-            });
-            browser.once('error', err => {
-                browser.removeAllListeners('ready');
-                reject(err);
-            });
-        });
+    public createBrowser(options: dnssd.BrowseOptions): Promise<dnssd.Browser> {
+        const browser = new DnssdBrowser(this, options);
+        return Promise.resolve(browser);
     }
 
     // interface method implementation
@@ -60,7 +51,6 @@ class DnssdClient implements dnssd.Client {
 }
 
 class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
-    private running = false;
     private service: dns.Service | undefined;
     private destroyOp: () => void;
     readonly services: DnssdService[] = new Array<DnssdService>();
@@ -68,11 +58,13 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
     constructor(private dnssd: DnssdClient, private options: dnssd.BrowseOptions) {
         super();
         this.destroyOp = this.dnssd.pushDestroyOp(() => this.destroy());
+    }
 
+    public async start(): Promise<void> {
         const regType = `_${this.options.service}._${this.options.transport || 'tcp'}`;
         const domain = ''; // TODO: is this part of options?
 
-        dns.Service.browse(0, 0, regType, domain, async (s, f, i, e, n, t, d) => {
+        this.service = await dns.Service.browse(0, 0, regType, domain, async (s, f, i, e, n, t, d) => {
             if (e) {
                 this.emit('error', new dns.ServiceError(e, 'Error while browsing.'));
                 return;
@@ -110,25 +102,29 @@ class DnssdBrowser extends events.EventEmitter implements dnssd.Browser {
                     this.emit('removed', service);
                 }
             }
-        }).then(async service => {
-            this.service = service;
-            this.running = true;
-            this.emit('ready');
-            while (this.running) {
-                await service.processResult();
-            }
-        }).catch(err => {
-            this.emit('error', err);
         });
+
+        // process received results in the background
+        (async () => {
+            while (this.service) {
+                try {
+                    await this.service.processResult();
+                } catch (err) {
+                    this.emit('error', err);
+                }
+            }
+        })();
+    }
+
+    public async stop(): Promise<void> {
+        this.service?.destroy();
+        this.service = undefined;
     }
 
     destroy(): void {
+        this.removeAllListeners();
+        this.stop();
         this.dnssd.popDestroyOp(this.destroyOp);
-        this.running = false;
-        if (this.service) {
-            this.service.destroy();
-            this.service = undefined;
-        }
     }
 }
 
