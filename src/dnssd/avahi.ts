@@ -53,6 +53,16 @@ let cachedServer: Server | undefined;
 async function getServer(): Promise<Server> {
     if (cachedServer === undefined) {
         const bus = dbus.systemBus();
+        // dbus-next will queue messages and wait forever for a connection
+        // so we have to hack in a timeout, otherwise we end up with a deadlock
+        // on systems without D-Bus.
+        await new Promise((resolve, reject) => setTimeout(() => {
+            if ((bus as any)._connection.state === 'connected') {
+                resolve();
+            } else {
+                reject(Error("Timeout while connecting to D-Bus"));
+            }
+        }, 100));
         const proxy = await bus.getProxyObject('org.freedesktop.Avahi', '/');
         const server = proxy.getInterface<Server>('org.freedesktop.Avahi.Server');
         const version = await server.GetAPIVersion();
