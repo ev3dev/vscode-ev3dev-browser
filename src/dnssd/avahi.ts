@@ -135,10 +135,8 @@ class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
 
     constructor(private readonly client: AvahiClient, private options: dnssd.BrowseOptions) {
         super();
-        // @ts-ignore
-        this.bus = client.server.$object.bus;
-        // @ts-ignore
-        this.bus.on('message', (msg: dbus.Message) => {
+        this.bus = (client.server as any).$object.bus;
+        (this.bus as any).on('message', (msg: dbus.Message) => {
             if (msg.type !== dbus.MessageType.SIGNAL) {
                 return;
             }
