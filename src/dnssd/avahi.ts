@@ -5,7 +5,6 @@ import * as dbus from 'dbus-next';
 import * as events from 'events';
 
 import * as dnssd from '../dnssd';
-import { time } from 'console';
 
 const PROTO_INET = 0;
 const PROTO_INET6 = 1;
