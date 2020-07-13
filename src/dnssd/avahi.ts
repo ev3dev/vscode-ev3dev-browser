@@ -48,9 +48,14 @@ interface ServiceBrowser extends dbus.ClientInterface {
     // on(event: 'CacheExhausted', listener: () => void): this;
 }
 
-let cachedServer: Server | undefined;
+type ServerObject = {
+    proxy: dbus.ProxyObject;
+    iface: Server;
+};
 
-async function getServer(): Promise<Server> {
+let cachedServer: ServerObject | undefined;
+
+async function getServer(): Promise<ServerObject> {
     if (cachedServer === undefined) {
         const bus = dbus.systemBus();
         // dbus-next will queue messages and wait forever for a connection
@@ -66,9 +71,9 @@ async function getServer(): Promise<Server> {
             });
         });
         const proxy = await bus.getProxyObject('org.freedesktop.Avahi', '/');
-        const server = proxy.getInterface<Server>('org.freedesktop.Avahi.Server');
-        const version = await server.GetAPIVersion();
-        cachedServer = server;
+        const iface = proxy.getInterface<Server>('org.freedesktop.Avahi.Server');
+        const version = await iface.GetAPIVersion();
+        cachedServer = { proxy, iface };
     }
 
     return cachedServer;
@@ -82,7 +87,7 @@ export async function getInstance(): Promise<dnssd.Client> {
 class AvahiClient implements dnssd.Client {
     private destroyOps = new Array<() => void>();
 
-    constructor(readonly server: Server) {
+    constructor(public readonly server: ServerObject) {
     }
 
     public createBrowser(options: dnssd.BrowseOptions): Promise<dnssd.Browser> {
@@ -134,7 +139,10 @@ class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
 
     constructor(private readonly client: AvahiClient, private options: dnssd.BrowseOptions) {
         super();
-        this.bus = (client.server as any).$object.bus;
+        // Due to race condition: https://github.com/lathiat/avahi/issues/9
+        // we have to add signal listeners now before creating browser objects
+        // otherwise we miss signals.
+        this.bus = client.server.proxy.bus;
         (this.bus as any).on('message', (msg: dbus.Message) => {
             if (msg.type !== dbus.MessageType.SIGNAL) {
                 return;
@@ -142,10 +150,13 @@ class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
             if (msg.interface !== 'org.freedesktop.Avahi.ServiceBrowser') {
                 return;
             }
+            // TODO: should also check msg.path, but we can receive messages
+            // before ServiceBrowserNew() returns when we don't know the path
+            // yet.
             switch (msg.member) {
                 case 'ItemNew': {
                     const [iface, protocol, name, type, domain, flags] = msg.body;
-                    client.server.ResolveService(iface, protocol, name, type, domain, protocol, 0).then(
+                    client.server.iface.ResolveService(iface, protocol, name, type, domain, protocol, 0).then(
                         ([iface, protocol, name, type, domain, host, aprotocol, addr, port, txt, flags]) => {
                             const service = new AvahiService(iface, protocol, name, type, domain, host, aprotocol, addr, port, txt, flags);
                             this.services.push(service);
@@ -183,7 +194,7 @@ class AvahiBrowser extends events.EventEmitter implements dnssd.Browser {
     public async start(): Promise<void> {
         const proto = this.options.ipv === 'IPv6' ? PROTO_INET6 : PROTO_INET;
         const type = `_${this.options.service}._${this.options.transport || 'tcp'}`;
-        const objPath = await this.client.server.ServiceBrowserNew(IF_UNSPEC, proto, type, '', 0);
+        const objPath = await this.client.server.iface.ServiceBrowserNew(IF_UNSPEC, proto, type, '', 0);
         const proxy = await this.bus.getProxyObject('org.freedesktop.Avahi', objPath);
         this.browser = proxy.getInterface<ServiceBrowser>('org.freedesktop.Avahi.ServiceBrowser');
     }
