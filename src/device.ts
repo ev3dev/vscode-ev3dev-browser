@@ -560,7 +560,7 @@ export class Device extends vscode.Disposable {
                 service: 'sftp-ssh'
             });
             const items = new Array<ServiceItem>();
-            let cancelSource: vscode.CancellationTokenSource;
+            let cancelSource: vscode.CancellationTokenSource | undefined;
             let done = false;
 
             // if a device is added or removed, cancel the quick-pick
@@ -577,21 +577,21 @@ export class Device extends vscode.Disposable {
                     }
                     const item = new ServiceItem(service);
                     items.push(item);
-                    cancelSource.cancel();
+                    cancelSource?.cancel();
                 }
             });
             browser.on('removed', (service) => {
                 const index = items.findIndex(si => si.service === service);
                 if (index > -1) {
                     items.splice(index, 1);
-                    cancelSource.cancel();
+                    cancelSource?.cancel();
                 }
             });
 
             // if there is a browser error, cancel the quick-pick and show
             // an error message
             browser.on('error', err => {
-                cancelSource.cancel();
+                cancelSource?.cancel();
                 browser.destroy();
                 done = true;
                 reject(err);
