@@ -9,6 +9,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Fixed
 - Stop button does not kill all child processes
 - Activate extension on command palette command
+- Fix multiple network interfaces not updated on Windows when scanning for devices
 ### Added
 - ev3dev remote debugger is now a default debugger for Python files
 

@@ -133,9 +133,9 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
     private readonly browsers = new Array<{
         bClient: bonjour.Bonjour,
         browser: bonjour.Browser,
-        services: BonjourService[]
+        services: BonjourService[],
+        updateInterval: NodeJS.Timer,
     }>();
-    private updateInterval: NodeJS.Timer | undefined;
 
     constructor(private readonly client: BonjourClient, private readonly opts: dnssd.BrowseOptions) {
         super();
@@ -176,21 +176,19 @@ class BonjourBrowser extends events.EventEmitter implements dnssd.Browser {
             const [service] = services.splice(index, 1);
             this.emit('removed', service, false);
         });
-        this.browsers.push({ bClient: bClient, browser: browser, services: services });
+        this.browsers.push({
+            bClient: bClient, browser: browser, services: services, updateInterval: setInterval(() => {
+                // poll again every 1 second
+                browser.update();
+            }, 1000)
+        });
         browser.start();
-        this.updateInterval = setInterval(() => {
-            // poll again every 1 second
-            browser.update();
-        }, 1000);
     }
 
     private removeBrowser(bClient: bonjour.Bonjour): void {
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-            this.updateInterval = undefined;
-        }
         const i = this.browsers.findIndex(v => v.bClient === bClient);
         const [removed] = this.browsers.splice(i, 1);
+        clearInterval(removed.updateInterval);
         removed.browser.stop();
         for (const s of removed.services) {
             this.emit('removed', s);
