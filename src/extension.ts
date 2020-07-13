@@ -146,7 +146,14 @@ async function pickDevice(): Promise<void> {
             toastStatusBarMessage(`Connected`);
         }
         catch (err) {
-            vscode.window.showErrorMessage(`Failed to connect to ${device.name}: ${err.message}`);
+            const troubleshoot = 'Troubleshoot';
+            vscode.window.showErrorMessage(`Failed to connect to ${device.name}: ${err.message}`, troubleshoot)
+                .then((value) => {
+                    if (value === troubleshoot) {
+                        const wiki = vscode.Uri.parse('https://github.com/ev3dev/vscode-ev3dev-browser/wiki/Troubleshooting')
+                        vscode.commands.executeCommand('vscode.open', wiki);
+                    }
+                });
         }
     });
 }
@@ -783,7 +790,14 @@ class DeviceTreeItem extends vscode.TreeItem {
             toastStatusBarMessage(`Connected to ${this.label}`);
         }
         catch (err) {
-            vscode.window.showErrorMessage(`Failed to connect to ${this.label}: ${err.message}`);
+            const troubleshoot = 'Troubleshoot';
+            vscode.window.showErrorMessage(`Failed to connect to ${this.label}: ${err.message}`, troubleshoot)
+                .then((value) => {
+                    if (value === troubleshoot) {
+                        const wiki = vscode.Uri.parse('https://github.com/ev3dev/vscode-ev3dev-browser/wiki/Troubleshooting')
+                        vscode.commands.executeCommand('vscode.open', wiki);
+                    }
+                });
         }
     }
 
