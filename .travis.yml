@@ -7,7 +7,7 @@ language: node_js
 node_js: lts/*
 
 install:
-  - npm install --no-optional
+  - npm install
 
 script:
   - npm run vscode:prepublish
