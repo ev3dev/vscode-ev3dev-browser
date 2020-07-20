@@ -1,9 +1,9 @@
 # Change Log
 All notable changes to the "ev3dev-browser" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+<!-- Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file. -->
 
-## Unreleased
+## v1.2.0 - 2020-07-20
 ### Changed
 - Initial debug configuration has new example to run current file
 ### Fixed
