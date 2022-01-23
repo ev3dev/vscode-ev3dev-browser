@@ -56,6 +56,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.action.pickDevice', () => pickDevice()),
         vscode.commands.registerCommand('ev3devBrowser.action.download', () => downloadAll()),
         vscode.commands.registerCommand('ev3devBrowser.action.refresh', () => refresh()),
+        vscode.commands.registerCommand('ev3devBrowser.action.uploadSingleFile', f => uploadSingleFileCommand(f)),
         vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e)),
         vscode.debug.registerDebugAdapterDescriptorFactory('ev3devBrowser', factory),
         vscode.debug.registerDebugConfigurationProvider('ev3devBrowser', provider),
@@ -476,6 +477,68 @@ async function download(folder: vscode.WorkspaceFolder, device: Device): Promise
 
         return true;
     });
+}
+
+// ask for a file directory, then upload single file to ev3
+async function uploadSingleFileCommand(f: vscode.Uri) {
+    console.log(f);
+    try {
+        if (!f) {
+            throw new Error("no file detected");
+        }
+        let device = await ev3devBrowserProvider.getDevice();
+        if (!device) {
+            throw new Error("no device");
+        }
+        if (!device.isConnected) {
+            throw new Error("Device is not connected.");
+        }
+        await vscode.workspace.saveAll();
+        const inputboxOptions = {
+            ignoreFocusOut: true,
+            placeHolder: "folder to place file in",
+            title: `Where should ${path.basename(f.fsPath)} be placed?`
+        };
+        const inputFilePath = await vscode.window.showInputBox(inputboxOptions);
+        if (inputFilePath == undefined) {
+            throw new Error("no file path given");
+        }
+        const relativePath = vscode.workspace.asRelativePath(f, false);
+        const basename = path.basename(f.fsPath);
+        let relativeDir = path.dirname(relativePath)
+        if (path === path.win32) {
+            relativeDir = relativeDir.replace(path.win32.sep, path.posix.sep);
+        }
+        const remoteDir = path.posix.join(device.homeDirectoryPath, inputFilePath);
+        await uploadSingleFile(f, remoteDir, device);
+    }
+    catch (err) {
+        vscode.window.showErrorMessage(`Error sending single file: ${err.message}`);
+    }
+}
+
+async function uploadSingleFile(f: vscode.Uri, remoteDir: string, device: Device) {
+    let mode: string;
+    if (await verifyFileHeader(f.fsPath, Buffer.from('#!/'))) {
+        mode = "755";
+    }
+    else {
+        const stat = fs.statSync(f.fsPath);
+        if (process.platform === "win32") {
+            if (await verifyFileHeader(f.fsPath, Buffer.from('\x7fELF'))) {
+                stat.mode |= S_IXUSR;
+            }
+        }
+        mode = stat.mode.toString(8);
+    }
+    if (!device) {
+        throw new Error("lost connection");
+    }
+    await device.mkdir_p(remoteDir);
+    await device.put(f.fsPath, path.basename(f.fsPath), mode);
+    ev3devBrowserProvider.fireDeviceChanged();
+    vscode.window.showInformationMessage("upload complete.");
+    return;
 }
 
 function refresh(): void {

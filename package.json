@@ -22,7 +22,8 @@
     "activationEvents": [
         "onView:ev3devBrowser",
         "onDebugResolve:ev3devBrowser",
-        "onCommand:ev3devBrowser.action.pickDevice"
+        "onCommand:ev3devBrowser.action.pickDevice",
+        "onCommand:ev3devBrowser.action.uploadSingleFile"
     ],
     "main": "./out/extension.js",
     "contributes": {
@@ -137,8 +138,7 @@
                 }
             }
         },
-        "commands": [
-            {
+        "commands": [{
                 "command": "ev3devBrowser.deviceTreeItem.openSshTerminal",
                 "title": "Open SSH Terminal"
             },
@@ -204,70 +204,69 @@
                     "light": "resources/icons/light/refresh.svg"
                 },
                 "category": "ev3dev"
-            }
-        ],
-        "debuggers": [
+            },
             {
-                "type": "ev3devBrowser",
-                "label": "ev3dev",
-                "program": "./out/debugServer.js",
-                "runtime": "node",
-                "languages": [
-                    "python"
-                ],
-                "configurationAttributes": {
-                    "launch": {
-                        "required": [
-                            "program"
-                        ],
-                        "properties": {
-                            "program": {
-                                "type": "string",
-                                "description": "Absolute path to an executable file on the remote device.",
-                                "default": "/home/robot/myproject/myprogram"
-                            },
-                            "interactiveTerminal": {
-                                "type": "boolean",
-                                "description": "When true, program will be run in a new interactive terminal, when false the output pane will be used instead.",
-                                "default": false
-                            }
-                        }
-                    }
-                },
-                "configurationSnippets": [
-                    {
-                        "label": "ev3dev: Download and Run",
-                        "description": "Configuration for downloading and running a program on an ev3dev device.",
-                        "body": {
-                            "name": "Download and Run",
-                            "type": "ev3devBrowser",
-                            "request": "launch",
-                            "program": "^\"/home/robot/\\${workspaceFolderBasename}/${1:myprogram}\"",
-                            "interactiveTerminal": false
-                        }
-                    }
-                ],
-                "initialConfigurations": [
-                    {
-                        "name": "Download and Run current file",
-                        "type": "ev3devBrowser",
-                        "request": "launch",
-                        "program": "/home/robot/${workspaceFolderBasename}/${relativeFile}",
-                        "interactiveTerminal": true
-                    },
-                    {
-                        "name": "Download and Run my-program",
-                        "type": "ev3devBrowser",
-                        "request": "launch",
-                        "program": "/home/robot/${workspaceFolderBasename}/my-program (replace 'my-program' with the actual path)",
-                        "interactiveTerminal": true
-                    }
-                ]
+                "command": "ev3devBrowser.action.uploadSingleFile",
+                "title": "upload this file to connected ev3",
+                "category": "ev3dev"
             }
         ],
-        "menus": {
-            "commandPalette": [
+        "debuggers": [{
+            "type": "ev3devBrowser",
+            "label": "ev3dev",
+            "program": "./out/debugServer.js",
+            "runtime": "node",
+            "languages": [
+                "python"
+            ],
+            "configurationAttributes": {
+                "launch": {
+                    "required": [
+                        "program"
+                    ],
+                    "properties": {
+                        "program": {
+                            "type": "string",
+                            "description": "Absolute path to an executable file on the remote device.",
+                            "default": "/home/robot/myproject/myprogram"
+                        },
+                        "interactiveTerminal": {
+                            "type": "boolean",
+                            "description": "When true, program will be run in a new interactive terminal, when false the output pane will be used instead.",
+                            "default": false
+                        }
+                    }
+                }
+            },
+            "configurationSnippets": [{
+                "label": "ev3dev: Download and Run",
+                "description": "Configuration for downloading and running a program on an ev3dev device.",
+                "body": {
+                    "name": "Download and Run",
+                    "type": "ev3devBrowser",
+                    "request": "launch",
+                    "program": "^\"/home/robot/\\${workspaceFolderBasename}/${1:myprogram}\"",
+                    "interactiveTerminal": false
+                }
+            }],
+            "initialConfigurations": [{
+                    "name": "Download and Run current file",
+                    "type": "ev3devBrowser",
+                    "request": "launch",
+                    "program": "/home/robot/${workspaceFolderBasename}/${relativeFile}",
+                    "interactiveTerminal": true
+                },
                 {
+                    "name": "Download and Run my-program",
+                    "type": "ev3devBrowser",
+                    "request": "launch",
+                    "program": "/home/robot/${workspaceFolderBasename}/my-program (replace 'my-program' with the actual path)",
+                    "interactiveTerminal": true
+                }
+            ]
+        }],
+        "menus": {
+            "commandPalette": [{
                     "command": "ev3devBrowser.action.pickDevice"
                 },
                 {
@@ -323,8 +322,7 @@
                     "when": "false"
                 }
             ],
-            "view/title": [
-                {
+            "view/title": [{
                     "command": "ev3devBrowser.action.refresh",
                     "group": "navigation",
                     "when": "view == ev3devBrowser && ev3devBrowser.context.connected"
@@ -335,8 +333,7 @@
                     "when": "view == ev3devBrowser && ev3devBrowser.context.connected"
                 }
             ],
-            "view/item/context": [
-                {
+            "view/item/context": [{
                     "command": "ev3devBrowser.deviceTreeItem.reconnect",
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.device.disconnected",
                     "group": "group@0"
@@ -411,15 +408,18 @@
                     "when": "view == ev3devBrowser && viewItem == ev3devBrowser.file",
                     "group": "group@10"
                 }
-            ]
+            ],
+            "explorer/context": [{
+                "command": "ev3devBrowser.action.uploadSingleFile",
+                "group": "navigation",
+                "when": "!explorerResourceIsFolder"
+            }]
         },
         "views": {
-            "explorer": [
-                {
-                    "id": "ev3devBrowser",
-                    "name": "ev3dev device browser"
-                }
-            ]
+            "explorer": [{
+                "id": "ev3devBrowser",
+                "name": "ev3dev device browser"
+            }]
         }
     },
     "scripts": {
