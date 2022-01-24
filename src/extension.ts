@@ -535,7 +535,8 @@ async function uploadSingleFile(f: vscode.Uri, remoteDir: string, device: Device
         throw new Error("lost connection");
     }
     await device.mkdir_p(remoteDir);
-    await device.put(f.fsPath, path.basename(f.fsPath), mode);
+    console.log(remoteDir);
+    await device.put(f.fsPath, path.posix.resolve(remoteDir, path.basename(f.fsPath)), mode);
     ev3devBrowserProvider.fireDeviceChanged();
     vscode.window.showInformationMessage("upload complete.");
     return;
