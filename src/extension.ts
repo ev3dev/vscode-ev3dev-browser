@@ -494,12 +494,15 @@ async function uploadSingleFileCommand(f: vscode.Uri) {
             throw new Error("Device is not connected.");
         }
         await vscode.workspace.saveAll();
+        const config = vscode.workspace.getConfiguration('ev3devBrowser.download');
+        const projectDir = config.get<string>('directory');
         const inputboxOptions = {
             ignoreFocusOut: true,
-            placeHolder: "folder to place file in",
+            placeHolder: projectDir || "enter folder name to place file in",
             title: `Where should ${path.basename(f.fsPath)} be placed?`
         };
-        const inputFilePath = await vscode.window.showInputBox(inputboxOptions);
+        let inputFilePath = await vscode.window.showInputBox(inputboxOptions);
+        inputFilePath = (inputFilePath || projectDir) || "";
         if (inputFilePath == undefined) {
             throw new Error("no file path given");
         }
