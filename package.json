@@ -206,8 +206,13 @@
                 "category": "ev3dev"
             },
             {
-                "command": "ev3devBrowser.action.uploadSingleFile",
-                "title": "upload this file to connected ev3",
+                "command": "ev3devBrowser.action.downloadSingleFile",
+                "title": "download this file to ev3 robot",
+                "category": "ev3dev"
+            },
+            {
+                "command": "ev3devBrowser.action.downloadSingleFolder",
+                "title": "download this folder to ev3 robot",
                 "category": "ev3dev"
             }
         ],
@@ -410,17 +415,31 @@
                 }
             ],
             "explorer/context": [{
-                "command": "ev3devBrowser.action.uploadSingleFile",
-                "group": "navigation",
-                "when": "!explorerResourceIsFolder"
-            }]
+                "submenu": "explorer/context/ev3devBrowser",
+                "group": "ev3devBrowser.editorGroup"
+            }],
+            "explorer/context/ev3devBrowser": [{
+                    "command": "ev3devBrowser.action.downloadSingleFile",
+                    "group": "group@1",
+                    "when": "!explorerResourceIsFolder"
+                },
+                {
+                    "command": "ev3devBrowser.action.downloadSingleFolder",
+                    "group": "group@2",
+                    "when": "explorerResourceIsFolder"
+                }
+            ]
         },
         "views": {
             "explorer": [{
                 "id": "ev3devBrowser",
                 "name": "ev3dev device browser"
             }]
-        }
+        },
+        "submenus": [{
+            "label": "ev3dev Browser",
+            "id": "explorer/context/ev3devBrowser"
+        }]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",

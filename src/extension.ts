@@ -56,7 +56,8 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('ev3devBrowser.action.pickDevice', () => pickDevice()),
         vscode.commands.registerCommand('ev3devBrowser.action.download', () => downloadAll()),
         vscode.commands.registerCommand('ev3devBrowser.action.refresh', () => refresh()),
-        vscode.commands.registerCommand('ev3devBrowser.action.uploadSingleFile', f => uploadSingleFileCommand(f)),
+        vscode.commands.registerCommand('ev3devBrowser.action.downloadSingleFile', f => downloadSingleFileCommand(f)),
+        vscode.commands.registerCommand("ev3devBrowser.action.downloadSingleFolder", f => downloadSingleFolderCommand(f)),
         vscode.debug.onDidReceiveDebugSessionCustomEvent(e => handleCustomDebugEvent(e)),
         vscode.debug.registerDebugAdapterDescriptorFactory('ev3devBrowser', factory),
         vscode.debug.registerDebugConfigurationProvider('ev3devBrowser', provider),
@@ -480,7 +481,7 @@ async function download(folder: vscode.WorkspaceFolder, device: Device): Promise
 }
 
 // ask for a file directory, then upload single file to ev3
-async function uploadSingleFileCommand(f: vscode.Uri) {
+async function downloadSingleFileCommand(f: vscode.Uri) {
     console.log(f);
     try {
         if (!f) {
@@ -513,14 +514,14 @@ async function uploadSingleFileCommand(f: vscode.Uri) {
             relativeDir = relativeDir.replace(path.win32.sep, path.posix.sep);
         }
         const remoteDir = path.posix.join(device.homeDirectoryPath, inputFilePath);
-        await uploadSingleFile(f, remoteDir, device);
+        await downloadSingleFile(f, remoteDir, device);
     }
     catch (err) {
         vscode.window.showErrorMessage(`Error sending single file: ${err.message}`);
     }
 }
 
-async function uploadSingleFile(f: vscode.Uri, remoteDir: string, device: Device) {
+async function downloadSingleFile(f: vscode.Uri, remoteDir: string, device: Device) {
     let mode: string;
     if (await verifyFileHeader(f.fsPath, Buffer.from('#!/'))) {
         mode = "755";
@@ -543,6 +544,109 @@ async function uploadSingleFile(f: vscode.Uri, remoteDir: string, device: Device
     ev3devBrowserProvider.fireDeviceChanged();
     vscode.window.showInformationMessage("upload complete.");
     return;
+}
+
+async function downloadSingleFolderCommand(f: vscode.Uri) {
+    try {
+
+        if (!f) {
+            throw new Error("no folder detected");
+        }
+        let device = await ev3devBrowserProvider.getDevice();
+        if (!device) {
+            throw new Error("no device");
+        }
+        if (!device.isConnected) {
+            throw new Error("Device is not connected.");
+        }
+        await vscode.workspace.saveAll();
+        const config = vscode.workspace.getConfiguration('ev3devBrowser.download');
+        const projectDir = config.get<string>('directory');
+        const inputboxOptions = {
+            ignoreFocusOut: true,
+            placeHolder: projectDir || "enter folder name to place folder in",
+            title: `Where should ${path.basename(f.fsPath)} be placed?`
+        };
+        let inputFilePath = await vscode.window.showInputBox(inputboxOptions);
+        inputFilePath = (inputFilePath || projectDir) || "";
+        if (inputFilePath == undefined) {
+            throw new Error("no file path given");
+        }
+        const remoteDir = path.posix.join(device.homeDirectoryPath, inputFilePath);
+        await downloadSingleFolder(f, remoteDir, device);
+    }
+    catch (err) {
+        vscode.window.showErrorMessage(`Error sending single folder: ${err.message}`);
+    }
+}
+
+async function downloadSingleFolder(folder: vscode.Uri, remDir: string, device: Device) {
+    const config = vscode.workspace.getConfiguration('ev3devBrowser.download');
+    const includeFiles = new vscode.RelativePattern(folder.fsPath, config.get<string>('include', ''));
+    const excludeFiles = new vscode.RelativePattern(folder.fsPath, config.get<string>('exclude', ''));
+    const files = await vscode.workspace.findFiles(includeFiles, excludeFiles);
+    if (!files.length) {
+        const msg = 'No files selected for download. Please check the ev3devBrowser.download.include and ev3devBrowser.download.exclude settings.';
+        // try to make it easy for the user to fix the problem by offering to
+        // open the settings editor
+        const openSettings = 'Open Settings';
+        vscode.window.showErrorMessage(msg, openSettings).then(result => {
+            if (result === openSettings) {
+                vscode.commands.executeCommand('workbench.action.openSettings2');
+            }
+        });
+
+        // "cancel" the download
+        return false;
+    }
+    for (const f of files) {
+        const relativePath = vscode.workspace.asRelativePath(f, false);
+
+        const basename = path.basename(f.fsPath);
+        let relativeDir = path.dirname(relativePath);
+        if (path === path.win32) {
+            relativeDir = relativeDir.replace(path.win32.sep, path.posix.sep);
+        }
+        const remoteDir = path.posix.join(remDir, relativeDir);
+        const remotePath = path.posix.resolve(remoteDir, basename);
+
+        // File permission handling:
+        // - If the file starts with a shebang, then assume it should be
+        //   executable.
+        // - Otherwise use the existing file permissions. On Windows
+        //   we also check for ELF file format to know if a file
+        //   should be executable since Windows doesn't know about
+        //   POSIX file permissions.
+        let mode: string;
+        if (await verifyFileHeader(f.fsPath, Buffer.from('#!/'))) {
+            mode = '755';
+        }
+        else {
+            const stat = fs.statSync(f.fsPath);
+            if (process.platform === 'win32') {
+                // fs.stat() on win32 return something like '100666'
+                // See https://github.com/joyent/libuv/blob/master/src/win/fs.c
+                // and search for `st_mode`
+
+                // So, we check to see the file uses ELF format, if
+                // so, make it executable.
+                if (await verifyFileHeader(f.fsPath, Buffer.from('\x7fELF'))) {
+                    stat.mode |= S_IXUSR;
+                }
+            }
+            mode = stat.mode.toString(8);
+        }
+
+        // make sure the directory exists
+        if (!device) {
+            throw new Error("Lost connection");
+        }
+        await device.mkdir_p(remoteDir);
+        // then we can copy the file
+        await device.put(f.fsPath, remotePath, mode);
+    }
+    vscode.window.showInformationMessage("Folder sent");
+    return true;
 }
 
 function refresh(): void {
