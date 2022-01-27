@@ -507,12 +507,6 @@ async function downloadSingleFileCommand(f: vscode.Uri) {
         if (inputFilePath == undefined) {
             throw new Error("no file path given");
         }
-        const relativePath = vscode.workspace.asRelativePath(f, false);
-        const basename = path.basename(f.fsPath);
-        let relativeDir = path.dirname(relativePath)
-        if (path === path.win32) {
-            relativeDir = relativeDir.replace(path.win32.sep, path.posix.sep);
-        }
         const remoteDir = path.posix.join(device.homeDirectoryPath, inputFilePath);
         await downloadSingleFile(f, remoteDir, device);
     }
@@ -539,8 +533,8 @@ async function downloadSingleFile(f: vscode.Uri, remoteDir: string, device: Devi
         throw new Error("lost connection");
     }
     await device.mkdir_p(remoteDir);
-    console.log(remoteDir);
-    await device.put(f.fsPath, path.posix.resolve(remoteDir, path.basename(f.fsPath)), mode);
+    const remotePath = path.posix.resolve(remoteDir, path.basename(f.fsPath));
+    await device.put(f.fsPath, remotePath, mode);
     ev3devBrowserProvider.fireDeviceChanged();
     vscode.window.showInformationMessage("upload complete.");
     return;
@@ -569,7 +563,7 @@ async function downloadSingleFolderCommand(f: vscode.Uri) {
         let inputFilePath = await vscode.window.showInputBox(inputboxOptions);
         inputFilePath = (inputFilePath || projectDir) || "";
         if (inputFilePath == undefined) {
-            throw new Error("no file path given");
+            throw new Error("no path given");
         }
         const remoteDir = path.posix.join(device.homeDirectoryPath, inputFilePath);
         await downloadSingleFolder(f, remoteDir, device);
@@ -594,7 +588,6 @@ async function downloadSingleFolder(folder: vscode.Uri, remDir: string, device: 
                 vscode.commands.executeCommand('workbench.action.openSettings2');
             }
         });
-
         // "cancel" the download
         return false;
     }
