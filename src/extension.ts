@@ -548,7 +548,6 @@ async function downloadSingleFile(f: vscode.Uri, remoteDir: string, device: Devi
 
 async function downloadSingleFolderCommand(f: vscode.Uri) {
     try {
-
         if (!f) {
             throw new Error("no folder detected");
         }
@@ -599,54 +598,69 @@ async function downloadSingleFolder(folder: vscode.Uri, remDir: string, device: 
         // "cancel" the download
         return false;
     }
-    for (const f of files) {
-        const relativePath = vscode.workspace.asRelativePath(f, false);
-
-        const basename = path.basename(f.fsPath);
-        let relativeDir = path.dirname(relativePath);
-        if (path === path.win32) {
-            relativeDir = relativeDir.replace(path.win32.sep, path.posix.sep);
-        }
-        const remoteDir = path.posix.join(remDir, relativeDir);
-        const remotePath = path.posix.resolve(remoteDir, basename);
-
-        // File permission handling:
-        // - If the file starts with a shebang, then assume it should be
-        //   executable.
-        // - Otherwise use the existing file permissions. On Windows
-        //   we also check for ELF file format to know if a file
-        //   should be executable since Windows doesn't know about
-        //   POSIX file permissions.
-        let mode: string;
-        if (await verifyFileHeader(f.fsPath, Buffer.from('#!/'))) {
-            mode = '755';
-        }
-        else {
-            const stat = fs.statSync(f.fsPath);
-            if (process.platform === 'win32') {
-                // fs.stat() on win32 return something like '100666'
-                // See https://github.com/joyent/libuv/blob/master/src/win/fs.c
-                // and search for `st_mode`
-
-                // So, we check to see the file uses ELF format, if
-                // so, make it executable.
-                if (await verifyFileHeader(f.fsPath, Buffer.from('\x7fELF'))) {
-                    stat.mode |= S_IXUSR;
-                }
+    return vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Sending folder",
+        cancellable: true,
+    }, async (progress, token) => {
+        let fileIndex: number = 1;
+        const increment: number = 100 / files.length;
+        const reportProgress = (message: string) => progress.report({ message: message });
+        for (const f of files) {
+            if (token.isCancellationRequested) {
+                ev3devBrowserProvider.fireDeviceChanged();
+                return false;
             }
-            mode = stat.mode.toString(8);
-        }
+            const relativePath = vscode.workspace.asRelativePath(f, false);
+            const basename = path.basename(f.fsPath);
+            let relativeDir = path.dirname(relativePath);
+            if (path === path.win32) {
+                relativeDir = relativeDir.replace(path.win32.sep, path.posix.sep);
+            }
+            const remoteDir = path.posix.join(remDir, relativeDir);
+            const remotePath = path.posix.resolve(remoteDir, basename);
+            const baseProgressMessage = `(${fileIndex}/${files.length}) ${relativePath}`;
+            reportProgress(baseProgressMessage);
+            // File permission handling:
+            // - If the file starts with a shebang, then assume it should be
+            //   executable.
+            // - Otherwise use the existing file permissions. On Windows
+            //   we also check for ELF file format to know if a file
+            //   should be executable since Windows doesn't know about
+            //   POSIX file permissions.
+            let mode: string;
+            if (await verifyFileHeader(f.fsPath, Buffer.from('#!/'))) {
+                mode = '755';
+            }
+            else {
+                const stat = fs.statSync(f.fsPath);
+                if (process.platform === 'win32') {
+                    // fs.stat() on win32 return something like '100666'
+                    // See https://github.com/joyent/libuv/blob/master/src/win/fs.c
+                    // and search for `st_mode`
 
-        // make sure the directory exists
-        if (!device) {
-            throw new Error("Lost connection");
+                    // So, we check to see the file uses ELF format, if
+                    // so, make it executable.
+                    if (await verifyFileHeader(f.fsPath, Buffer.from('\x7fELF'))) {
+                        stat.mode |= S_IXUSR;
+                    }
+                }
+                mode = stat.mode.toString(8);
+            }
+
+            // make sure the directory exists
+            if (!device) {
+                throw new Error("Lost connection");
+            }
+            await device.mkdir_p(remoteDir);
+            // then we can copy the file
+            await device.put(f.fsPath, remotePath, mode);
+            fileIndex++;
+            progress.report({ increment: increment });
         }
-        await device.mkdir_p(remoteDir);
-        // then we can copy the file
-        await device.put(f.fsPath, remotePath, mode);
-    }
-    vscode.window.showInformationMessage("Folder sent");
-    return true;
+        vscode.window.showInformationMessage("Folder sent");
+        return true;
+    });
 }
 
 function refresh(): void {
