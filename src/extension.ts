@@ -17,6 +17,7 @@ import {
     toastStatusBarMessage,
     verifyFileHeader,
     getPlatform,
+    normalizeLineEndings,
 } from './utils';
 
 // fs.constants.S_IXUSR is undefined on win32!
@@ -438,6 +439,10 @@ async function download(folder: vscode.WorkspaceFolder, device: Device): Promise
                 let mode: string;
                 if (await verifyFileHeader(f.fsPath, Buffer.from('#!/'))) {
                     mode = '755';
+                    // Bash will fail to execute a file when the shebang line
+                    // contains Windows line endings because it treats \r as
+                    // text rather than a line break.
+                    await normalizeLineEndings(f.fsPath);
                 }
                 else {
                     const stat = fs.statSync(f.fsPath);

@@ -33,6 +33,40 @@ export function getSharedTempDir(sharedKey: string): Promise<string> {
     });
 }
 
+/**
+ * Checks a file for Windows line endings. If found, modifies the file to remove
+ * the Windows line endings.
+ * @param path The path to the file.
+ * @returns true if the file was modified, otherwise false
+ */
+export function normalizeLineEndings(path: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        fs.readFile(path, { encoding: "utf8" }, (err, data) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+
+            const replace = data.replace("\r\n", "\n");
+
+            if (replace === data) {
+                // not changed
+                resolve(false);
+                return;
+            }
+
+            fs.writeFile(path, replace, (err) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                resolve(true);
+            });
+        });
+    });
+}
+
 export function openAndRead(path: string, offset: number, length: number, position: number): Promise<Buffer> {
     return new Promise((resolve, reject) => {
         fs.open(path, 'r', (err, fd) => {
