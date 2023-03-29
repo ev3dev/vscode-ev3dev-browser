@@ -515,11 +515,15 @@ export class Device extends vscode.Disposable {
         const txt: dnssd.TxtRecords = {};
         txt['ev3dev.robot.user'] = device.username || 'robot';
         txt['ev3dev.robot.home'] = device.homeDirectory || `/home/${txt['ev3dev.robot.user']}`;
+
+        // device.ipAddress is validated, so this is safe
+        const [address, port] = device.ipAddress.split(':');
+
         return <dnssd.Service>{
             name: device.name,
-            address: device.ipAddress,
+            address,
             ipv: 'IPv4',
-            port: 22,
+            port: Number(port) || 22,
             service: 'sftp-ssh',
             transport: 'tcp',
             txt: txt
@@ -643,7 +647,7 @@ export class Device extends vscode.Disposable {
                 prompt: "Enter the IP address of the device",
                 placeHolder: 'Example: "192.168.137.3"',
                 validateInput: (v) => {
-                    if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(v)) {
+                    if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d{1,5})?$/.test(v)) {
                         return 'Not a valid IP address';
                     }
                     return undefined;

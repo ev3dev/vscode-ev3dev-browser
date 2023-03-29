@@ -8,6 +8,7 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 ### Fixed
 - Fixed Windows path separator in "program" in `.vscode/launch.json` not converted to UNIX path.
 - Fixed running files with `#!` and Windows line endings (CRLF vs. LF).
+- Fixed no way to specify port for user-specified IP address.
 
 ## v1.2.0 - 2020-07-20
 ### Changed
