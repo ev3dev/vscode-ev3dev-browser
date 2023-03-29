@@ -24,7 +24,7 @@
         "onDebugResolve:ev3devBrowser",
         "onCommand:ev3devBrowser.action.pickDevice"
     ],
-    "main": "./out/extension.js",
+    "main": "./out/main.js",
     "contributes": {
         "configuration": {
             "title": "ev3dev browser configuration",
@@ -423,7 +423,10 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
+        "vscode:prepublish": "npm run esbuild-base -- --minify",
+        "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+        "esbuild": "npm run esbuild-base -- --sourcemap",
+        "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
@@ -438,6 +441,7 @@
         "@types/temp": "^0.8.3",
         "@types/vscode": "^1.39.0",
         "@types/zen-observable": "^0.5.3",
+        "esbuild": "^0.17.14",
         "tslint": "^5.8.0",
         "typescript": "^3.7.4",
         "vscode-test": "^1.3.0"

@@ -2,7 +2,7 @@ import compareVersions = require('compare-versions');
 import * as events from "events";
 import * as readline from 'readline';
 import * as ssh2 from 'ssh2';
-import * as Observable from 'zen-observable';
+import Observable from 'zen-observable';
 
 const minBrickdVersion = '1.1.0';
 const maxBrickdVersion = '2.0.0';

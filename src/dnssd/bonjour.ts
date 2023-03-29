@@ -1,5 +1,5 @@
 
-import * as bonjour from 'bonjour';
+import bonjour from 'bonjour';
 import * as events from 'events';
 import * as os from 'os';
 

@@ -4,7 +4,7 @@ import * as readline from 'readline';
 import * as ssh2 from 'ssh2';
 import * as ssh2Streams from 'ssh2-streams';
 import * as vscode from 'vscode';
-import * as Observable from 'zen-observable';
+import Observable from 'zen-observable';
 
 import { Brickd } from './brickd';
 import * as dnssd from './dnssd';
