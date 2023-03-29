@@ -436,7 +436,7 @@ async function download(folder: vscode.WorkspaceFolder, device: Device): Promise
                 //   should be executable since Windows doesn't know about
                 //   POSIX file permissions.
                 let mode: string;
-                if (await verifyFileHeader(f.fsPath, new Buffer('#!/'))) {
+                if (await verifyFileHeader(f.fsPath, Buffer.from('#!/'))) {
                     mode = '755';
                 }
                 else {
@@ -448,7 +448,7 @@ async function download(folder: vscode.WorkspaceFolder, device: Device): Promise
 
                         // So, we check to see the file uses ELF format, if
                         // so, make it executable.
-                        if (await verifyFileHeader(f.fsPath, new Buffer('\x7fELF'))) {
+                        if (await verifyFileHeader(f.fsPath, Buffer.from('\x7fELF'))) {
                             stat.mode |= S_IXUSR;
                         }
                     }

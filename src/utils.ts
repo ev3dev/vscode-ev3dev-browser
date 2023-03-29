@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import * as temp from 'temp';
 import * as fs from 'fs';
 import * as os from 'os';
-import { isArray } from 'util';
 
 const toastDuration = 5000;
 
@@ -42,7 +41,7 @@ export function openAndRead(path: string, offset: number, length: number, positi
                 return;
             }
 
-            const buffer = new Buffer(length);
+            const buffer = Buffer.alloc(length);
             fs.read(fd, buffer, offset, length, position, (err, bytesRead, buffer) => {
                 fs.close(fd, err => console.log(err));
                 if (err) {
@@ -56,7 +55,7 @@ export function openAndRead(path: string, offset: number, length: number, positi
 }
 
 export async function verifyFileHeader(filePath: string, expectedHeader: Buffer | number[], offset: number = 0): Promise<boolean> {
-    const bufferExpectedHeader = isArray(expectedHeader) ? new Buffer(<number[]>expectedHeader) : <Buffer>expectedHeader;
+    const bufferExpectedHeader = Array.isArray(expectedHeader) ? Buffer.from(<number[]>expectedHeader) : <Buffer>expectedHeader;
     const header = await openAndRead(filePath, 0, bufferExpectedHeader.length, offset);
     return header.compare(bufferExpectedHeader) === 0;
 }
