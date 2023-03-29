@@ -3,8 +3,7 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 <!-- Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file. -->
 
-## Unreleased
-
+## v1.2.1 - 2023-03-29
 ### Fixed
 - Fixed Windows path separator in "program" in `.vscode/launch.json` not converted to UNIX path.
 - Fixed running files with `#!` and Windows line endings (CRLF vs. LF).
