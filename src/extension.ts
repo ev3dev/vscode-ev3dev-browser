@@ -191,9 +191,12 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
 
             // run the program
             try {
-                const dirname = path.posix.dirname(args.program);
+                // normalize the path to unix path separators since this path will be used on the EV3
+                const programPath = vscode.Uri.file(args.program).path;
+
+                const dirname = path.posix.dirname(programPath);
                 if (args.interactiveTerminal) {
-                    const command = `brickrun -r --directory="${dirname}" "${args.program}"`;
+                    const command = `brickrun -r --directory="${dirname}" "${programPath}"`;
                     const config = vscode.workspace.getConfiguration(`terminal.integrated.env.${getPlatform()}`);
                     const termEnv = config.get<string>('TERM');
                     const env = {
@@ -208,7 +211,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                         debugTerminal.dispose();
                     }
                     debugTerminal = vscode.window.createTerminal({
-                        name: `${path.posix.basename(args.program)} on ${device.name}`,
+                        name: `${path.posix.basename(programPath)} on ${device.name}`,
                         pty: {
                             onDidWrite: writeEmitter.event,
                             open: (dim: vscode.TerminalDimensions | undefined) => {
@@ -262,7 +265,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                     event.session.customRequest('ev3devBrowser.debugger.thread', 'started');
                 }
                 else {
-                    const command = `brickrun --directory="${dirname}" "${args.program}"`;
+                    const command = `brickrun --directory="${dirname}" "${programPath}"`;
                     output.show(true);
                     output.clear();
                     output.appendLine(`Starting: ${command}`);
