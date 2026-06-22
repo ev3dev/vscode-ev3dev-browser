@@ -3,7 +3,7 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 
 <!-- Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file. -->
 
-## Unreleased
+## v1.2.2 - 2026-06-21
 
 ### Fixed
 - Fix compatibility with VS Code v1.124 and later.
