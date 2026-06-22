@@ -6,7 +6,7 @@ All notable changes to the "ev3dev-browser" extension will be documented in this
 ## v1.2.2 - 2026-06-21
 
 ### Fixed
-- Fix compatibility with VS Code v1.124 and later.
+- Fix compatibility with VS Code v1.123 and later.
 
 ## v1.2.1 - 2023-03-29
 ### Fixed
