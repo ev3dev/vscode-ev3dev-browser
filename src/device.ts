@@ -2,7 +2,6 @@ import * as path from 'path';
 import * as os from 'os';
 import * as readline from 'readline';
 import * as ssh2 from 'ssh2';
-import * as ssh2Streams from 'ssh2-streams';
 import * as vscode from 'vscode';
 import Observable from 'zen-observable';
 
@@ -15,7 +14,7 @@ import * as dnssd from './dnssd';
 export class Device extends vscode.Disposable {
     private readonly client: ssh2.Client;
     private sftp?: ssh2.SFTPWrapper;
-    private _homeDirectoryAttr?: ssh2Streams.Attributes;
+    private _homeDirectoryAttr?: ssh2.Attributes;
     private _isConnecting = false;
     private _isConnected = false;
 
@@ -184,7 +183,7 @@ export class Device extends vscode.Disposable {
     /**
      * Get the file attributes of the home directory.
      */
-    public get homeDirectoryAttr(): ssh2Streams.Attributes {
+    public get homeDirectoryAttr(): ssh2.Attributes {
         if (!this._homeDirectoryAttr) {
             throw new Error('Not connected');
         }
@@ -340,7 +339,7 @@ export class Device extends vscode.Disposable {
                 }
             }
             catch (err) {
-                if (err.code !== ssh2.SFTP_STATUS_CODE.NO_SUCH_FILE) {
+                if (err.code !== ssh2.utils.sftp.STATUS_CODE.NO_SUCH_FILE) {
                     throw err;
                 }
                 await this.mkdir(part);
@@ -414,7 +413,7 @@ export class Device extends vscode.Disposable {
      * List the contents of a remote directory.
      * @param path The path to a directory.
      */
-    public ls(path: string): Promise<ssh2Streams.FileEntry[]> {
+    public ls(path: string): Promise<ssh2.FileEntry[]> {
         return new Promise((resolve, reject) => {
             if (!this.sftp) {
                 reject(new Error('Not connected'));
@@ -435,7 +434,7 @@ export class Device extends vscode.Disposable {
      * Stat a remote file or directory.
      * @param path The path to a remote file or directory.
      */
-    public stat(path: string): Promise<ssh2Streams.Stats> {
+    public stat(path: string): Promise<ssh2.Stats> {
         return new Promise((resolve, reject) => {
             if (!this.sftp) {
                 reject(new Error('Not connected'));

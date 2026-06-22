@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import * as net from 'net';
 import * as os from 'os';
 import * as path from 'path';
-import * as ssh2Streams from 'ssh2-streams';
 import * as temp from 'temp';
+import type { FileEntry, Stats } from 'ssh2';
 
 import * as vscode from 'vscode';
 
@@ -244,7 +244,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                         }
                         ch.destroy();
                     });
-                    ch.on('exit', (code, signal, coreDump, desc) => {
+                    ch.on('exit', (code: number | undefined, signal: string | undefined, coreDump: boolean | undefined, desc: string | undefined) => {
                         writeEmitter.fire('----------\r\n');
                         if (code === 0) {
                             writeEmitter.fire('Completed successfully.\r\n');
@@ -284,7 +284,7 @@ async function handleCustomDebugEvent(event: vscode.DebugSessionCustomEvent): Pr
                             event.session.customRequest('ev3devBrowser.debugger.terminate');
                         }
                     });
-                    channel.on('exit', (code, signal, coreDump, desc) => {
+                    channel.on('exit', (code: number | undefined, signal: string | undefined, coreDump: boolean | undefined, desc: string | undefined) => {
                         if (!debugRestarting) {
                             output.appendLine('----------');
                             if (code === 0) {
@@ -831,10 +831,10 @@ class File extends vscode.TreeItem {
     readonly isDirectory: boolean;
 
     constructor(public device: Device, public parent: File | undefined, directory: string,
-        private fileInfo: ssh2Streams.FileEntry) {
+        private fileInfo: FileEntry) {
         super(fileInfo.filename);
         // work around bad typescript bindings
-        const stats = (<ssh2Streams.Stats>fileInfo.attrs);
+        const stats = (fileInfo.attrs as Stats);
         this.path = directory + fileInfo.filename;
         this.isExecutable = stats.isFile() && !!(stats.mode & S_IXUSR);
         this.isDirectory = stats.isDirectory();
